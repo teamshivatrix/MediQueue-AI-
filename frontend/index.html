@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediQueue AI - Smart Hospital Scheduler</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <i class="fas fa-hospital"></i>
+        <span>MediQueue AI</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="booking.html"><i class="fas fa-calendar-plus"></i> Book</a></li>
+        <li><a href="symptom-analyzer.html"><i class="fas fa-brain"></i> AI Analyzer</a></li>
+        <li><a href="chatbot.html"><i class="fas fa-robot"></i> Chatbot</a></li>
+        <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+        <li><a href="queue-display.html"><i class="fas fa-tv"></i> Queue</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1>
+          Smart Healthcare<br>
+          <span class="gradient-text">Queue Management</span><br>
+          Powered by AI
+        </h1>
+        <p>
+          Reduce waiting times, book appointments online, and get AI-powered health guidance. 
+          Our smart platform helps government hospitals serve patients efficiently with predictive queue management.
+        </p>
+        <div class="hero-buttons">
+          <a href="booking.html" class="btn-primary">
+            <i class="fas fa-calendar-plus"></i> Book Appointment
+          </a>
+          <a href="symptom-analyzer.html" class="btn-secondary">
+            <i class="fas fa-brain"></i> AI Symptom Check
+          </a>
+          <a href="queue-display.html" class="btn-outline">
+            <i class="fas fa-tv"></i> View Queue
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-card">
+          <div class="hero-card-header">
+            <div class="hero-card-icon"><i class="fas fa-list-ol"></i></div>
+            <div>
+              <div class="hero-card-title">Live Queue Status</div>
+              <div class="hero-card-subtitle">Real-time patient tracking</div>
+            </div>
+          </div>
+          <div class="hero-queue-item">
+            <div class="hero-queue-left">
+              <div class="hero-queue-token">24</div>
+              <div>
+                <div class="hero-queue-name">Anand Verma</div>
+                <div class="hero-queue-dept">Cardiology</div>
+              </div>
+            </div>
+            <span class="hero-queue-status" style="background:#dcfce7;color:#166534;">Serving</span>
+          </div>
+          <div class="hero-queue-item">
+            <div class="hero-queue-left">
+              <div class="hero-queue-token">25</div>
+              <div>
+                <div class="hero-queue-name">Sita Devi</div>
+                <div class="hero-queue-dept">General Medicine</div>
+              </div>
+            </div>
+            <span class="hero-queue-status" style="background:#dbeafe;color:#1e40af;">Next</span>
+          </div>
+          <div class="hero-queue-item">
+            <div class="hero-queue-left">
+              <div class="hero-queue-token">26</div>
+              <div>
+                <div class="hero-queue-name">Rahul Mehta</div>
+                <div class="hero-queue-dept">Orthopedics</div>
+              </div>
+            </div>
+            <span class="hero-queue-status" style="background:#fef3c7;color:#92400e;">Waiting</span>
+          </div>
+          <div class="queue-next" style="margin-top:1rem; background:linear-gradient(135deg, rgba(8,145,178,0.08), rgba(5,150,105,0.08)); padding:1rem; border-radius:12px; text-align:center;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Avg Wait Time</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#0891b2;">~18 min</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-user-injured"></i></div>
+        <div class="stat-number" id="statPatients">0</div>
+        <div class="stat-label">Patients Today</div>
+      </div>
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+        <div class="stat-number" id="statDoctors">0</div>
+        <div class="stat-label">Active Doctors</div>
+      </div>
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-number" id="statWait">0</div>
+        <div class="stat-label">Avg Wait (min)</div>
+      </div>
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-number" id="statCompleted">0</div>
+        <div class="stat-label">Completed Today</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="section-header animate-on-scroll">
+      <h2>Intelligent Hospital Management</h2>
+      <p>Powered by AI to reduce queues, predict wait times, and streamline patient care</p>
+    </div>
+    <div class="features-grid">
+      <a href="booking.html" class="feature-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <h3>Online Booking</h3>
+        <p>Book appointments instantly with smart time slot recommendations and automatic queue positioning.</p>
+      </a>
+      <a href="symptom-analyzer.html" class="feature-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #059669, #047857);">
+          <i class="fas fa-brain"></i>
+        </div>
+        <h3>AI Symptom Analyzer</h3>
+        <p>Enter your symptoms and our AI will recommend the right department and priority level instantly.</p>
+      </a>
+      <a href="queue-display.html" class="feature-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Smart Queue Prediction</h3>
+        <p>AI predicts your exact waiting time based on current queue data and doctor consultation patterns.</p>
+      </a>
+      <a href="chatbot.html" class="feature-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h3>AI Helpdesk Chatbot</h3>
+        <p>Ask anything about hospital services, doctor availability, timings, and more — 24/7 assistance.</p>
+      </a>
+      <a href="admin-dashboard.html" class="feature-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #ef4444, #dc2626);">
+          <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <h3>Admin Dashboard</h3>
+        <p>Real-time analytics with live charts showing patient flow, department load, and queue metrics.</p>
+      </a>
+      <a href="doctor-management.html" class="feature-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #8b5cf6, #7c3aed);">
+          <i class="fas fa-stethoscope"></i>
+        </div>
+        <h3>Doctor Management</h3>
+        <p>Manage doctor schedules, availability, departments, and time slots from a single control panel.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- Quick Actions -->
+  <section style="max-width:1280px; margin:0 auto; padding:0 1.5rem 4rem;">
+    <div class="quick-actions">
+      <a href="booking.html" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);"><i class="fas fa-plus-circle"></i></div>
+        <h3>New Appointment</h3>
+        <p>Book your visit in under 2 minutes</p>
+      </a>
+      <a href="symptom-analyzer.html" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #059669, #047857);"><i class="fas fa-search-plus"></i></div>
+        <h3>Check Symptoms</h3>
+        <p>AI-powered department recommendation</p>
+      </a>
+      <a href="chatbot.html" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);"><i class="fas fa-comments"></i></div>
+        <h3>Ask Assistant</h3>
+        <p>Get instant answers to your questions</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3><i class="fas fa-hospital"></i> MediQueue AI</h3>
+        <p>AI-Powered Government Hospital Check-up Scheduler. Making healthcare accessible, efficient, and smart for everyone.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Quick Links</h4>
+        <a href="booking.html">Book Appointment</a>
+        <a href="symptom-analyzer.html">Symptom Analyzer</a>
+        <a href="chatbot.html">AI Chatbot</a>
+        <a href="queue-display.html">Queue Display</a>
+      </div>
+      <div class="footer-links">
+        <h4>Admin</h4>
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="doctor-management.html">Manage Doctors</a>
+      </div>
+      <div class="footer-links">
+        <h4>Contact</h4>
+        <a href="#"><i class="fas fa-phone"></i> Emergency: 108</a>
+        <a href="#"><i class="fas fa-envelope"></i> help@mediqueue.ai</a>
+        <a href="#"><i class="fas fa-map-marker-alt"></i> Govt. Hospital, India</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MediQueue AI — Built for Smart India Hackathon</p>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Load stats on home page
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const [statsRes, doctorsRes] = await Promise.all([
+          fetch('/api/appointments/stats'),
+          fetch('/api/doctors')
+        ]);
+        const stats = await statsRes.json();
+        const doctors = await doctorsRes.json();
+
+        animateCounter('statPatients', stats.totalToday || 0);
+        animateCounter('statDoctors', doctors.length || 0);
+        animateCounter('statWait', stats.avgWaitTime || 0);
+        animateCounter('statCompleted', stats.completed || 0);
+      } catch (err) {
+        console.log('Could not load stats');
+      }
+    });
+
+    function animateCounter(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let current = 0;
+      const step = Math.ceil(target / 40);
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        el.textContent = current;
+      }, 30);
+    }
+  </script>
+</body>
+</html>

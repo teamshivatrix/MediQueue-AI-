@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo"><i class="fas fa-hospital"></i><span>MediQueue AI</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="booking.html" class="active"><i class="fas fa-calendar-plus"></i> Book</a></li>
+        <li><a href="symptom-analyzer.html"><i class="fas fa-brain"></i> AI Analyzer</a></li>
+        <li><a href="chatbot.html"><i class="fas fa-robot"></i> Chatbot</a></li>
+        <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+        <li><a href="queue-display.html"><i class="fas fa-tv"></i> Queue</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-calendar-plus" style="color: var(--primary);"></i> Book Appointment</h1>
+    <p>Fill in your details and book your hospital visit in minutes</p>
+  </div>
+
+  <!-- Booking Container -->
+  <div class="booking-container">
+    <!-- Booking Form -->
+    <div class="booking-form-card" id="bookingForm">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:2rem; padding-bottom:1rem; border-bottom:2px solid #f1f5f9;">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg, var(--primary), var(--primary-dark));display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:700;color:#0f172a;">Patient Information</h2>
+          <p style="font-size:0.85rem;color:#64748b;">All fields are required for booking</p>
+        </div>
+      </div>
+
+      <form id="appointmentForm" onsubmit="return false;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Patient Name</label>
+            <input type="text" class="form-control" id="patientName" placeholder="Enter full name" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-birthday-cake"></i> Age</label>
+            <input type="number" class="form-control" id="patientAge" placeholder="Enter age" min="0" max="120" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-phone"></i> Phone Number</label>
+            <input type="tel" class="form-control" id="patientPhone" placeholder="10-digit phone number" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-calendar"></i> Appointment Date</label>
+            <input type="date" class="form-control" id="appointmentDate" required>
+          </div>
+          <div class="form-group full-width">
+            <label><i class="fas fa-notes-medical"></i> Symptoms</label>
+            <textarea class="form-control" id="patientSymptoms" placeholder="Describe your symptoms in detail..." rows="3" required></textarea>
+            <button type="button" class="btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="analyzeSymptoms()">
+              <i class="fas fa-brain"></i> AI: Suggest Department
+            </button>
+            <div id="aiSuggestion" style="display:none; margin-top:0.75rem; padding:0.75rem 1rem; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:0.85rem;">
+              <strong style="color:#059669;"><i class="fas fa-lightbulb"></i> AI Suggestion:</strong>
+              <span id="aiSuggestionText"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-hospital"></i> Department</label>
+            <select class="form-control" id="department" required onchange="loadDoctors()">
+              <option value="">Select Department</option>
+              <option value="General Medicine">General Medicine</option>
+              <option value="Cardiology">Cardiology</option>
+              <option value="Orthopedics">Orthopedics</option>
+              <option value="Neurology">Neurology</option>
+              <option value="Pediatrics">Pediatrics</option>
+              <option value="Dermatology">Dermatology</option>
+              <option value="ENT">ENT</option>
+              <option value="Ophthalmology">Ophthalmology</option>
+              <option value="Gastroenterology">Gastroenterology</option>
+              <option value="Psychiatry">Psychiatry</option>
+              <option value="Gynecology">Gynecology</option>
+              <option value="Dental">Dental</option>
+              <option value="Pulmonology">Pulmonology</option>
+              <option value="Urology">Urology</option>
+              <option value="Endocrinology">Endocrinology</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-user-md"></i> Select Doctor</label>
+            <select class="form-control" id="doctor" required onchange="loadTimeSlots()">
+              <option value="">Select department first</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-clock"></i> Time Slot</label>
+            <select class="form-control" id="timeSlot" required>
+              <option value="">Select doctor first</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-exclamation-triangle"></i> Priority</label>
+            <select class="form-control" id="priority">
+              <option value="low">Low - Routine checkup</option>
+              <option value="medium" selected>Medium - Needs attention</option>
+              <option value="high">High - Urgent care needed</option>
+              <option value="emergency">Emergency - Immediate attention</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:flex-end;">
+          <button type="button" class="btn-outline" onclick="resetForm()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button type="button" class="btn-primary" id="submitBtn" onclick="submitBooking()">
+            <i class="fas fa-check-circle"></i> Book Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success Card -->
+    <div class="booking-form-card booking-success" id="bookingSuccess">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <h2 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin-bottom:0.5rem;">Appointment Booked!</h2>
+      <p style="color:#64748b; margin-bottom:1rem;">Your appointment has been confirmed. Here are your details:</p>
+      
+      <div class="success-details" id="successDetails">
+        <!-- Filled by JS -->
+      </div>
+
+      <div class="wait-progress" id="waitProgress">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="font-weight:600; color:#374151; font-size:0.9rem;">Estimated Wait Time</span>
+          <span style="font-weight:700; color:var(--primary); font-size:0.9rem;" id="waitTimeText">--</span>
+        </div>
+        <div class="wait-progress-bar">
+          <div class="wait-progress-fill" id="waitProgressFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+        <a href="queue-display.html" class="btn-primary">
+          <i class="fas fa-tv"></i> View Queue
+        </a>
+        <button class="btn-outline" onclick="newBooking()">
+          <i class="fas fa-plus"></i> Book Another
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/booking.js"></script>
+</body>
+</html>

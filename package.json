@@ -1,0 +1,29 @@
+{
+  "name": "mediqueue-ai",
+  "version": "1.0.0",
+  "description": "AI-Powered Government Hospital Check-up Scheduler - Smart digital platform for appointment booking with AI-driven waiting time prediction",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
+  },
+  "keywords": [
+    "hospital",
+    "ai",
+    "appointment",
+    "queue",
+    "scheduler",
+    "healthcare"
+  ],
+  "author": "MediQueue AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "mongodb": "^7.1.0",
+    "mongoose": "^8.7.0",
+    "openai": "^4.67.0"
+  }
+}
