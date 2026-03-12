@@ -156,18 +156,30 @@ router.post('/analyze-symptoms', async (req, res) => {
     const { provider, client } = getAIClient();
 
     if (provider === 'gemini') {
-      const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
-      const prompt = `You are a medical triage AI for a government hospital. Analyze these symptoms and suggest the most appropriate hospital department. Respond in JSON format only:
-{"department": "department name", "priority": "low/medium/high/emergency", "confidence": 0.0-1.0, "reasoning": "brief explanation", "recommendations": ["rec1", "rec2", "rec3"]}
+      try {
+        const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const prompt = `You are a medical triage AI for a government hospital. Analyze these symptoms and suggest the most appropriate hospital department.
+
+IMPORTANT: You must respond ONLY with valid JSON, no markdown, no backticks, no extra text.
+Available departments: General Medicine, Cardiology, Orthopedics, Neurology, Pediatrics, Dermatology, ENT, Ophthalmology, Gastroenterology, Psychiatry, Gynecology, Dental, Pulmonology, Urology, Endocrinology
+
+JSON format:
+{"department": "department name from list above", "priority": "low/medium/high/emergency", "confidence": 0.0-1.0, "reasoning": "brief explanation", "recommendations": ["rec1", "rec2", "rec3"]}
 
 Patient symptoms: ${symptoms}`;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return res.json({ ...parsed, aiProvider: 'gemini' });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        // Extract JSON from response (handle markdown code blocks too)
+        const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return res.json({ ...parsed, aiProvider: 'gemini' });
+        }
+      } catch (geminiErr) {
+        console.error('Gemini analyze error:', geminiErr.message?.substring(0, 100));
+        // Fall through to fallback
       }
     }
 
@@ -211,8 +223,9 @@ router.post('/chat', async (req, res) => {
     const { provider, client } = getAIClient();
 
     if (provider === 'gemini') {
-      const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
-      const prompt = `You are a helpful hospital assistant chatbot for MediQueue AI, a government hospital scheduling system. Be friendly, concise, and helpful. Answer questions about hospital services, appointments, doctors, timings, and general health guidance. Do not provide medical diagnoses.
+      try {
+        const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const prompt = `You are a helpful hospital assistant chatbot for MediQueue AI, a government hospital scheduling system. Be friendly, concise (2-4 sentences), and helpful. Answer questions about hospital services, appointments, doctors, timings, and general health guidance. Do not provide medical diagnoses. Do not use markdown formatting.
 
 Hospital Info:
 - Hours: Mon-Fri 9AM-5PM, Sat 9AM-1PM
@@ -222,8 +235,12 @@ Hospital Info:
 
 User message: ${message}`;
 
-      const result = await model.generateContent(prompt);
-      return res.json({ response: result.response.text(), aiProvider: 'gemini' });
+        const result = await model.generateContent(prompt);
+        return res.json({ response: result.response.text(), aiProvider: 'gemini' });
+      } catch (geminiErr) {
+        console.error('Gemini chat error:', geminiErr.message?.substring(0, 100));
+        // Fall through to fallback
+      }
     }
 
     if (provider === 'openai') {

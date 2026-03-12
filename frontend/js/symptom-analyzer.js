@@ -23,15 +23,25 @@ async function analyzeSymptoms() {
   btn.disabled = true;
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
     const result = await apiCall('/api/ai/analyze-symptoms', {
       method: 'POST',
-      body: JSON.stringify({ symptoms })
+      body: JSON.stringify({ symptoms }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     showResult(result);
     showToast('Analysis Complete', `Suggested Department: ${result.department}`, 'success');
   } catch (err) {
-    showToast('Analysis Failed', 'Please try again', 'error');
+    console.error('Symptom analysis error:', err);
+    if (err.name === 'AbortError') {
+      showToast('Timeout', 'AI is taking too long. Please try again.', 'warning');
+    } else {
+      showToast('Analysis Failed', 'Could not reach AI. Please try again.', 'error');
+    }
   } finally {
     btn.innerHTML = '<i class="fas fa-brain"></i> Analyze Symptoms with AI';
     btn.disabled = false;
