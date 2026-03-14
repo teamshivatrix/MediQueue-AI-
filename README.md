@@ -1,242 +1,177 @@
-# 🏥 MediQueue AI — AI-Powered Hospital Queue Management System
+# MediQueue AI
 
-> A smart digital platform that eliminates long hospital queues by enabling online appointment booking, AI-driven symptom analysis, real-time queue prediction, and live admin monitoring — built for government hospitals.
+MediQueue AI is an AI-assisted hospital queue management system for OPD workflows. It helps patients book appointments online, estimates waiting times, recommends departments from symptoms, and gives admins a live operational dashboard.
 
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Gemini](https://img.shields.io/badge/Google_Gemini-AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
+## Why This Project
 
----
+Government hospitals often face long registration queues, uncertain waiting times, and limited visibility into doctor load. MediQueue AI digitizes this flow with:
 
-## 🚨 Problem Statement
+- online appointment booking and tokening
+- real-time queue insights
+- AI triage assistance for symptom routing
+- admin controls for doctor and queue operations
 
-Government hospitals in India face a critical challenge:
-- Patients wait **3–6 hours** in queues just to register
-- No visibility into doctor availability or waiting times
-- Manual token systems cause chaos and long lines
-- Emergency patients get stuck behind routine checkups
-- Doctors have no data on upcoming patient load
+## Core Features
 
-**MediQueue AI solves all of this** with a zero-friction digital system.
+- Smart booking flow with department, doctor, date, and time slot selection
+- Auto-generated token number and estimated waiting time
+- AI symptom analyzer with provider support: Gemini, OpenAI, and built-in fallback
+- AI chatbot for hospital guidance and booking help
+- Admin login with token session verification
+- Live dashboard stats: total, waiting, in-progress, completed, avg wait
+- Doctor management (create, read, update, delete)
+- Public queue display board for current and upcoming patients
+- MongoDB persistence with automatic in-memory fallback
 
----
+## Tech Stack
 
-## ✨ Key Features
+- Frontend: HTML, CSS, Vanilla JavaScript, Chart.js
+- Backend: Node.js, Express
+- Database: MongoDB + Mongoose (optional; in-memory fallback available)
+- AI: Google Gemini, OpenAI, and rule-based fallback
+- Auth: lightweight admin token session in server memory
 
-| Feature | Description |
-|---------|-------------|
-| 📅 **Smart Appointment Booking** | Book with department, doctor & time slot selection — get instant token confirmation |
-| 🧠 **AI Symptom Analyzer** | Describe symptoms → AI recommends the right department and priority level |
-| ⏱️ **Real-Time Queue Prediction** | Live estimated waiting time based on current queue data |
-| 🤖 **AI Helpdesk Chatbot** | Ask anything about doctors, timings, departments, or bookings |
-| 📊 **Admin Dashboard** | Live charts for patient flow, department load, appointment stats |
-| 👨‍⚕️ **Doctor Management** | Add/edit/remove doctors, set schedules, toggle availability |
-| 📺 **Live Queue Display Board** | Dark-theme public display showing currently serving and waiting patients |
-| 🔔 **Browser Notifications** | Instant booking confirmation via browser push notifications |
+## Project Structure
 
----
+```text
+.
+|-- backend/
+|   |-- server.js
+|   |-- database/
+|   |   `-- database-config.js
+|   |-- models/
+|   |   |-- Appointment.js
+|   |   `-- Doctor.js
+|   `-- routes/
+|       |-- ai.js
+|       |-- appointments.js
+|       `-- doctors.js
+|-- frontend/
+|   |-- index.html
+|   |-- booking.html
+|   |-- symptom-analyzer.html
+|   |-- chatbot.html
+|   |-- admin-login.html
+|   |-- admin-dashboard.html
+|   |-- doctor-management.html
+|   |-- queue-display.html
+|   |-- css/
+|   |   `-- styles.css
+|   `-- js/
+|       |-- main.js
+|       |-- booking.js
+|       |-- symptom-analyzer.js
+|       |-- chatbot.js
+|       |-- admin-dashboard.js
+|       |-- doctor-management.js
+|       `-- queue-display.js
+|-- package.json
+`-- README.md
+```
 
-## 🚀 Quick Start
+## Getting Started
+
+### 1) Clone and install
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/mediqueue-ai.git
+git clone https://github.com/<your-username>/mediqueue-ai.git
 cd mediqueue-ai
-
-# 2. Install dependencies
 npm install
+```
 
-# 3. Start the server
+### 2) Configure environment
+
+Create a `.env` file in the project root:
+
+```env
+PORT=3000
+
+# Optional: MongoDB Atlas URI. If missing/invalid, app runs in-memory mode.
+MONGODB_URI=
+
+# AI provider: gemini | openai | fallback
+AI_PROVIDER=fallback
+
+# Optional AI keys
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+
+# Admin credentials
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
+```
+
+### 3) Run
+
+```bash
 npm start
-
-# 4. Open in browser
-# http://localhost:3000
 ```
 
-> ✅ Works out of the box — no database or API keys required. Uses in-memory storage and built-in AI fallback for demo.
+Open:
 
----
+- `http://localhost:3000`
+- `http://localhost:3000/admin-dashboard.html`
 
-## 🧱 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | HTML5, CSS3 (Custom Glassmorphism UI), Vanilla JavaScript, Chart.js |
-| **Backend** | Node.js, Express.js |
-| **Database** | MongoDB Atlas (with automatic in-memory fallback) |
-| **AI Engine** | Google Gemini API / OpenAI API / Built-in rule-based fallback |
-| **Notifications** | Browser Notification API |
-| **Auth** | Session token-based admin authentication |
-
----
-
-## 📁 Project Structure
-
-```
-mediqueue-ai/
-├── backend/
-│   ├── server.js                  # Main Express server + seed data
-│   ├── database/
-│   │   └── database-config.js     # MongoDB connection with fallback
-│   ├── models/
-│   │   ├── Appointment.js         # Appointment Mongoose schema
-│   │   └── Doctor.js              # Doctor Mongoose schema
-│   └── routes/
-│       ├── appointments.js        # Appointment CRUD + queue logic
-│       ├── doctors.js             # Doctor CRUD
-│       └── ai.js                  # AI symptom analysis + chatbot
-├── frontend/
-│   ├── index.html                 # Home / Landing page
-│   ├── booking.html               # Appointment booking form
-│   ├── symptom-analyzer.html      # AI symptom analyzer
-│   ├── chatbot.html               # AI chatbot interface
-│   ├── admin-login.html           # Admin authentication
-│   ├── admin-dashboard.html       # Analytics dashboard
-│   ├── doctor-management.html     # Doctor CRUD panel
-│   ├── queue-display.html         # Public queue display board
-│   ├── css/
-│   │   └── styles.css             # All styles, animations, responsive
-│   └── js/
-│       ├── main.js                # Shared utilities + API_BASE config
-│       ├── booking.js             # Booking page logic
-│       ├── symptom-analyzer.js    # Symptom analyzer logic
-│       ├── chatbot.js             # Chatbot logic
-│       ├── admin-dashboard.js     # Dashboard charts & stats
-│       ├── doctor-management.js   # Doctor management logic
-│       └── queue-display.js       # Live queue polling
-├── .env.example                   # Environment variable template
-├── package.json
-└── README.md
-```
-
----
-
-## 🔌 API Reference
+## API Overview
 
 ### Appointments
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/appointments` | Book new appointment |
-| `GET` | `/api/appointments` | List appointments (filter by date, dept, status) |
-| `GET` | `/api/appointments/stats` | Dashboard statistics |
-| `GET` | `/api/appointments/queue` | Live queue display data |
-| `PATCH` | `/api/appointments/:id/status` | Update appointment status |
-| `POST` | `/api/appointments/predict-waiting-time` | Get wait time prediction |
+- `POST /api/appointments` - create appointment
+- `GET /api/appointments` - list appointments with optional filters
+- `PATCH /api/appointments/:id/status` - update appointment status
+- `POST /api/appointments/predict-waiting-time` - estimate waiting time
+- `GET /api/appointments/stats` - dashboard analytics
+- `GET /api/appointments/queue` - queue display payload
 
 ### Doctors
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/doctors` | Add new doctor |
-| `GET` | `/api/doctors` | Get all doctors (filter by dept, availability) |
-| `GET` | `/api/doctors/:id` | Get doctor by ID |
-| `PUT` | `/api/doctors/:id` | Update doctor details |
-| `DELETE` | `/api/doctors/:id` | Remove doctor |
+- `POST /api/doctors` - add doctor
+- `GET /api/doctors` - list doctors (by department/availability)
+- `GET /api/doctors/:id` - fetch doctor by id
+- `PUT /api/doctors/:id` - update doctor
+- `DELETE /api/doctors/:id` - remove doctor
 
 ### AI
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/ai/analyze-symptoms` | Analyze symptoms → suggest department + priority |
-| `POST` | `/api/ai/chat` | Chatbot conversation |
+- `POST /api/ai/analyze-symptoms` - symptom triage and priority suggestion
+- `POST /api/ai/chat` - assistant chat for hospital-related help
 
 ### Admin
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/admin/login` | Admin login → returns session token |
-| `POST` | `/api/admin/verify` | Verify session token |
-| `POST` | `/api/admin/logout` | Invalidate session token |
+- `POST /api/admin/login` - login and get session token
+- `POST /api/admin/verify` - verify token
+- `POST /api/admin/logout` - logout and invalidate token
 
----
+## Data and Runtime Notes
 
-## 📱 Pages Overview
+- If MongoDB is unavailable, the app automatically switches to in-memory storage.
+- In-memory mode is demo-friendly but resets data on server restart.
+- On startup, demo doctors and appointments are seeded for quick testing.
+- Admin sessions are stored in memory and expire automatically.
 
-| Page | URL | Access |
-|------|-----|--------|
-| 🏠 Home | `/` | Public |
-| 📅 Book Appointment | `/booking.html` | Public |
-| 🧠 Symptom Analyzer | `/symptom-analyzer.html` | Public |
-| 🤖 AI Chatbot | `/chatbot.html` | Public |
-| 📺 Queue Display | `/queue-display.html` | Public |
-| 🔐 Admin Login | `/admin-login.html` | Admin |
-| 📊 Admin Dashboard | `/admin-dashboard.html` | Admin |
-| 👨‍⚕️ Doctor Management | `/doctor-management.html` | Admin |
+## Demo User Flow
 
-> **Default Admin Credentials:** `admin` / `admin123`
+1. Patient uses symptom analyzer for department suggestion.
+2. Patient books appointment, receives token and estimated wait.
+3. Admin monitors queue and updates statuses.
+4. Public queue display reflects current serving and upcoming tokens.
 
----
+## Security Notes
 
-## 🎯 Demo Flow
+- Do not commit real API keys or database credentials.
+- Use environment variables and rotate keys if they are exposed.
+- Replace default admin credentials before production use.
 
-```
-Patient                          Admin
-  │                                │
-  ├─ Opens home page               ├─ Logs in to dashboard
-  ├─ Enters symptoms               ├─ Monitors live queue charts
-  ├─ AI suggests department        ├─ Updates appointment statuses
-  ├─ Selects doctor + time slot    ├─ Manages doctor availability
-  ├─ Gets token + wait time        └─ Views department-wise analytics
-  └─ Sees queue on display board
-```
+## Built For
 
----
+Smart India Hackathon style OPD digitization use case: reducing queue friction, improving triage quality, and increasing admin visibility.
 
-## 🤖 AI Setup (Optional)
+## License
 
-The project works without any API keys using the built-in rule-based AI. For smarter responses:
-
-### Google Gemini (Recommended — Free tier)
-```env
-AI_PROVIDER=gemini
-GEMINI_API_KEY=your_key_here
-```
-Get key: https://aistudio.google.com/apikey
-
-### OpenAI
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
-```
-
----
-
-## 🗃️ MongoDB Setup (Optional)
-
-Default mode uses in-memory storage (data resets on server restart).
-
-For persistent storage with MongoDB Atlas:
-```env
-MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/mediqueue
-```
-Create free cluster: https://www.mongodb.com/atlas
-
----
-
-## 🎨 UI Highlights
-
-- Glassmorphism card components with blur/shadow effects
-- Blue → Teal → Green hospital-theme gradient palette
-- Smooth CSS transitions and entrance animations
-- Fully responsive — Mobile, Tablet, Desktop
-- Chart.js visualizations: Bar, Line, Pie, Doughnut
-- Toast notification system with slide-in animation
-- Animated counters and wait-time progress bars
-- Dark-themed public queue display board
-
----
-
-## 🏆 Built For
-
-**Smart India Hackathon (SIH)** — Problem Statement: Digital transformation of OPD queue management in government hospitals.
-
----
-
-## 📄 License
-
-MIT License — free to use, modify, and distribute.
+MIT
 
