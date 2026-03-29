@@ -3,6 +3,62 @@
 let allDoctors = [];
 let selectedDoctor = null;
 
+function defaultSlots() {
+  const slots = [];
+  for (let h = 9; h <= 16; h++) {
+    const hh = String(h).padStart(2, '0');
+    slots.push(`${hh}:00`, `${hh}:30`);
+  }
+  return slots;
+}
+
+async function fetchDoctorsByDepartment(dept) {
+  const encodedDept = encodeURIComponent(dept);
+  const primary = (typeof API_BASE === 'string' ? API_BASE : '');
+  const candidates = [
+    `${primary}/api/doctors?department=${encodedDept}&available=true`,
+    `${primary}/api/doctors?department=${encodedDept}`,
+    `/api/doctors?department=${encodedDept}&available=true`,
+    `http://localhost:3000/api/doctors?department=${encodedDept}&available=true`
+  ];
+
+  const tried = new Set();
+  let lastError = new Error('Unable to fetch doctors');
+
+  for (const url of candidates) {
+    const normalizedUrl = url.replace('///', '//');
+    if (tried.has(normalizedUrl)) continue;
+    tried.add(normalizedUrl);
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(normalizedUrl, { signal: controller.signal });
+      clearTimeout(timer);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+
+      const list = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload.doctors) ? payload.doctors : []);
+
+      return list
+        .filter(doc => doc && (doc.isAvailable !== false))
+        .map(doc => ({
+          ...doc,
+          availableSlots: Array.isArray(doc.availableSlots) && doc.availableSlots.length > 0
+            ? doc.availableSlots
+            : defaultSlots()
+        }));
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Set minimum date to today
   const dateInput = document.getElementById('appointmentDate');
@@ -25,11 +81,7 @@ function loadDoctors() {
 
   doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
 
-  fetch(API_BASE + '/api/doctors?department=' + encodeURIComponent(dept) + '&available=true')
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
+  fetchDoctorsByDepartment(dept)
     .then(doctors => {
       allDoctors = doctors;
       doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
@@ -49,7 +101,7 @@ function loadDoctors() {
     })
     .catch(err => {
       console.error('Failed to load doctors:', err);
-      doctorSelect.innerHTML = '<option value="">Error loading - try again</option>';
+      doctorSelect.innerHTML = '<option value="">Error loading - check server</option>';
     });
 }
 

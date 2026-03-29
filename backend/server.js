@@ -172,8 +172,13 @@ const seedMongoDB = async () => {
   console.log(`📋 Seeded ${savedDoctors.length} doctors and ${sampleAppointments.length} appointments into MongoDB`);
 };
 
-// Start server
-const startServer = async () => {
+let initializationPromise = null;
+
+// Initialize DB/fallback/seed once per process (works for local and serverless cold starts)
+const initializeApp = async () => {
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = (async () => {
   const dbConnected = await connectDB();
 
   if (!dbConnected) {
@@ -186,6 +191,20 @@ const startServer = async () => {
     await seedMongoDB();
   }
 
+    return true;
+  })().catch((err) => {
+    // Allow retries on next invocation if initialization fails
+    initializationPromise = null;
+    throw err;
+  });
+
+  return initializationPromise;
+};
+
+// Start server (local runtime only)
+const startServer = async () => {
+  await initializeApp();
+
   app.listen(PORT, () => {
     console.log(`\n🏥 MediQueue AI Server running on http://localhost:${PORT}`);
     console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin-dashboard.html`);
@@ -195,4 +214,11 @@ const startServer = async () => {
   });
 };
 
-startServer();
+if (require.main === module) {
+  startServer().catch((err) => {
+    console.error('❌ Failed to start server:', err.message);
+    process.exit(1);
+  });
+}
+
+module.exports = { app, initializeApp };

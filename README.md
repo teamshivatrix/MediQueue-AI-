@@ -122,11 +122,11 @@ Open:
 ### Appointments
 
 - `POST /api/appointments` - create appointment
-- `GET /api/appointments` - list appointments with optional filters
+- `GET /api/appointments` - l
 - `PATCH /api/appointments/:id/status` - update appointment status
 - `POST /api/appointments/predict-waiting-time` - estimate waiting time
 - `GET /api/appointments/stats` - dashboard analytics
-- `GET /api/appointments/queue` - queue display payload
+- `GET /api/appointments/queue` - queue display payloist appointments with optional filtersad
 
 ### Doctors
 
