@@ -101,10 +101,26 @@ AI_PROVIDER=fallback
 GEMINI_API_KEY=
 OPENAI_API_KEY=
 
+# OTP SMS provider (optional)
+SMS_PROVIDER=
+SMS_DEFAULT_COUNTRY_CODE=+91
+OTP_BRAND_NAME=MediQueue AI
+
+# Twilio (required when SMS_PROVIDER=twilio)
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+
 # Admin credentials
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 ```
+
+### OTP Notes
+
+- Forgot-password uses 4-digit OTP.
+- If `SMS_PROVIDER=twilio` and Twilio keys are valid, OTP is sent by SMS.
+- If SMS provider is not configured, app falls back to dev mode and returns `debugOtp` in non-production.
 
 ### 3) Run
 

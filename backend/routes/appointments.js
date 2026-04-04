@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
 // In-memory store fallback
 let memoryAppointments = [];
-let tokenCounter = 100;
 let useMemory = false;
 
 const setMemoryMode = (val) => { useMemory = val; };
@@ -25,10 +25,18 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    tokenCounter++;
+    let nextTokenNumber = 101;
+    if (useMemory) {
+      nextTokenNumber = Math.max(100, ...memoryAppointments.map(a => Number(a.tokenNumber) || 0)) + 1;
+    } else {
+      const Appointment = require('../models/Appointment');
+      const last = await Appointment.findOne({}).sort({ tokenNumber: -1 });
+      nextTokenNumber = (last?.tokenNumber || 100) + 1;
+    }
+
     const appointmentData = {
       appointmentId: generateAppointmentId(),
-      tokenNumber: tokenCounter,
+      tokenNumber: nextTokenNumber,
       patientName,
       age: parseInt(age),
       phone,
@@ -60,11 +68,33 @@ router.post('/', async (req, res) => {
     } else {
       const Appointment = require('../models/Appointment');
       const Doctor = require('../models/Doctor');
+
+      const isObjectId = mongoose.Types.ObjectId.isValid(doctorId);
+      let doc = null;
+
+      if (isObjectId) {
+        doc = await Doctor.findById(doctorId);
+      }
+
+      if (!doc && doctorName) {
+        doc = await Doctor.findOne({ name: doctorName });
+      }
+
+      if (!doc && department) {
+        doc = await Doctor.findOne({ department, isAvailable: true }).sort({ name: 1 });
+      }
+
+      if (doc) {
+        appointmentData.doctorId = doc._id.toString();
+        appointmentData.doctorName = doc.name;
+        avgConsultTime = doc.averageConsultationTime || 10;
+      }
+
       patientsAhead = await Appointment.countDocuments({
-        doctorId, date, status: 'waiting'
+        doctorId: appointmentData.doctorId,
+        date,
+        status: 'waiting'
       });
-      const doc = await Doctor.findById(doctorId);
-      if (doc) avgConsultTime = doc.averageConsultationTime || 10;
     }
 
     appointmentData.estimatedWaitTime = patientsAhead * avgConsultTime;
@@ -91,7 +121,7 @@ router.post('/', async (req, res) => {
 // GET /api/appointments - Get all appointments
 router.get('/', async (req, res) => {
   try {
-    const { date, department, status, doctorId } = req.query;
+    const { date, department, status, doctorId, priority } = req.query;
     let appointments;
 
     if (useMemory) {
@@ -100,6 +130,7 @@ router.get('/', async (req, res) => {
       if (department) appointments = appointments.filter(a => a.department === department);
       if (status) appointments = appointments.filter(a => a.status === status);
       if (doctorId) appointments = appointments.filter(a => a.doctorId === doctorId);
+      if (priority) appointments = appointments.filter(a => a.priority === priority);
       appointments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else {
       const Appointment = require('../models/Appointment');
@@ -108,6 +139,7 @@ router.get('/', async (req, res) => {
       if (department) filter.department = department;
       if (status) filter.status = status;
       if (doctorId) filter.doctorId = doctorId;
+      if (priority) filter.priority = priority;
       appointments = await Appointment.find(filter).sort({ createdAt: -1 });
     }
 
@@ -142,6 +174,65 @@ router.patch('/:id/status', async (req, res) => {
   } catch (error) {
     console.error('Error updating appointment:', error);
     res.status(500).json({ error: 'Failed to update appointment' });
+  }
+});
+
+// PATCH /api/appointments/:id/take-first - Mark as critical and move to queue front
+router.patch('/:id/take-first', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const today = new Date().toISOString().split('T')[0];
+
+    if (useMemory) {
+      const apt = memoryAppointments.find(a => a._id === id || a.appointmentId === id);
+      if (!apt) return res.status(404).json({ error: 'Appointment not found' });
+      if (apt.status === 'completed') return res.status(400).json({ error: 'Completed appointment cannot be prioritized' });
+
+      const sameDayWaiting = memoryAppointments
+        .filter(a => a.date === apt.date && a.status === 'waiting' && a._id !== apt._id && a.appointmentId !== apt.appointmentId)
+        .sort((a, b) => Number(a.tokenNumber || 0) - Number(b.tokenNumber || 0));
+
+      const minWaitingToken = sameDayWaiting.length > 0 ? Number(sameDayWaiting[0].tokenNumber || 0) : Number(apt.tokenNumber || 101);
+
+      apt.priority = 'emergency';
+      apt.estimatedWaitTime = 0;
+      if (apt.status === 'waiting') {
+        apt.tokenNumber = Math.max(1, minWaitingToken - 1);
+      }
+
+      return res.json({
+        message: 'Appointment moved to front as critical',
+        appointment: apt
+      });
+    }
+
+    const Appointment = require('../models/Appointment');
+    const apt = await Appointment.findOne({ $or: [{ _id: id }, { appointmentId: id }] });
+    if (!apt) return res.status(404).json({ error: 'Appointment not found' });
+    if (apt.status === 'completed') return res.status(400).json({ error: 'Completed appointment cannot be prioritized' });
+
+    const minWaiting = await Appointment.findOne({
+      date: apt.date || today,
+      status: 'waiting',
+      _id: { $ne: apt._id }
+    }).sort({ tokenNumber: 1 });
+
+    const minWaitingToken = minWaiting ? Number(minWaiting.tokenNumber || 0) : Number(apt.tokenNumber || 101);
+
+    apt.priority = 'emergency';
+    apt.estimatedWaitTime = 0;
+    if (apt.status === 'waiting') {
+      apt.tokenNumber = Math.max(1, minWaitingToken - 1);
+    }
+
+    await apt.save();
+    return res.json({
+      message: 'Appointment moved to front as critical',
+      appointment: apt
+    });
+  } catch (error) {
+    console.error('Error prioritizing appointment:', error);
+    res.status(500).json({ error: 'Failed to prioritize appointment' });
   }
 });
 
@@ -272,4 +363,4 @@ router.get('/queue', async (req, res) => {
 module.exports = router;
 module.exports.setMemoryMode = setMemoryMode;
 module.exports.getMemoryAppointments = () => memoryAppointments;
-module.exports.seedAppointments = (data) => { memoryAppointments = data; tokenCounter = 100 + data.length; };
+module.exports.seedAppointments = (data) => { memoryAppointments = data; };

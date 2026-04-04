@@ -2,6 +2,10 @@
 // If opened via Live Server (port 5500/5501) or file://, point API calls to the actual backend server
 const API_BASE = window.location.port === '3000' ? '' : 'http://localhost:3000';
 
+function sanitizeBase(raw) {
+  return String(raw || '').trim().replace(/\/+$/, '');
+}
+
 // ---- Toast Notifications ----
 function showToast(title, message, type = 'info') {
   const container = document.getElementById('toastContainer');
@@ -79,20 +83,38 @@ window.addEventListener('scroll', () => {
 
 // ---- API Helper ----
 async function apiCall(endpoint, options = {}) {
-  try {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      headers: { 'Content-Type': 'application/json' },
-      ...options
-    });
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${res.status}`);
+  const bases = Array.from(new Set([
+    sanitizeBase(API_BASE),
+    '',
+    'http://localhost:3000'
+  ]));
+
+  let lastError = null;
+
+  for (const base of bases) {
+    try {
+      const res = await fetch(`${base}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const err = new Error(errorData.error || `HTTP ${res.status}`);
+        if (res.status === 404 || res.status === 405) {
+          lastError = err;
+          continue;
+        }
+        throw err;
+      }
+      return await res.json();
+    } catch (err) {
+      lastError = err;
+      if (err && err.name === 'TypeError') continue;
     }
-    return await res.json();
-  } catch (err) {
-    console.error(`API Error (${endpoint}):`, err);
-    throw err;
   }
+
+  console.error(`API Error (${endpoint}):`, lastError);
+  throw lastError || new Error('API request failed');
 }
 
 // ---- Format Helpers ----

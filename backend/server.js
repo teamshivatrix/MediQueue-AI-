@@ -13,18 +13,38 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+// Serve separate patient/admin frontend sites
+const patientFrontendPath = path.join(__dirname, '..', 'frontend-patient');
+const adminFrontendPath = path.join(__dirname, '..', 'frontend-admin');
+app.use('/patient', express.static(patientFrontendPath));
+app.use('/admin', express.static(adminFrontendPath));
+
+// Backward-compatible redirects for old routes
+app.get('/', (_req, res) => res.redirect('/patient/index.html'));
+app.get('/patient', (_req, res) => res.redirect('/patient/index.html'));
+app.get('/admin', (_req, res) => res.redirect('/admin/admin-login.html'));
+app.get('/index.html', (_req, res) => res.redirect('/patient/index.html'));
+app.get('/booking.html', (_req, res) => res.redirect('/patient/booking.html'));
+app.get('/symptom-analyzer.html', (_req, res) => res.redirect('/patient/symptom-analyzer.html'));
+app.get('/chatbot.html', (_req, res) => res.redirect('/patient/chatbot.html'));
+app.get('/queue-display.html', (_req, res) => res.redirect('/patient/queue-display.html'));
+app.get('/admin-login.html', (_req, res) => res.redirect('/admin/admin-login.html'));
+app.get('/admin-dashboard.html', (_req, res) => res.redirect('/admin/admin-dashboard.html'));
+app.get('/doctor-management.html', (_req, res) => res.redirect('/admin/doctor-management.html'));
 
 // Import routes
 const appointmentRoutes = require('./routes/appointments');
 const doctorRoutes = require('./routes/doctors');
 const aiRoutes = require('./routes/ai');
+const patientRoutes = require('./routes/patients');
+const emergencyRoutes = require('./routes/emergency');
 
 // API routes
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/emergency', emergencyRoutes);
 
 // Admin authentication
 const crypto = require('crypto');
@@ -185,6 +205,8 @@ const initializeApp = async () => {
     // Use in-memory mode
     require('./routes/appointments').setMemoryMode(true);
     require('./routes/doctors').setMemoryMode(true);
+    require('./routes/patients').setMemoryMode(true);
+    require('./routes/emergency').setMemoryMode(true);
     seedDemoData();
   } else {
     // Seed MongoDB if empty
@@ -207,10 +229,12 @@ const startServer = async () => {
 
   app.listen(PORT, () => {
     console.log(`\n🏥 MediQueue AI Server running on http://localhost:${PORT}`);
-    console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin-dashboard.html`);
-    console.log(`📅 Book Appointment: http://localhost:${PORT}/booking.html`);
-    console.log(`🤖 AI Chatbot: http://localhost:${PORT}/chatbot.html`);
-    console.log(`📺 Queue Display: http://localhost:${PORT}/queue-display.html\n`);
+    console.log(`👤 Patient Portal: http://localhost:${PORT}/patient/index.html`);
+    console.log(`🛡️  Admin Portal: http://localhost:${PORT}/admin/admin-login.html`);
+    console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin/admin-dashboard.html`);
+    console.log(`📅 Book Appointment: http://localhost:${PORT}/patient/booking.html`);
+    console.log(`🤖 AI Chatbot: http://localhost:${PORT}/patient/chatbot.html`);
+    console.log(`📺 Queue Display: http://localhost:${PORT}/patient/queue-display.html\n`);
   });
 };
 

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+    // Admin auth check - redirect to login if not authenticated
+    (function() {
+      const adminApiBase = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=admin-dashboard.html'; return; }
+      fetch(adminApiBase + '/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+        .then(r => r.json()).then(d => { if (!d.valid) { sessionStorage.removeItem('adminToken'); window.location.href = 'admin-login.html?redirect=admin-dashboard.html'; } })
+        .catch(() => {});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="admin-dashboard.html" class="nav-logo"><i class="fas fa-hospital"></i><span>MediQueue Admin</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="admin-dashboard.html" class="active"><i class="fas fa-chart-bar"></i> <span data-i18n="admin.navDashboard">Dashboard</span></a></li>
+        <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> <span data-i18n="admin.navDoctors">Doctors</span></a></li>
+        <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> <span data-i18n="admin.navCompleted">Completed Records</span></a></li>
+        <li><a href="#emergencyAlertBox"><i class="fas fa-triangle-exclamation" style="color:#dc2626;"></i> <span data-i18n="admin.navEmergencyAlerts">Emergency Alerts</span></a></li>
+        <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> <span data-i18n="admin.navQueue">Queue Board</span></a></li>
+        <li><a href="/patient/index.html"><i class="fas fa-globe"></i> <span data-i18n="admin.navPatientPortal">Patient Portal</span></a></li>
+      </ul>
+      <button class="admin-logout-btn" onclick="adminLogout()" title="Logout"><i class="fas fa-sign-out-alt"></i> <span data-i18n="admin.logout">Logout</span></button>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-tachometer-alt" style="color: var(--primary);"></i> <span data-i18n="admin.dashboardTitle">Admin Dashboard</span></h1>
+    <p data-i18n="admin.dashboardSub">Real-time hospital analytics and patient tracking</p>
+  </div>
+
+  <div class="container">
+    <div id="emergencyAlertBox" style="display:none; margin-bottom:1.1rem; background:linear-gradient(135deg, #7f1d1d, #dc2626); border:2px solid #fecaca; color:white; border-radius:16px; padding:0.9rem 1.1rem; box-shadow:0 14px 30px rgba(220,38,38,0.35);">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">
+        <div>
+          <div style="font-size:0.95rem; font-weight:800;"><i class="fas fa-bell"></i> EMERGENCY APPOINTMENT ALERT</div>
+          <div id="emergencyAlertText" style="font-size:0.84rem; opacity:0.95; margin-top:0.2rem;">A new emergency appointment has been booked.</div>
+        </div>
+        <button class="btn-outline btn-sm" onclick="hideEmergencyAlert()" style="color:white; border-color:rgba(255,255,255,0.5);">Dismiss</button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="dashboard-stats">
+      <div class="dash-stat-card">
+        <div class="dash-stat-header">
+          <div>
+            <div class="dash-stat-label">Total Appointments</div>
+            <div class="dash-stat-value" id="dashTotal">0</div>
+          </div>
+          <div class="dash-stat-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);"><i class="fas fa-calendar-check"></i></div>
+        </div>
+        <div style="font-size:0.75rem; color:#059669; font-weight:600;"><i class="fas fa-arrow-up"></i> Today's count</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-header">
+          <div>
+            <div class="dash-stat-label">Waiting in Queue</div>
+            <div class="dash-stat-value" id="dashWaiting" style="color:var(--warning);">0</div>
+          </div>
+          <div class="dash-stat-icon" style="background:linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-hourglass-half"></i></div>
+        </div>
+        <div style="font-size:0.75rem; color:#f59e0b; font-weight:600;"><i class="fas fa-users"></i> Active queue</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-header">
+          <div>
+            <div class="dash-stat-label">Avg Wait Time</div>
+            <div class="dash-stat-value" id="dashAvgWait" style="color:var(--accent);">0<span style="font-size:0.9rem;"> min</span></div>
+          </div>
+          <div class="dash-stat-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);"><i class="fas fa-clock"></i></div>
+        </div>
+        <div style="font-size:0.75rem; color:#6366f1; font-weight:600;"><i class="fas fa-chart-line"></i> Average today</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-header">
+          <div>
+            <div class="dash-stat-label">Completed</div>
+            <div class="dash-stat-value" id="dashCompleted" style="color:var(--success);">0</div>
+          </div>
+          <div class="dash-stat-icon" style="background:linear-gradient(135deg, #10b981, #047857);"><i class="fas fa-check-circle"></i></div>
+        </div>
+        <div style="font-size:0.75rem; color:#10b981; font-weight:600;"><i class="fas fa-arrow-up"></i> Finished today</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-bar"></i> Patients per Department</h3>
+        <div class="chart-wrapper"><canvas id="deptChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-line"></i> Appointments per Hour</h3>
+        <div class="chart-wrapper"><canvas id="hourChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-pie"></i> Doctor Workload</h3>
+        <div class="chart-wrapper"><canvas id="doctorChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3><i class="fas fa-tasks"></i> Queue Status Overview</h3>
+        <div class="chart-wrapper"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Emergency Appointments -->
+    <div style="margin-bottom:3rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+        <h3 style="font-size:1.15rem; font-weight:700; color:#7f1d1d;">
+          <i class="fas fa-triangle-exclamation" style="color:#dc2626;"></i> Emergency Appointments
+        </h3>
+      </div>
+      <div id="emergencyAppointmentsList" class="appointments-list">
+        <p style="text-align:center; color:#64748b; padding:2rem;">Loading emergency appointments...</p>
+      </div>
+    </div>
+
+    <!-- Normal Appointments -->
+    <div style="margin-bottom:3rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+        <h3 style="font-size:1.15rem; font-weight:700; color:#0f172a;">
+          <i class="fas fa-list" style="color:var(--primary);"></i> Normal Appointments
+        </h3>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <a href="completed-appointments.html" class="btn-outline btn-sm" style="text-decoration:none;"><i class="fas fa-check-double"></i> View Completed</a>
+          <button class="btn-primary btn-sm" onclick="loadDashboard()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+      </div>
+      <div id="normalAppointmentsList" class="appointments-list">
+        <p style="text-align:center; color:#64748b; padding:2rem;">Loading normal appointments...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/admin-dashboard.js"></script>
+  <script>
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) }).catch(() => {});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

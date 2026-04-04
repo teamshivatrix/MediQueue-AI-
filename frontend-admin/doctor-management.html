@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Management - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    // Admin auth check - redirect to login if not authenticated
+    (function() {
+      const adminApiBase = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=doctor-management.html'; return; }
+      fetch(adminApiBase + '/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+        .then(r => r.json()).then(d => { if (!d.valid) { sessionStorage.removeItem('adminToken'); window.location.href = 'admin-login.html?redirect=doctor-management.html'; } })
+        .catch(() => {});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="admin-dashboard.html" class="nav-logo"><i class="fas fa-hospital"></i><span>MediQueue Admin</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="doctor-management.html" class="active"><i class="fas fa-user-md"></i> Doctors</a></li>
+        <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+        <li><a href="/patient/index.html"><i class="fas fa-globe"></i> Patient Portal</a></li>
+      </ul>
+      <button class="admin-logout-btn" onclick="adminLogout()" title="Logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-user-md" style="color: var(--accent);"></i> Doctor Management</h1>
+    <p>Manage doctors, schedules, and department assignments</p>
+  </div>
+
+  <div class="container">
+    <!-- Action Bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <select class="form-control" id="filterDept" style="width:auto; padding:0.55rem 2rem 0.55rem 1rem;" onchange="loadDoctors()">
+          <option value="">All Departments</option>
+          <option value="General Medicine">General Medicine</option>
+          <option value="Cardiology">Cardiology</option>
+          <option value="Orthopedics">Orthopedics</option>
+          <option value="Neurology">Neurology</option>
+          <option value="Pediatrics">Pediatrics</option>
+          <option value="Dermatology">Dermatology</option>
+          <option value="ENT">ENT</option>
+          <option value="Ophthalmology">Ophthalmology</option>
+          <option value="Gastroenterology">Gastroenterology</option>
+          <option value="Psychiatry">Psychiatry</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="openAddModal()">
+        <i class="fas fa-plus"></i> Add Doctor
+      </button>
+    </div>
+
+    <!-- Doctor Table -->
+    <div class="doctor-table-card">
+      <table class="doctor-table">
+        <thead>
+          <tr>
+            <th>Doctor</th>
+            <th>Department</th>
+            <th>Specialization</th>
+            <th>Avg. Time</th>
+            <th>Slots</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="doctorTableBody">
+          <tr><td colspan="7" style="text-align:center; padding:2rem; color:#64748b;">Loading doctors...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Doctor Modal -->
+  <div class="modal-overlay" id="doctorModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle"><i class="fas fa-user-md"></i> Add Doctor</h2>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="doctorForm" onsubmit="return false;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Doctor Name</label>
+            <input type="text" class="form-control" id="docName" placeholder="Dr. Full Name" required>
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select class="form-control" id="docDept" required>
+              <option value="">Select Department</option>
+              <option value="General Medicine">General Medicine</option>
+              <option value="Cardiology">Cardiology</option>
+              <option value="Orthopedics">Orthopedics</option>
+              <option value="Neurology">Neurology</option>
+              <option value="Pediatrics">Pediatrics</option>
+              <option value="Dermatology">Dermatology</option>
+              <option value="ENT">ENT</option>
+              <option value="Ophthalmology">Ophthalmology</option>
+              <option value="Gastroenterology">Gastroenterology</option>
+              <option value="Psychiatry">Psychiatry</option>
+              <option value="Gynecology">Gynecology</option>
+              <option value="Dental">Dental</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Specialization</label>
+            <input type="text" class="form-control" id="docSpec" placeholder="e.g. Interventional Cardiology">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" class="form-control" id="docPhone" placeholder="Phone number">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" id="docEmail" placeholder="doctor@hospital.gov">
+          </div>
+          <div class="form-group">
+            <label>Avg. Consultation Time (min)</label>
+            <input type="number" class="form-control" id="docConsultTime" value="10" min="5" max="60">
+          </div>
+          <div class="form-group">
+            <label>Max Patients/Day</label>
+            <input type="number" class="form-control" id="docMaxPatients" value="30" min="5" max="100">
+          </div>
+          <div class="form-group">
+            <label>Availability</label>
+            <select class="form-control" id="docAvailable">
+              <option value="true">Available</option>
+              <option value="false">Unavailable</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label>Weekly Schedule</label>
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;">
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedMon" checked> Mon
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedTue" checked> Tue
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedWed" checked> Wed
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedThu" checked> Thu
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedFri" checked> Fri
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedSat"> Sat
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; padding:0.4rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+              <input type="checkbox" id="schedSun"> Sun
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:flex-end;">
+          <button type="button" class="btn-outline" onclick="closeModal()">Cancel</button>
+          <button type="button" class="btn-primary" id="saveDocBtn" onclick="saveDoctor()">
+            <i class="fas fa-save"></i> Save Doctor
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/doctor-management.js"></script>
+  <script>
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) }).catch(() => {});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

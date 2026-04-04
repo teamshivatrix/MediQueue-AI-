@@ -1,0 +1,843 @@
+// MediQueue AI - Main JavaScript (shared utilities)
+// API base resolution:
+// 1) ?apiBase=https://your-backend-url (saved to localStorage)
+// 2) localStorage key `mq_api_base`
+// 3) local/dev defaults
+function sanitizeApiBase(raw) {
+  if (!raw) return '';
+  return String(raw).trim().replace(/\/+$/, '');
+}
+
+function resolveApiBase() {
+  const query = new URLSearchParams(window.location.search);
+  const queryBase = sanitizeApiBase(query.get('apiBase'));
+  if (queryBase) {
+    localStorage.setItem('mq_api_base', queryBase);
+    return queryBase;
+  }
+
+  const storedBase = sanitizeApiBase(localStorage.getItem('mq_api_base'));
+  if (storedBase) return storedBase;
+
+  const host = window.location.hostname;
+  const port = window.location.port;
+  const protocol = window.location.protocol;
+  const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+  const isPrivateIpv4 = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host);
+  const isLikelyHosted = host.endsWith('.vercel.app') || host.endsWith('.netlify.app');
+
+  if (protocol === 'file:') return 'http://localhost:3000';
+
+  if (isLocalHost && port === '3000') return '';
+  if (isLocalHost) return 'http://localhost:3000';
+
+  // If opened from local LAN or custom local dev server, route API to local backend.
+  if (!isLikelyHosted && (isPrivateIpv4 || port)) return 'http://localhost:3000';
+
+  // Netlify/production default expects same-origin reverse proxy if configured.
+  return '';
+}
+
+const API_BASE = resolveApiBase();
+const LANGUAGE_STORAGE_KEY = 'mq_lang';
+const EASY_MODE_STORAGE_KEY = 'mq_easy_mode';
+
+const LANGUAGE_OPTIONS = [
+  { code: 'en', label: 'English', native: 'English' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
+  { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'te', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'bn', label: 'Bengali', native: 'বাংলা' },
+  { code: 'mr', label: 'Marathi', native: 'मराठी' },
+  { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
+  { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' }
+];
+
+const TRANSLATIONS = {
+  en: {
+    'lang.choose': 'Choose your language',
+    'lang.subtitle': 'Select your preferred language for better hospital access.',
+    'lang.quick': 'Quick select',
+    'lang.more': 'More languages',
+    'lang.detected': 'Recommended by your browser',
+    'lang.continue': 'Continue',
+    'lang.voice': 'Hear language prompt',
+    'lang.easy': 'Easy mode (simple words + larger text)',
+    'lang.change': 'Language',
+    'home.heroKicker': 'Next-Gen OPD Experience',
+    'home.heroTitle1': 'Smart OPD Flow,',
+    'home.heroTitle2': 'Zero Queue Chaos',
+    'home.heroTitle3': 'Powered by AI Precision',
+    'home.emergency': 'Emergency Appointment',
+    'home.login': 'Login',
+    'home.create': 'Create Account',
+    'home.welcome': 'Welcome to MediQueue AI',
+    'auth.title': 'Patient Access',
+    'auth.loginTab': 'Login',
+    'auth.signupTab': 'Create Account',
+    'auth.loginEmailPhone': 'Email or Phone',
+    'auth.loginPassword': 'Password',
+    'auth.forgot': 'Forgot Password?',
+    'auth.sendOtp': 'Send 4-Digit OTP',
+    'auth.verifyOtp': 'Verify OTP',
+    'auth.resetPassword': 'Reset Password',
+    'auth.back': 'Back to Dashboard',
+    'patientHome.title': 'Patient Home',
+    'patientHome.subtitle': 'Choose what you want to do next',
+    'patientHome.navHome': 'Home',
+    'patientHome.navBook': 'Book',
+    'patientHome.navAnalyzer': 'AI Analyzer',
+    'patientHome.navChatbot': 'Chatbot',
+    'patientHome.navQueue': 'Queue',
+    'patientHome.quick.book.title': 'Book Appointment',
+    'patientHome.quick.book.desc': 'Create appointment and get token instantly',
+    'patientHome.quick.analyzer.title': 'AI Symptom Analyzer',
+    'patientHome.quick.analyzer.desc': 'Check symptoms and get department suggestion',
+    'patientHome.quick.chatbot.title': 'AI Chatbot',
+    'patientHome.quick.chatbot.desc': 'Ask questions about doctors and processes',
+    'patientHome.quick.queue.title': 'Queue Board',
+    'patientHome.quick.queue.desc': 'Track live queue updates in real-time',
+    'patientHome.quick.nextVisit.title': 'My Next Visit',
+    'patientHome.quick.nextVisit.desc': 'Continue your booking and check wait status',
+    'patientHome.quick.support.title': 'Support',
+    'patientHome.quick.support.desc': 'Get instant help from virtual assistant',
+    'auth.continue': 'Continue',
+    'auth.useAnother': 'Use Another Account',
+    'auth.already': 'You are already logged in as',
+    'auth.logout': 'Logout',
+    'emergency.title': 'Emergency Appointment',
+    'emergency.subtitle': 'Quick booking for urgent and critical cases (no login required)',
+    'emergency.nav': 'Emergency',
+    'emergency.book': 'Book Emergency Appointment'
+  },
+  hi: {
+    'lang.choose': 'अपनी भाषा चुनें',
+    'lang.subtitle': 'अस्पताल सेवाओं के लिए अपनी पसंदीदा भाषा चुनें।',
+    'lang.quick': 'त्वरित चयन',
+    'lang.more': 'अन्य भाषाएं',
+    'lang.detected': 'ब्राउज़र से सुझाई गई भाषा',
+    'lang.continue': 'आगे बढ़ें',
+    'lang.voice': 'भाषा निर्देश सुनें',
+    'lang.easy': 'ईज़ी मोड (सरल शब्द + बड़ा टेक्स्ट)',
+    'lang.change': 'भाषा',
+    'home.heroKicker': 'नेक्स्ट-जेन ओपीडी अनुभव',
+    'home.heroTitle1': 'स्मार्ट ओपीडी फ्लो,',
+    'home.heroTitle2': 'जीरो कतार अव्यवस्था',
+    'home.heroTitle3': 'एआई से बेहतर सेवा',
+    'home.emergency': 'आपातकालीन अपॉइंटमेंट',
+    'home.login': 'लॉगिन',
+    'home.create': 'खाता बनाएं',
+    'home.welcome': 'MediQueue AI में आपका स्वागत है',
+    'auth.title': 'रोगी प्रवेश',
+    'auth.loginTab': 'लॉगिन',
+    'auth.signupTab': 'खाता बनाएं',
+    'auth.loginEmailPhone': 'ईमेल या फोन',
+    'auth.loginPassword': 'पासवर्ड',
+    'auth.forgot': 'पासवर्ड भूल गए?',
+    'auth.sendOtp': '4-अंकों का OTP भेजें',
+    'auth.verifyOtp': 'OTP सत्यापित करें',
+    'auth.resetPassword': 'पासवर्ड रीसेट करें',
+    'auth.back': 'डैशबोर्ड पर वापस',
+    'patientHome.title': 'रोगी होम',
+    'patientHome.subtitle': 'अगला कदम चुनें',
+    'patientHome.navHome': 'होम',
+    'patientHome.navBook': 'बुक',
+    'patientHome.navAnalyzer': 'एआई विश्लेषक',
+    'patientHome.navChatbot': 'चैटबॉट',
+    'patientHome.navQueue': 'क्यू',
+    'patientHome.quick.book.title': 'अपॉइंटमेंट बुक करें',
+    'patientHome.quick.book.desc': 'अपॉइंटमेंट बनाएं और तुरंत टोकन पाएं',
+    'patientHome.quick.analyzer.title': 'एआई लक्षण विश्लेषक',
+    'patientHome.quick.analyzer.desc': 'लक्षण जांचें और विभाग की सलाह पाएं',
+    'patientHome.quick.chatbot.title': 'एआई चैटबॉट',
+    'patientHome.quick.chatbot.desc': 'डॉक्टर और प्रक्रिया से जुड़े सवाल पूछें',
+    'patientHome.quick.queue.title': 'क्यू बोर्ड',
+    'patientHome.quick.queue.desc': 'लाइव क्यू अपडेट रियल-टाइम में देखें',
+    'patientHome.quick.nextVisit.title': 'मेरी अगली विज़िट',
+    'patientHome.quick.nextVisit.desc': 'बुकिंग जारी रखें और वेट स्टेटस देखें',
+    'patientHome.quick.support.title': 'सहायता',
+    'patientHome.quick.support.desc': 'वर्चुअल असिस्टेंट से तुरंत मदद पाएं',
+    'auth.continue': 'जारी रखें',
+    'auth.useAnother': 'दूसरा अकाउंट उपयोग करें',
+    'auth.already': 'आप पहले से लॉगिन हैं',
+    'auth.logout': 'लॉगआउट',
+    'emergency.title': 'आपातकालीन अपॉइंटमेंट',
+    'emergency.subtitle': 'तत्काल और गंभीर मामलों के लिए जल्दी बुकिंग',
+    'emergency.nav': 'आपातकाल',
+    'emergency.book': 'आपातकालीन अपॉइंटमेंट बुक करें'
+  },
+  ta: {
+    'lang.choose': 'உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்',
+    'lang.subtitle': 'மருத்துவ சேவைக்கு விருப்ப மொழியைத் தேர்ந்தெடுக்கவும்.',
+    'lang.quick': 'விரைவு தேர்வு',
+    'lang.more': 'மேலும் மொழிகள்',
+    'lang.detected': 'உலாவி பரிந்துரைத்த மொழி',
+    'lang.continue': 'தொடரவும்',
+    'lang.voice': 'மொழி அறிவிப்பு கேள்',
+    'lang.easy': 'எளிய முறை (பெரிய எழுத்து + எளிய சொற்கள்)',
+    'lang.change': 'மொழி',
+    'home.heroKicker': 'அடுத்த தலைமுறை OPD அனுபவம்',
+    'home.heroTitle1': 'ச்மார்ட் OPD ஓட்டம்,',
+    'home.heroTitle2': 'பூஜ்ய வரிசை குழப்பம்',
+    'home.heroTitle3': 'AI துல்லிய சேவை',
+    'home.emergency': 'அவசர நேர முன்பதிவு',
+    'home.login': 'உள்நுழை',
+    'home.create': 'கணக்கு உருவாக்கு',
+    'home.welcome': 'MediQueue AI வரவேற்கிறது',
+    'auth.title': 'நோயாளர் அணுகல்',
+    'auth.loginTab': 'உள்நுழை',
+    'auth.signupTab': 'கணக்கு உருவாக்கு',
+    'auth.loginEmailPhone': 'மின்னஞ்சல் அல்லது தொலைபேசி',
+    'auth.loginPassword': 'கடவுச்சொல்',
+    'auth.forgot': 'கடவுச்சொல் மறந்துவிட்டதா?',
+    'auth.sendOtp': '4 இலக்க OTP அனுப்பு',
+    'auth.verifyOtp': 'OTP சரிபார்',
+    'auth.resetPassword': 'கடவுச்சொல் மாற்று',
+    'auth.back': 'முகப்புக்கு திரும்பு',
+    'patientHome.title': 'நோயாளர் முகப்பு',
+    'patientHome.subtitle': 'அடுத்த செயல்பாட்டை தேர்வு செய்யவும்',
+    'patientHome.navHome': 'முகப்பு',
+    'patientHome.navBook': 'முன்பதிவு',
+    'patientHome.navAnalyzer': 'AI பகுப்பாய்வு',
+    'patientHome.navChatbot': 'சாட்பாட்',
+    'patientHome.navQueue': 'வரிசை',
+    'patientHome.quick.book.title': 'நியமனம் பதிவு',
+    'patientHome.quick.book.desc': 'நியமனம் செய்து உடனே டோக்கன் பெறவும்',
+    'patientHome.quick.analyzer.title': 'AI அறிகுறி பகுப்பாய்வு',
+    'patientHome.quick.analyzer.desc': 'அறிகுறிகளை பார்த்து துறை பரிந்துரை பெறவும்',
+    'patientHome.quick.chatbot.title': 'AI சாட்பாட்',
+    'patientHome.quick.chatbot.desc': 'மருத்துவர் மற்றும் செயல்முறை பற்றி கேளுங்கள்',
+    'patientHome.quick.queue.title': 'வரிசை பலகை',
+    'patientHome.quick.queue.desc': 'நேரடி வரிசை மாற்றங்களை உடனுக்குடன் பாருங்கள்',
+    'patientHome.quick.nextVisit.title': 'என் அடுத்த வருகை',
+    'patientHome.quick.nextVisit.desc': 'பதிவை தொடரவும், காத்திருப்பு நிலையை பார்க்கவும்',
+    'patientHome.quick.support.title': 'உதவி',
+    'patientHome.quick.support.desc': 'மெய்நிகர் உதவியாளரிடம் உடனடி உதவி பெறுங்கள்',
+    'auth.continue': 'தொடரவும்',
+    'auth.useAnother': 'வேறு கணக்கு பயன்படுத்தவும்',
+    'auth.already': 'நீங்கள் ஏற்கனவே உள்நுழைந்துள்ளீர்கள்',
+    'auth.logout': 'வெளியேறு',
+    'emergency.title': 'அவசர முன்பதிவு',
+    'emergency.subtitle': 'அவசர நிலைக்கு உடனடி முன்பதிவு',
+    'emergency.nav': 'அவசரம்',
+    'emergency.book': 'அவசர முன்பதிவை பதிவு செய்'
+  },
+  te: {
+    'lang.choose': 'మీ భాషను ఎంచుకోండి',
+    'lang.subtitle': 'ఆసుపత్రి సేవల కోసం మీకు ఇష్టమైన భాషను ఎంచుకోండి.',
+    'lang.quick': 'త్వరిత ఎంపిక',
+    'lang.more': 'ఇంకా భాషలు',
+    'lang.detected': 'బ్రౌజర్ సూచించిన భాష',
+    'lang.continue': 'కొనసాగించు',
+    'lang.voice': 'భాష సూచన వినండి',
+    'lang.easy': 'ఈజీ మోడ్ (సాధారణ పదాలు + పెద్ద అక్షరాలు)',
+    'lang.change': 'భాష',
+    'home.heroKicker': 'నెక్స్ట్-జెన్ OPD అనుభవం',
+    'home.heroTitle1': 'స్మార్ట్ OPD ఫ్లో,',
+    'home.heroTitle2': 'జీరో క్యూల గందరగోళం',
+    'home.heroTitle3': 'AI తో మెరుగైన సేవ',
+    'home.emergency': 'అత్యవసర అపాయింట్మెంట్',
+    'home.login': 'లాగిన్',
+    'home.create': 'ఖాతా సృష్టించు',
+    'home.welcome': 'MediQueue AI కి స్వాగతం',
+    'auth.title': 'రోగి ప్రవేశం',
+    'auth.loginTab': 'లాగిన్',
+    'auth.signupTab': 'ఖాతా సృష్టించు',
+    'auth.loginEmailPhone': 'ఈమెయిల్ లేదా ఫోన్',
+    'auth.loginPassword': 'పాస్‌వర్డ్',
+    'auth.forgot': 'పాస్‌వర్డ్ మర్చిపోయారా?',
+    'auth.sendOtp': '4 అంకెల OTP పంపు',
+    'auth.verifyOtp': 'OTP నిర్ధారించు',
+    'auth.resetPassword': 'పాస్‌వర్డ్ రీసెట్',
+    'auth.back': 'డాష్‌బోర్డ్‌కు వెనక్కి',
+    'patientHome.title': 'రోగి హోమ్',
+    'patientHome.subtitle': 'తర్వాత ఏమి చేయాలో ఎంచుకోండి',
+    'patientHome.navHome': 'హోమ్',
+    'patientHome.navBook': 'బుక్',
+    'patientHome.navAnalyzer': 'AI విశ్లేషణ',
+    'patientHome.navChatbot': 'చాట్‌బాట్',
+    'patientHome.navQueue': 'క్యూ',
+    'patientHome.quick.book.title': 'అపాయింట్మెంట్ బుక్ చేయండి',
+    'patientHome.quick.book.desc': 'అపాయింట్మెంట్ సృష్టించి వెంటనే టోకెన్ పొందండి',
+    'patientHome.quick.analyzer.title': 'AI లక్షణ విశ్లేషకుడు',
+    'patientHome.quick.analyzer.desc': 'లక్షణాలు చెక్ చేసి విభాగ సూచన పొందండి',
+    'patientHome.quick.chatbot.title': 'AI చాట్‌బాట్',
+    'patientHome.quick.chatbot.desc': 'డాక్టర్లు మరియు ప్రక్రియల గురించి అడగండి',
+    'patientHome.quick.queue.title': 'క్యూ బోర్డ్',
+    'patientHome.quick.queue.desc': 'ప్రత్యక్ష క్యూ అప్‌డేట్స్‌ను రియల్-టైమ్‌లో చూడండి',
+    'patientHome.quick.nextVisit.title': 'నా తదుపరి సందర్శనం',
+    'patientHome.quick.nextVisit.desc': 'మీ బుకింగ్ కొనసాగించి వేచి స్థితి చూడండి',
+    'patientHome.quick.support.title': 'సహాయం',
+    'patientHome.quick.support.desc': 'వర్చువల్ అసిస్టెంట్ నుండి వెంటనే సహాయం పొందండి',
+    'auth.continue': 'కొనసాగించు',
+    'auth.useAnother': 'ఇంకో అకౌంట్ వాడండి',
+    'auth.already': 'మీరు ఇప్పటికే లాగిన్ అయ్యారు',
+    'auth.logout': 'లాగౌట్',
+    'emergency.title': 'అత్యవసర అపాయింట్మెంట్',
+    'emergency.subtitle': 'తక్షణ & అత్యవసర పరిస్థితుల కోసం త్వరిత బుకింగ్',
+    'emergency.nav': 'అత్యవసరం',
+    'emergency.book': 'అత్యవసర అపాయింట్మెంట్ బుక్ చేయండి'
+  }
+};
+
+// Helper to update backend URL at runtime from browser console:
+// setMediQueueApiBase('https://your-backend-domain.com')
+window.setMediQueueApiBase = function setMediQueueApiBase(url) {
+  const clean = sanitizeApiBase(url);
+  if (!clean) {
+    localStorage.removeItem('mq_api_base');
+  } else {
+    localStorage.setItem('mq_api_base', clean);
+  }
+  window.location.reload();
+};
+
+const USER_SESSION_KEY = 'mq_patient_session';
+
+function getCurrentUser() {
+  try {
+    const raw = localStorage.getItem(USER_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function isUserLoggedIn() {
+  const session = getCurrentUser();
+  return !!(session && session.token && session.user);
+}
+
+function setCurrentUser(sessionData) {
+  if (!sessionData || !sessionData.token || !sessionData.user) return;
+  localStorage.setItem(USER_SESSION_KEY, JSON.stringify(sessionData));
+}
+
+function clearCurrentUser() {
+  localStorage.removeItem(USER_SESSION_KEY);
+}
+
+function getAvailableLanguage(code) {
+  return LANGUAGE_OPTIONS.find((l) => l.code === code) || LANGUAGE_OPTIONS[0];
+}
+
+function getCurrentLanguage() {
+  const saved = sanitizeApiBase(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toLowerCase();
+  return getAvailableLanguage(saved).code;
+}
+
+function detectBrowserLanguage() {
+  const langs = Array.isArray(navigator.languages) ? navigator.languages : [navigator.language || 'en'];
+  for (const item of langs) {
+    const normalized = String(item || '').toLowerCase();
+    const short = normalized.split('-')[0];
+    if (LANGUAGE_OPTIONS.some((l) => l.code === short)) return short;
+  }
+  return 'en';
+}
+
+function t(key) {
+  const lang = getCurrentLanguage();
+  const dict = TRANSLATIONS[lang] || {};
+  const en = TRANSLATIONS.en || {};
+  return dict[key] || en[key] || key;
+}
+
+function applyTranslations(root = document) {
+  root.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+
+  root.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.setAttribute('placeholder', t(key));
+  });
+
+  root.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-title');
+    if (key) el.setAttribute('title', t(key));
+  });
+
+  const modalTitle = document.getElementById('languageModalTitle');
+  if (modalTitle) modalTitle.textContent = t('lang.choose');
+  const modalSub = document.getElementById('languageModalSub');
+  if (modalSub) modalSub.textContent = t('lang.subtitle');
+  const continueBtn = document.getElementById('langContinueBtn');
+  if (continueBtn) continueBtn.textContent = t('lang.continue');
+  const voiceBtn = document.getElementById('langVoiceBtn');
+  if (voiceBtn) voiceBtn.textContent = t('lang.voice');
+  const easyText = document.getElementById('easyModeLabelText');
+  if (easyText) easyText.textContent = t('lang.easy');
+  const langBtnLabel = document.getElementById('langFloatingLabel');
+  if (langBtnLabel) langBtnLabel.textContent = t('lang.change');
+}
+
+function applyEasyMode(flag) {
+  const isEasy = !!flag;
+  localStorage.setItem(EASY_MODE_STORAGE_KEY, isEasy ? '1' : '0');
+  document.body.classList.toggle('easy-mode', isEasy);
+}
+
+function injectEasyModeStyles() {
+  if (document.getElementById('mqEasyModeStyle')) return;
+  const style = document.createElement('style');
+  style.id = 'mqEasyModeStyle';
+  style.textContent = `
+    body.easy-mode { font-size: 1.06rem; line-height: 1.65; }
+    body.easy-mode .btn, body.easy-mode .btn-primary, body.easy-mode .btn-secondary, body.easy-mode .btn-outline, body.easy-mode .nav-emergency-btn {
+      font-size: 1rem !important;
+      padding: 0.75rem 1rem !important;
+    }
+    body.easy-mode h1, body.easy-mode h2, body.easy-mode h3 { letter-spacing: 0.01em; }
+    body.easy-mode .form-control { font-size: 1rem !important; min-height: 46px; }
+  `;
+  document.head.appendChild(style);
+}
+
+function getEasyMode() {
+  return localStorage.getItem(EASY_MODE_STORAGE_KEY) === '1';
+}
+
+async function syncLanguagePreference(lang) {
+  const session = getCurrentUser();
+  if (!session || !session.token) return;
+  try {
+    await apiCall('/api/patients/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify({ token: session.token, preferredLanguage: lang, easyMode: getEasyMode() })
+    });
+  } catch (_err) {
+    // Keep local preference even if remote sync fails.
+  }
+}
+
+function speakLanguagePrompt() {
+  if (!window.speechSynthesis) return;
+  const utter = new SpeechSynthesisUtterance(t('lang.choose'));
+  utter.lang = getCurrentLanguage();
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+function buildLanguageModal() {
+  if (document.getElementById('languageModalOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'languageModalOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.75);backdrop-filter:blur(6px);z-index:5000;display:none;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:720px;background:white;border-radius:20px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.35);">
+      <h2 id="languageModalTitle" style="font-size:1.5rem;font-weight:800;margin:0 0 0.4rem;"></h2>
+      <p id="languageModalSub" style="color:#475569;margin:0 0 1rem;"></p>
+      <div style="font-size:0.82rem;font-weight:700;color:#0e7490;margin-bottom:0.5rem;" data-i18n="lang.quick"></div>
+      <div id="langQuickButtons" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1rem;"></div>
+      <div style="font-size:0.82rem;font-weight:700;color:#0e7490;margin-bottom:0.5rem;" data-i18n="lang.more"></div>
+      <select id="langMoreSelect" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:0.5rem;"></select>
+      <div id="langDetected" style="font-size:0.78rem;color:#64748b;margin-bottom:0.8rem;"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:0.9rem;font-size:0.88rem;color:#0f172a;">
+        <input type="checkbox" id="easyModeToggle" />
+        <span id="easyModeLabelText"></span>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button id="langVoiceBtn" class="btn-outline btn-sm" type="button"></button>
+        <button id="langContinueBtn" class="btn-primary" type="button"></button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const quickCodes = ['en', 'hi', 'ta', 'te'];
+  const quickWrap = document.getElementById('langQuickButtons');
+  quickCodes.forEach((code) => {
+    const lang = getAvailableLanguage(code);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-outline btn-sm';
+    btn.style.justifyContent = 'center';
+    btn.dataset.code = code;
+    btn.textContent = `${lang.native} (${lang.label})`;
+    btn.onclick = () => {
+      document.getElementById('langMoreSelect').value = code;
+    };
+    quickWrap.appendChild(btn);
+  });
+
+  const select = document.getElementById('langMoreSelect');
+  LANGUAGE_OPTIONS.forEach((lang) => {
+    const opt = document.createElement('option');
+    opt.value = lang.code;
+    opt.textContent = `${lang.native} - ${lang.label}`;
+    select.appendChild(opt);
+  });
+
+  document.getElementById('langVoiceBtn').onclick = speakLanguagePrompt;
+  document.getElementById('langContinueBtn').onclick = async () => {
+    const lang = select.value;
+    const easy = document.getElementById('easyModeToggle').checked;
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    applyEasyMode(easy);
+    await syncLanguagePreference(lang);
+    setLanguage(lang, true);
+    overlay.style.display = 'none';
+  };
+}
+
+function renderLanguageControl() {
+  const navContainer = document.querySelector('.nav-container');
+  if (!navContainer || document.getElementById('langControlBtn')) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'flex';
+  wrapper.style.alignItems = 'center';
+  wrapper.style.gap = '8px';
+  wrapper.innerHTML = `
+    <button id="langControlBtn" class="btn-outline btn-sm" type="button" style="padding:0.45rem 0.8rem;">
+      <i class="fas fa-language"></i>
+      <span id="langFloatingLabel"></span>
+    </button>
+  `;
+
+  const mobileToggle = navContainer.querySelector('.mobile-toggle');
+  if (mobileToggle) {
+    navContainer.insertBefore(wrapper, mobileToggle);
+  } else {
+    navContainer.appendChild(wrapper);
+  }
+
+  wrapper.querySelector('#langControlBtn').onclick = () => {
+    buildLanguageModal();
+    const overlay = document.getElementById('languageModalOverlay');
+    const select = document.getElementById('langMoreSelect');
+    const easyToggle = document.getElementById('easyModeToggle');
+    const detected = detectBrowserLanguage();
+    select.value = getCurrentLanguage();
+    easyToggle.checked = getEasyMode();
+    const detectedLine = document.getElementById('langDetected');
+    const d = getAvailableLanguage(detected);
+    detectedLine.textContent = `${t('lang.detected')}: ${d.native} (${d.label})`;
+    overlay.style.display = 'flex';
+    applyTranslations(overlay);
+  };
+}
+
+function setLanguage(lang, syncRemote = false) {
+  const finalLang = getAvailableLanguage(lang).code;
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, finalLang);
+  document.documentElement.lang = finalLang;
+  applyTranslations(document);
+  if (syncRemote) {
+    syncLanguagePreference(finalLang);
+  }
+}
+
+function initLanguageExperience() {
+  injectEasyModeStyles();
+  renderLanguageControl();
+  const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const preferred = saved || detectBrowserLanguage();
+  setLanguage(preferred, false);
+  applyEasyMode(getEasyMode());
+
+  if (!saved) {
+    buildLanguageModal();
+    const overlay = document.getElementById('languageModalOverlay');
+    const select = document.getElementById('langMoreSelect');
+    const detected = detectBrowserLanguage();
+    select.value = detected;
+    const detectedLine = document.getElementById('langDetected');
+    const d = getAvailableLanguage(detected);
+    detectedLine.textContent = `${t('lang.detected')}: ${d.native} (${d.label})`;
+    document.getElementById('easyModeToggle').checked = getEasyMode();
+    applyTranslations(overlay);
+    overlay.style.display = 'flex';
+  }
+}
+
+function redirectToAuth(targetPath) {
+  const redirect = encodeURIComponent(targetPath || window.location.pathname.split('/').pop() || 'patient-home.html');
+  window.location.href = `auth.html?redirect=${redirect}`;
+}
+
+function enforceProtectedPatientPages() {
+  const protectedPages = ['patient-home.html', 'booking.html', 'symptom-analyzer.html', 'chatbot.html', 'queue-display.html'];
+  const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+
+  // Admin can open queue board directly from admin portal.
+  if (page === 'queue-display.html' && sessionStorage.getItem('adminToken')) {
+    return;
+  }
+
+  if (protectedPages.includes(page) && !isUserLoggedIn()) {
+    redirectToAuth(page);
+  }
+}
+
+function setupAuthRequiredLinks() {
+  document.querySelectorAll('[data-requires-auth="true"]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      if (isUserLoggedIn()) return;
+      e.preventDefault();
+      const href = el.getAttribute('href') || 'index.html';
+      redirectToAuth(href);
+    });
+  });
+}
+
+function logoutPatientUser() {
+  const session = getCurrentUser();
+  if (session && session.token) {
+    fetch(API_BASE + '/api/patients/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: session.token })
+    }).catch(() => {});
+  }
+  clearCurrentUser();
+  window.location.href = 'index.html';
+}
+
+function renderAuthActions() {
+  const container = document.getElementById('navAuthActions');
+  if (!container) return;
+
+  const session = getCurrentUser();
+  const user = session ? session.user : null;
+  if (user) {
+    container.innerHTML = `
+      <span class="user-chip"><i class="fas fa-user"></i> ${user.name || 'User'}</span>
+      <button class="auth-btn auth-btn-secondary" onclick="logoutPatientUser()"><i class="fas fa-sign-out-alt"></i> ${t('auth.logout')}</button>
+    `;
+  } else {
+    container.innerHTML = `
+      <a href="auth.html" class="auth-btn auth-btn-secondary"><i class="fas fa-sign-in-alt"></i> ${t('auth.loginTab')}</a>
+      <a href="auth.html?mode=signup" class="auth-btn auth-btn-primary"><i class="fas fa-user-plus"></i> ${t('auth.signupTab')}</a>
+    `;
+  }
+}
+
+async function validateCurrentUserSession() {
+  const session = getCurrentUser();
+  if (!session || !session.token) return;
+
+  try {
+    const res = await fetch(API_BASE + '/api/patients/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: session.token })
+    });
+
+    if (!res.ok) {
+      clearCurrentUser();
+      const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      const protectedPages = ['patient-home.html', 'booking.html', 'symptom-analyzer.html', 'chatbot.html', 'queue-display.html'];
+      if (protectedPages.includes(page)) redirectToAuth(page);
+      return;
+    }
+
+    const data = await res.json();
+    if (data && data.valid && data.user) {
+      setCurrentUser({ token: session.token, user: data.user });
+      if (data.user.preferredLanguage) {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, data.user.preferredLanguage);
+        setLanguage(data.user.preferredLanguage, false);
+      }
+      if (typeof data.user.easyMode === 'boolean') {
+        applyEasyMode(data.user.easyMode);
+      }
+      renderAuthActions();
+    }
+  } catch (_err) {
+    // Ignore transient network errors; local session check still applies.
+  }
+}
+
+// ---- Toast Notifications ----
+function showToast(title, message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const icons = {
+    success: 'fas fa-check-circle',
+    error: 'fas fa-exclamation-circle',
+    info: 'fas fa-info-circle',
+    warning: 'fas fa-exclamation-triangle'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <div class="toast-icon"><i class="${icons[type] || icons.info}"></i></div>
+    <div class="toast-content">
+      <h4>${title}</h4>
+      <p>${message}</p>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.style.animation = 'toastSlide 0.3s ease reverse';
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+}
+
+// ---- Browser Notifications ----
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendBrowserNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      body: body,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🏥</text></svg>'
+    });
+  }
+}
+
+// Request on page load
+requestNotificationPermission();
+
+// ---- Scroll Animations ----
+const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, observerOptions);
+
+document.addEventListener('DOMContentLoaded', () => {
+  initLanguageExperience();
+  enforceProtectedPatientPages();
+  setupAuthRequiredLinks();
+  renderAuthActions();
+  validateCurrentUserSession();
+  document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+  applyTranslations(document);
+});
+
+// ---- Navbar Scroll Effect ----
+window.addEventListener('scroll', () => {
+  const navbar = document.getElementById('navbar');
+  if (navbar) {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  }
+});
+
+// ---- API Helper ----
+async function apiCall(endpoint, options = {}) {
+  const bases = Array.from(new Set([
+    sanitizeApiBase(API_BASE),
+    '',
+    'http://localhost:3000'
+  ]));
+
+  let lastError = null;
+
+  for (const base of bases) {
+    try {
+      const res = await fetch(`${base}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const err = new Error(errorData.error || `HTTP ${res.status}`);
+        err.status = res.status;
+
+        // 404/405 often means wrong API origin in local preview; try next base.
+        if (res.status === 404 || res.status === 405) {
+          lastError = err;
+          continue;
+        }
+
+        throw err;
+      }
+
+      return await res.json();
+    } catch (err) {
+      lastError = err;
+      // Network-level failure, keep trying other candidate bases.
+      if (err && err.name === 'TypeError') {
+        continue;
+      }
+    }
+  }
+
+  console.error(`API Error (${endpoint}):`, lastError);
+  throw lastError || new Error('API request failed');
+}
+
+// ---- Format Helpers ----
+function formatTime(slot) {
+  if (!slot) return '--';
+  const [h, m] = slot.split(':');
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '--';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Department colors mapping
+const deptColors = {
+  'Cardiology': '#ef4444',
+  'General Medicine': '#3b82f6',
+  'Orthopedics': '#f97316',
+  'Neurology': '#8b5cf6',
+  'Pediatrics': '#10b981',
+  'Dermatology': '#ec4899',
+  'ENT': '#14b8a6',
+  'Ophthalmology': '#6366f1',
+  'Gastroenterology': '#eab308',
+  'Psychiatry': '#7c3aed',
+  'Gynecology': '#f43f5e',
+  'Dental': '#06b6d4',
+  'Pulmonology': '#0891b2',
+  'Urology': '#0ea5e9',
+  'Endocrinology': '#84cc16'
+};
+
+function getDeptColor(dept) {
+  return deptColors[dept] || '#64748b';
+}
+
+// Department icons
+const deptIcons = {
+  'Cardiology': 'fas fa-heartbeat',
+  'General Medicine': 'fas fa-stethoscope',
+  'Orthopedics': 'fas fa-bone',
+  'Neurology': 'fas fa-brain',
+  'Pediatrics': 'fas fa-baby',
+  'Dermatology': 'fas fa-hand-sparkles',
+  'ENT': 'fas fa-head-side-cough',
+  'Ophthalmology': 'fas fa-eye',
+  'Gastroenterology': 'fas fa-stomach',
+  'Psychiatry': 'fas fa-comments',
+  'Gynecology': 'fas fa-venus',
+  'Dental': 'fas fa-tooth',
+  'Pulmonology': 'fas fa-lungs',
+  'Urology': 'fas fa-kidneys',
+  'Endocrinology': 'fas fa-vial'
+};
+
+function getDeptIcon(dept) {
+  return deptIcons[dept] || 'fas fa-hospital';
+}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completed Appointments - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    (function() {
+      const adminApiBase = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=completed-appointments.html'; return; }
+      fetch(adminApiBase + '/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+        .then(r => r.json()).then(d => { if (!d.valid) { sessionStorage.removeItem('adminToken'); window.location.href = 'admin-login.html?redirect=completed-appointments.html'; } })
+        .catch(() => {});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="admin-dashboard.html" class="nav-logo"><i class="fas fa-hospital"></i><span>MediQueue Admin</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="completed-appointments.html" class="active"><i class="fas fa-check-double"></i> Completed Records</a></li>
+        <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      </ul>
+      <button class="admin-logout-btn" onclick="adminLogout()" title="Logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1><i class="fas fa-check-double" style="color: var(--success);"></i> Completed Records</h1>
+    <p>Separated completed appointments for normal and emergency cases</p>
+  </div>
+
+  <div class="container">
+    <div style="margin-bottom:3rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+        <h3 style="font-size:1.15rem; font-weight:700; color:#0f172a;">
+          <i class="fas fa-list" style="color:var(--primary);"></i> Normal Completed Appointments
+        </h3>
+        <button class="btn-primary btn-sm" onclick="loadCompletedRecords()"><i class="fas fa-sync-alt"></i> Refresh</button>
+      </div>
+      <div id="normalCompletedList" class="appointments-list">
+        <p style="text-align:center; color:#64748b; padding:2rem;">Loading normal completed appointments...</p>
+      </div>
+    </div>
+
+    <div style="margin-bottom:3rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+        <h3 style="font-size:1.15rem; font-weight:700; color:#7f1d1d;">
+          <i class="fas fa-triangle-exclamation" style="color:#dc2626;"></i> Emergency Completed Appointments
+        </h3>
+      </div>
+      <div id="emergencyCompletedList" class="appointments-list">
+        <p style="text-align:center; color:#64748b; padding:2rem;">Loading emergency completed appointments...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/completed-appointments.js"></script>
+  <script>
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) }).catch(() => {});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

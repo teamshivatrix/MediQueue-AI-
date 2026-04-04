@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediQueue AI - Smart Hospital Scheduler</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <i class="fas fa-hospital"></i>
+        <span>MediQueue AI</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+      </ul>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-kicker"><i class="fas fa-wave-square"></i> <span data-i18n="home.heroKicker">Next-Gen OPD Experience</span></div>
+        <h1>
+          <span data-i18n="home.heroTitle1">Smart OPD Flow,</span><br>
+          <span class="gradient-text" data-i18n="home.heroTitle2">Zero Queue Chaos</span><br>
+          <span data-i18n="home.heroTitle3">Powered by AI Precision</span>
+        </h1>
+        <p>
+          Book faster, route smarter, and reduce crowding in minutes. MediQueue AI helps hospitals
+          streamline appointments, prioritize urgent cases, and deliver a smoother patient journey
+          with real-time, predictive queue intelligence.
+        </p>
+        <div class="hero-buttons">
+          <a href="emergency-booking.html" class="nav-emergency-btn" title="Emergency Appointment" data-i18n-title="home.emergency">
+            <i class="fas fa-triangle-exclamation"></i> <span data-i18n="home.emergency">Emergency Appointment</span>
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-auth-3d">
+          <div class="hero-auth-shadow"></div>
+          <div class="hero-auth-panel">
+            <div class="hero-auth-badge"><i class="fas fa-lock"></i> Secure Patient Access</div>
+            <h3 data-i18n="home.welcome">Welcome to MediQueue AI</h3>
+            <p>Book appointments, use AI analyzer, and track queue only after secure login.</p>
+
+            <div class="hero-auth-actions">
+              <a href="auth.html" class="hero-auth-login">
+                <i class="fas fa-sign-in-alt"></i> <span data-i18n="home.login">Login</span>
+              </a>
+              <a href="auth.html?mode=signup" class="hero-auth-signup">
+                <i class="fas fa-user-plus"></i> <span data-i18n="home.create">Create Account</span>
+              </a>
+            </div>
+
+            <div class="hero-auth-mini-stats">
+              <div>
+                <span>Fast Access</span>
+                <strong>&lt; 30 sec</strong>
+              </div>
+              <div>
+                <span>Protected</span>
+                <strong>100% Session</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-user-injured"></i></div>
+        <div class="stat-number" id="statPatients">0</div>
+        <div class="stat-label">Patients Today</div>
+      </div>
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+        <div class="stat-number" id="statDoctors">0</div>
+        <div class="stat-label">Active Doctors</div>
+      </div>
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-number" id="statWait">0</div>
+        <div class="stat-label">Avg Wait (min)</div>
+      </div>
+      <div class="stat-card glass-card animate-on-scroll">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-number" id="statCompleted">0</div>
+        <div class="stat-label">Completed Today</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="section-header animate-on-scroll">
+      <h2>Login First, Access Everything</h2>
+      <p>Once you login, you will land on your personal patient home with all smart options.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card glass-card animate-on-scroll">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h3>Secure Access</h3>
+        <p>Your data and actions are tied to your account for a personalized patient experience.</p>
+      </div>
+      <div class="feature-card glass-card animate-on-scroll">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #059669, #047857);">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <h3>Personal Home</h3>
+        <p>After login, you get a dedicated patient home page with all service options together.</p>
+      </div>
+      <div class="feature-card glass-card animate-on-scroll">
+        <div class="feature-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <h3>Fast Workflow</h3>
+        <p>Login once and continue quickly with booking, AI tools, chatbot, and live queue tracking.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3><i class="fas fa-hospital"></i> MediQueue AI</h3>
+        <p>AI-Powered Government Hospital Check-up Scheduler. Making healthcare accessible, efficient, and smart for everyone.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Get Started</h4>
+        <a href="auth.html">Login</a>
+        <a href="auth.html?mode=signup">Create Account</a>
+        <a href="auth.html">Patient Access</a>
+      </div>
+      <div class="footer-links">
+        <h4>Contact</h4>
+        <a href="#"><i class="fas fa-phone"></i> Emergency: 108</a>
+        <a href="#"><i class="fas fa-envelope"></i> help@mediqueue.ai</a>
+        <a href="#"><i class="fas fa-map-marker-alt"></i> Govt. Hospital, India</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MediQueue AI — Built for Smart India Hackathon</p>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Load stats on home page
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const [statsRes, doctorsRes] = await Promise.all([
+          fetch(API_BASE + '/api/appointments/stats'),
+          fetch(API_BASE + '/api/doctors')
+        ]);
+        const stats = await statsRes.json();
+        const doctors = await doctorsRes.json();
+
+        animateCounter('statPatients', stats.totalToday || 0);
+        animateCounter('statDoctors', doctors.length || 0);
+        animateCounter('statWait', stats.avgWaitTime || 0);
+        animateCounter('statCompleted', stats.completed || 0);
+      } catch (err) {
+        console.log('Could not load stats');
+      }
+    });
+
+    function animateCounter(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let current = 0;
+      const step = Math.ceil(target / 40);
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        el.textContent = current;
+      }, 30);
+    }
+  </script>
+</body>
+</html>

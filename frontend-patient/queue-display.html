@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queue Display - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .queue-header-bar {
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+    }
+    .queue-header-bar .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.3rem;
+    }
+    .queue-header-bar .logo i { color: var(--primary-light); }
+    .queue-header-bar .logo span {
+      background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .queue-header-bar .datetime {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.6);
+    }
+    .queue-header-bar .back-link {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.3s;
+    }
+    .queue-header-bar .back-link:hover { color: white; }
+    .queue-main {
+      padding-top: 80px;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      padding: 2rem;
+    }
+    .now-serving-panel {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      padding: 3rem 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .serving-label {
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 1rem;
+    }
+    .serving-token {
+      font-size: 8rem;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, #22d3ee, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: pulse-glow 2s ease-in-out infinite;
+      margin-bottom: 1rem;
+    }
+    .serving-name {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 0.5rem;
+    }
+    .serving-dept {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 2rem;
+    }
+    .serving-doctor {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.6rem 1.25rem;
+      background: rgba(8,145,178,0.15);
+      border-radius: 12px;
+      color: var(--primary-light);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .next-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+    .next-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.4);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .next-token {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--warning);
+    }
+    .next-name {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.9rem;
+    }
+    .queue-right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .queue-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    .queue-stat-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1.25rem;
+      text-align: center;
+      color: white;
+    }
+    .queue-stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .queue-stat-label {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .waiting-list-panel {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .waiting-list-header {
+      font-size: 1rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .waiting-list-header i {
+      color: var(--primary-light);
+    }
+    @media (max-width: 768px) {
+      .queue-main { grid-template-columns: 1fr; }
+      .serving-token { font-size: 5rem; }
+      .queue-stats-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Queue Header -->
+  <div class="queue-header-bar">
+    <div class="logo"><i class="fas fa-hospital"></i> <span>MediQueue AI</span></div>
+    <div class="datetime" id="currentDateTime">--</div>
+    <a href="/patient/patient-home.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+  </div>
+
+  <!-- Queue Display -->
+  <div class="queue-main">
+    <!-- Left: Now Serving -->
+    <div class="now-serving-panel">
+      <div class="serving-label"><i class="fas fa-broadcast-tower" style="animation:pulse 1.5s infinite;"></i> Now Serving</div>
+      <div class="serving-token" id="servingToken">--</div>
+      <div class="serving-name" id="servingName">--</div>
+      <div class="serving-dept" id="servingDept">--</div>
+      <div class="serving-doctor" id="servingDoctor"><i class="fas fa-user-md"></i> <span>--</span></div>
+      
+      <div class="next-box">
+        <div class="next-label">Next in Queue</div>
+        <div class="next-token" id="nextToken">--</div>
+        <div class="next-name" id="nextName">--</div>
+      </div>
+    </div>
+
+    <!-- Right: Stats + Waiting List -->
+    <div class="queue-right-panel">
+      <div class="queue-stats-row">
+        <div class="queue-stat-box">
+          <div class="queue-stat-value" id="qStatWaiting" style="color:var(--warning);">0</div>
+          <div class="queue-stat-label">Waiting</div>
+        </div>
+        <div class="queue-stat-box">
+          <div class="queue-stat-value" id="qStatCompleted" style="color:var(--success);">0</div>
+          <div class="queue-stat-label">Completed</div>
+        </div>
+        <div class="queue-stat-box">
+          <div class="queue-stat-value" id="qStatTotal" style="color:var(--primary-light);">0</div>
+          <div class="queue-stat-label">Total Today</div>
+        </div>
+      </div>
+
+      <div class="waiting-list-panel">
+        <div class="waiting-list-header"><i class="fas fa-list-ol"></i> Waiting Queue</div>
+        <div id="waitingList">
+          <p style="text-align:center; color:rgba(255,255,255,0.3); padding:2rem;">Loading queue data...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/queue-display.js"></script>
+</body>
+</html>

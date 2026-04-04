@@ -6,7 +6,11 @@
       "use": "@vercel/node"
     },
     {
-      "src": "frontend/**",
+      "src": "frontend-patient/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend-admin/**",
       "use": "@vercel/static"
     }
   ],
@@ -17,11 +21,67 @@
     },
     {
       "src": "/",
-      "dest": "/frontend/index.html"
+      "dest": "/frontend-patient/index.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "src": "/patient/?",
+      "dest": "/frontend-patient/index.html"
+    },
+    {
+      "src": "/admin/?",
+      "dest": "/frontend-admin/admin-login.html"
+    },
+    {
+      "src": "/patient/(.*)",
+      "dest": "/frontend-patient/$1"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/frontend-admin/$1"
+    },
+    {
+      "src": "/index.html",
+      "dest": "/frontend-patient/index.html"
+    },
+    {
+      "src": "/auth.html",
+      "dest": "/frontend-patient/auth.html"
+    },
+    {
+      "src": "/patient-home.html",
+      "dest": "/frontend-patient/patient-home.html"
+    },
+    {
+      "src": "/emergency-booking.html",
+      "dest": "/frontend-patient/emergency-booking.html"
+    },
+    {
+      "src": "/booking.html",
+      "dest": "/frontend-patient/booking.html"
+    },
+    {
+      "src": "/symptom-analyzer.html",
+      "dest": "/frontend-patient/symptom-analyzer.html"
+    },
+    {
+      "src": "/chatbot.html",
+      "dest": "/frontend-patient/chatbot.html"
+    },
+    {
+      "src": "/queue-display.html",
+      "dest": "/frontend-patient/queue-display.html"
+    },
+    {
+      "src": "/admin-login.html",
+      "dest": "/frontend-admin/admin-login.html"
+    },
+    {
+      "src": "/admin-dashboard.html",
+      "dest": "/frontend-admin/admin-dashboard.html"
+    },
+    {
+      "src": "/doctor-management.html",
+      "dest": "/frontend-admin/doctor-management.html"
     }
   ]
 }

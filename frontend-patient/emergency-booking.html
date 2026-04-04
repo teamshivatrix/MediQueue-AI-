@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Appointment - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .emergency-header {
+      background: linear-gradient(135deg, #7f1d1d, #dc2626);
+      color: #fff;
+      border-radius: 20px;
+      padding: 1.25rem 1.4rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 12px 30px rgba(220, 38, 38, 0.3);
+    }
+    .emergency-note {
+      margin-top: 0.6rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo"><i class="fas fa-hospital"></i><span>MediQueue AI</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active"><i class="fas fa-triangle-exclamation"></i> <span data-i18n="emergency.nav">Emergency</span></a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1><i class="fas fa-triangle-exclamation" style="color:#dc2626;"></i> <span data-i18n="emergency.title">Emergency Appointment</span></h1>
+    <p data-i18n="emergency.subtitle">Quick booking for urgent and critical cases (no login required)</p>
+  </div>
+
+  <div class="booking-container">
+    <div class="booking-form-card" id="emergencyFormCard">
+      <div class="emergency-header">
+        <h2 style="font-size:1.15rem; font-weight:800;"><i class="fas fa-ambulance"></i> Priority Emergency Intake</h2>
+        <p style="opacity:0.9; margin-top:0.4rem; font-size:0.88rem;">Your emergency request will be highlighted instantly on admin dashboard.</p>
+      </div>
+
+      <form id="emergencyForm" onsubmit="return false;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Patient Full Name</label>
+            <input type="text" class="form-control" id="emPatientName" placeholder="Enter full name" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-birthday-cake"></i> Age</label>
+            <input type="number" class="form-control" id="emAge" min="0" max="120" placeholder="Enter age" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-phone"></i> Phone Number</label>
+            <input type="tel" class="form-control" id="emPhone" placeholder="10-digit number" required>
+          </div>
+          <div class="form-group full-width">
+            <label><i class="fas fa-notes-medical"></i> Emergency Symptoms / Condition</label>
+            <textarea id="emSymptoms" class="form-control" rows="4" placeholder="Describe emergency condition in detail..." required></textarea>
+            <div class="emergency-note"><i class="fas fa-circle-info"></i> Doctor will be auto-assigned randomly from 4 always-available emergency doctors.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.8rem; margin-top:1.2rem; flex-wrap:wrap;">
+          <button id="emSubmitBtn" class="btn-danger" style="padding:0.8rem 1.3rem; font-size:0.95rem;" onclick="submitEmergencyBooking()">
+            <i class="fas fa-bell"></i> <span data-i18n="emergency.book">Book Emergency Appointment</span>
+          </button>
+          <a href="index.html" class="btn-outline" style="text-decoration:none;"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="booking-form-card booking-success" id="emergencySuccessCard">
+      <div class="success-icon" style="background:linear-gradient(135deg, #dc2626, #b91c1c);"><i class="fas fa-triangle-exclamation"></i></div>
+      <h2 style="font-size:1.6rem; font-weight:800; color:#0f172a; margin-bottom:0.5rem;">Emergency Booked</h2>
+      <p style="color:#64748b; margin-bottom:1rem;">Admin has been notified with red emergency alert.</p>
+      <div class="success-details" id="emergencySuccessDetails"></div>
+      <div style="margin-top:1.1rem; display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap;">
+        <a href="index.html" class="btn-outline"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="queue-display.html" class="btn-primary"><i class="fas fa-tv"></i> Queue Board</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/emergency-booking.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Home - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="patient-home.html" class="nav-logo">
+        <i class="fas fa-hospital"></i>
+        <span>MediQueue AI</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="patient-home.html" class="active"><i class="fas fa-home"></i> <span data-i18n="patientHome.navHome">Home</span></a></li>
+        <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span data-i18n="patientHome.navBook">Book</span></a></li>
+        <li><a href="symptom-analyzer.html" data-requires-auth="true"><i class="fas fa-brain"></i> <span data-i18n="patientHome.navAnalyzer">AI Analyzer</span></a></li>
+        <li><a href="chatbot.html" data-requires-auth="true"><i class="fas fa-robot"></i> <span data-i18n="patientHome.navChatbot">Chatbot</span></a></li>
+        <li><a href="queue-display.html" data-requires-auth="true"><i class="fas fa-tv"></i> <span data-i18n="patientHome.navQueue">Queue</span></a></li>
+      </ul>
+      <div class="nav-auth" id="navAuthActions"></div>
+      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1><i class="fas fa-user-check" style="color: var(--primary);"></i> <span id="patientHomeName" data-i18n="patientHome.title">Patient Home</span></h1>
+    <p data-i18n="patientHome.subtitle">Choose what you want to do next</p>
+  </div>
+
+  <section style="max-width:1280px; margin:0 auto; padding:0 1.5rem 4rem; position:relative; z-index:1;">
+    <div class="quick-actions">
+      <a href="booking.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);"><i class="fas fa-calendar-plus"></i></div>
+        <h3 data-i18n="patientHome.quick.book.title">Book Appointment</h3>
+        <p data-i18n="patientHome.quick.book.desc">Create appointment and get token instantly</p>
+      </a>
+      <a href="symptom-analyzer.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #059669, #047857);"><i class="fas fa-brain"></i></div>
+        <h3 data-i18n="patientHome.quick.analyzer.title">AI Symptom Analyzer</h3>
+        <p data-i18n="patientHome.quick.analyzer.desc">Check symptoms and get department suggestion</p>
+      </a>
+      <a href="chatbot.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);"><i class="fas fa-robot"></i></div>
+        <h3 data-i18n="patientHome.quick.chatbot.title">AI Chatbot</h3>
+        <p data-i18n="patientHome.quick.chatbot.desc">Ask questions about doctors and processes</p>
+      </a>
+      <a href="queue-display.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #8b5cf6, #7c3aed);"><i class="fas fa-tv"></i></div>
+        <h3 data-i18n="patientHome.quick.queue.title">Queue Board</h3>
+        <p data-i18n="patientHome.quick.queue.desc">Track live queue updates in real-time</p>
+      </a>
+      <a href="booking.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-clock"></i></div>
+        <h3 data-i18n="patientHome.quick.nextVisit.title">My Next Visit</h3>
+        <p data-i18n="patientHome.quick.nextVisit.desc">Continue your booking and check wait status</p>
+      </a>
+      <a href="chatbot.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
+        <div class="qa-icon" style="background:linear-gradient(135deg, #ef4444, #dc2626);"><i class="fas fa-headset"></i></div>
+        <h3 data-i18n="patientHome.quick.support.title">Support</h3>
+        <p data-i18n="patientHome.quick.support.desc">Get instant help from virtual assistant</p>
+      </a>
+    </div>
+  </section>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const titleEl = document.getElementById('patientHomeName');
+      const session = getCurrentUser();
+      const fullName = session && session.user && session.user.name ? session.user.name : '';
+
+      if (titleEl && fullName) {
+        titleEl.textContent = fullName;
+      }
+    });
+  </script>
+</body>
+</html>
