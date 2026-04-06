@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Appointments - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    (function() {
+      const adminApiBase = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=patients.html'; return; }
+      fetch(adminApiBase + '/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+        .then(r => r.json()).then(d => { if (!d.valid) { sessionStorage.removeItem('adminToken'); window.location.href = 'admin-login.html?redirect=patients.html'; } })
+        .catch(() => {});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <a href="admin-dashboard.html" class="sidebar-logo">
+      <i class="fas fa-hospital"></i>
+      <span>MediQueue<br>Admin</span>
+    </a>
+    <ul class="sidebar-nav">
+      <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+      <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+      <li><a href="patients.html" class="active"><i class="fas fa-users"></i> Patient Appointments</a></li>
+      <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    </ul>
+    <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <!-- Language button -->
+  <div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <div class="page-header">
+      <h1><i class="fas fa-users" style="color: var(--primary);"></i> Patient Appointments</h1>
+      <p>Today's Emergency and Normal Appointments</p>
+    </div>
+
+    <div class="container">
+
+      <!-- Emergency Alert Banner -->
+      <div id="emergencyAlertBox" style="display:none; margin-bottom:1.1rem; background:linear-gradient(135deg, #7f1d1d, #dc2626); border:2px solid #fecaca; color:white; border-radius:16px; padding:0.9rem 1.1rem; box-shadow:0 14px 30px rgba(220,38,38,0.35);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem;">
+          <div>
+            <div style="font-size:0.95rem; font-weight:800;"><i class="fas fa-bell"></i> EMERGENCY APPOINTMENT ALERT</div>
+            <div id="emergencyAlertText" style="font-size:0.84rem; opacity:0.95; margin-top:0.2rem;">A new emergency appointment has been booked.</div>
+          </div>
+          <button class="btn-outline btn-sm" onclick="hideEmergencyAlert()" style="color:white; border-color:rgba(255,255,255,0.5);">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Emergency Appointments -->
+      <div style="margin-bottom:3rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+          <h3 style="font-size:1.15rem; font-weight:700; color:#7f1d1d;">
+            <i class="fas fa-triangle-exclamation" style="color:#dc2626;"></i> Emergency Appointments
+          </h3>
+          <button class="btn-primary btn-sm" onclick="loadPatients()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div id="emergencyAppointmentsList" class="appointments-list">
+          <p style="text-align:center; color:#64748b; padding:2rem;">Loading emergency appointments...</p>
+        </div>
+      </div>
+
+      <!-- Normal Appointments -->
+      <div style="margin-bottom:3rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+          <h3 style="font-size:1.15rem; font-weight:700; color:#0f172a;">
+            <i class="fas fa-list" style="color:var(--primary);"></i> Normal Appointments
+          </h3>
+          <a href="completed-appointments.html" class="btn-outline btn-sm" style="text-decoration:none;"><i class="fas fa-check-double"></i> View Completed</a>
+        </div>
+        <div id="normalAppointmentsList" class="appointments-list">
+          <p style="text-align:center; color:#64748b; padding:2rem;">Loading normal appointments...</p>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- end main-content -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/patients.js"></script>
+  <script>
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) }).catch(() => {});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

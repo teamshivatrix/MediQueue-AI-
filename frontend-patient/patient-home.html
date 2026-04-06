@@ -6,83 +6,293 @@
   <title>Patient Home - MediQueue AI</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Patient Sidebar */
+    .patient-sidebar {
+      position: fixed; top: 0; left: 0;
+      width: 220px; height: 100vh; z-index: 1000;
+      background: rgba(255,255,255,0.93);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(8,145,178,0.12);
+      box-shadow: 4px 0 24px rgba(8,145,178,0.07);
+      display: flex; flex-direction: column;
+      padding: 1.5rem 0 1rem;
+    }
+    .ps-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; font-weight: 800; font-size: 1.15rem;
+      color: var(--primary-dark);
+      padding: 0 1.2rem 1.4rem;
+      border-bottom: 1px solid rgba(8,145,178,0.1);
+      margin-bottom: 1rem;
+    }
+    .ps-logo i { font-size: 1.6rem; color: var(--primary); flex-shrink: 0; }
+    .ps-logo span {
+      background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1.2;
+    }
+    /* User chip in sidebar */
+    .ps-user {
+      margin: 0 0.75rem 0.75rem;
+      background: linear-gradient(135deg, rgba(8,145,178,0.08), rgba(5,150,105,0.06));
+      border: 1px solid rgba(8,145,178,0.12);
+      border-radius: 12px; padding: 0.65rem 0.9rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ps-user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #0891b2, #059669);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+    }
+    .ps-user-name { font-size: 0.82rem; font-weight: 700; color: #0f172a; }
+    .ps-user-role { font-size: 0.7rem; color: #64748b; }
+
+    .ps-nav { list-style: none; flex: 1; padding: 0 0.75rem; display: flex; flex-direction: column; gap: 0.15rem; }
+    .ps-nav a {
+      text-decoration: none; color: #475569; font-weight: 500; font-size: 0.9rem;
+      padding: 0.65rem 1rem; border-radius: 10px;
+      transition: all 0.25s; display: flex; align-items: center; gap: 10px;
+    }
+    .ps-nav a:hover { color: var(--primary-dark); background: rgba(8,145,178,0.08); }
+    .ps-nav a.active { color: var(--primary-dark); background: rgba(8,145,178,0.13); font-weight: 600; }
+    .ps-nav a i { font-size: 0.95rem; width: 18px; text-align: center; }
+    .ps-nav .ps-emergency a {
+      color: #dc2626; background: rgba(220,38,38,0.06);
+    }
+    .ps-nav .ps-emergency a:hover { background: rgba(220,38,38,0.12); }
+
+    .ps-logout {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white; border: none; padding: 10px 16px;
+      border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      margin: 0.75rem; width: calc(100% - 1.5rem); justify-content: center;
+      transition: all 0.3s;
+    }
+    .ps-logout:hover { background: linear-gradient(135deg,#dc2626,#b91c1c); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+
+    /* Main content */
+    .ps-main { margin-left: 220px; min-height: 100vh; }
+
+    /* Welcome hero - compact */
+    .ph-hero {
+      padding: 2.5rem 2rem 2rem;
+      background: linear-gradient(135deg, #ecfeff 0%, #f0fdf4 100%);
+      position: relative; overflow: hidden;
+    }
+    .ph-hero-inner { position: relative; z-index: 2; }
+    .ph-welcome-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(5,150,105,0.1); color: #059669;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 0.28rem 0.8rem; border-radius: 999px;
+      border: 1px solid rgba(5,150,105,0.2); margin-bottom: 0.6rem;
+    }
+    .ph-hero h1 { font-size: 2.2rem; font-weight: 900; color: #0f172a; margin-bottom: 0.3rem; }
+    .ph-hero p { font-size: 0.95rem; color: #64748b; }
+    .ph-hero-decor { position: absolute; inset: 0; pointer-events: none; }
+    .ph-decor-circle { position: absolute; border-radius: 50%; }
+    .ph-decor-circle.c1 { width: 300px; height: 300px; top: -120px; right: -60px; background: radial-gradient(circle, rgba(8,145,178,0.1), transparent); }
+    .ph-decor-circle.c2 { width: 200px; height: 200px; bottom: -80px; left: 30%; background: radial-gradient(circle, rgba(5,150,105,0.08), transparent); }
+
+    /* Cards grid */
+    .ph-section { padding: 2rem; }
+    .ph-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    .ph-card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1.3rem 1.1rem; border-radius: 16px;
+      text-decoration: none; color: white;
+      position: relative; overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+    .ph-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 14px 36px rgba(0,0,0,0.16); }
+    .ph-card-primary { background: linear-gradient(135deg,#0891b2,#0e7490); }
+    .ph-card-green   { background: linear-gradient(135deg,#059669,#047857); }
+    .ph-card-purple  { background: linear-gradient(135deg,#6366f1,#4f46e5); }
+    .ph-card-indigo  { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+    .ph-card-red     { background: linear-gradient(135deg,#dc2626,#b91c1c); }
+    .ph-card-amber   { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .ph-card::before {
+      content: ''; position: absolute; top: 0; left: -60%;
+      width: 40%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.15), transparent);
+      transform: skewX(-20deg); transition: left 0.5s ease;
+    }
+    .ph-card:hover::before { left: 120%; }
+    .ph-card-icon {
+      width: 44px; height: 44px; flex-shrink: 0;
+      background: rgba(255,255,255,0.2); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+    }
+    .ph-card-body { flex: 1; }
+    .ph-card-body h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+    .ph-card-body p { font-size: 0.75rem; opacity: 0.85; }
+    .ph-card-arrow { opacity: 0.7; font-size: 0.85rem; }
+    .ph-card-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(255,255,255,0.22); font-size: 0.62rem; font-weight: 800;
+      padding: 2px 6px; border-radius: 5px;
+    }
+    .ph-info-strip {
+      display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+      background: white; border-radius: 12px; padding: 0.9rem 1.2rem;
+      border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    .ph-info-item { display: flex; align-items: center; gap: 7px; font-size: 0.82rem; font-weight: 500; color: #475569; }
+
+    @media (max-width: 900px) {
+      .patient-sidebar { width: 64px; }
+      .ps-logo span, .ps-nav a span, .ps-user-name, .ps-user-role, .ps-logout span { display: none; }
+      .ps-user { justify-content: center; padding: 0.5rem; }
+      .ps-nav a { justify-content: center; padding: 0.65rem; }
+      .ps-logout { justify-content: center; padding: 10px; }
+      .ps-main { margin-left: 64px; }
+      .ph-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .ph-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
   <div class="bg-pattern"></div>
 
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
-      <a href="patient-home.html" class="nav-logo">
-        <i class="fas fa-hospital"></i>
-        <span>MediQueue AI</span>
-      </a>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="patient-home.html" class="active"><i class="fas fa-home"></i> <span data-i18n="patientHome.navHome">Home</span></a></li>
-        <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span data-i18n="patientHome.navBook">Book</span></a></li>
-        <li><a href="symptom-analyzer.html" data-requires-auth="true"><i class="fas fa-brain"></i> <span data-i18n="patientHome.navAnalyzer">AI Analyzer</span></a></li>
-        <li><a href="chatbot.html" data-requires-auth="true"><i class="fas fa-robot"></i> <span data-i18n="patientHome.navChatbot">Chatbot</span></a></li>
-        <li><a href="queue-display.html" data-requires-auth="true"><i class="fas fa-tv"></i> <span data-i18n="patientHome.navQueue">Queue</span></a></li>
-      </ul>
-      <div class="nav-auth" id="navAuthActions"></div>
-      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')">
-        <i class="fas fa-bars"></i>
-      </button>
-    </div>
-  </nav>
+  <!-- Patient Sidebar -->
+  <aside class="patient-sidebar">
+    <a href="patient-home.html" class="ps-logo">
+      <i class="fas fa-hospital-alt"></i>
+      <span>MediQueue<br>AI</span>
+    </a>
 
-  <div class="page-header">
-    <h1><i class="fas fa-user-check" style="color: var(--primary);"></i> <span id="patientHomeName" data-i18n="patientHome.title">Patient Home</span></h1>
-    <p data-i18n="patientHome.subtitle">Choose what you want to do next</p>
-  </div>
-
-  <section style="max-width:1280px; margin:0 auto; padding:0 1.5rem 4rem; position:relative; z-index:1;">
-    <div class="quick-actions">
-      <a href="booking.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
-        <div class="qa-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);"><i class="fas fa-calendar-plus"></i></div>
-        <h3 data-i18n="patientHome.quick.book.title">Book Appointment</h3>
-        <p data-i18n="patientHome.quick.book.desc">Create appointment and get token instantly</p>
-      </a>
-      <a href="symptom-analyzer.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
-        <div class="qa-icon" style="background:linear-gradient(135deg, #059669, #047857);"><i class="fas fa-brain"></i></div>
-        <h3 data-i18n="patientHome.quick.analyzer.title">AI Symptom Analyzer</h3>
-        <p data-i18n="patientHome.quick.analyzer.desc">Check symptoms and get department suggestion</p>
-      </a>
-      <a href="chatbot.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
-        <div class="qa-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);"><i class="fas fa-robot"></i></div>
-        <h3 data-i18n="patientHome.quick.chatbot.title">AI Chatbot</h3>
-        <p data-i18n="patientHome.quick.chatbot.desc">Ask questions about doctors and processes</p>
-      </a>
-      <a href="queue-display.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
-        <div class="qa-icon" style="background:linear-gradient(135deg, #8b5cf6, #7c3aed);"><i class="fas fa-tv"></i></div>
-        <h3 data-i18n="patientHome.quick.queue.title">Queue Board</h3>
-        <p data-i18n="patientHome.quick.queue.desc">Track live queue updates in real-time</p>
-      </a>
-      <a href="booking.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
-        <div class="qa-icon" style="background:linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-clock"></i></div>
-        <h3 data-i18n="patientHome.quick.nextVisit.title">My Next Visit</h3>
-        <p data-i18n="patientHome.quick.nextVisit.desc">Continue your booking and check wait status</p>
-      </a>
-      <a href="chatbot.html" data-requires-auth="true" class="quick-action-card glass-card animate-on-scroll" style="text-decoration:none; color:inherit;">
-        <div class="qa-icon" style="background:linear-gradient(135deg, #ef4444, #dc2626);"><i class="fas fa-headset"></i></div>
-        <h3 data-i18n="patientHome.quick.support.title">Support</h3>
-        <p data-i18n="patientHome.quick.support.desc">Get instant help from virtual assistant</p>
-      </a>
+    <!-- User chip -->
+    <div class="ps-user">
+      <div class="ps-user-avatar" id="userAvatar">P</div>
+      <div>
+        <div class="ps-user-name" id="sidebarUserName">Patient</div>
+        <div class="ps-user-role">Patient</div>
+      </div>
     </div>
-  </section>
+
+    <ul class="ps-nav">
+      <li><a href="patient-home.html" class="active"><i class="fas fa-home"></i> <span>Home</span></a></li>
+      <li><a href="profile.html"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
+      <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
+      <li><a href="symptom-analyzer.html" data-requires-auth="true"><i class="fas fa-brain"></i> <span>AI Analyzer</span></a></li>
+      <li><a href="chatbot.html" data-requires-auth="true"><i class="fas fa-robot"></i> <span>AI Chatbot</span></a></li>
+      <li><a href="queue-display.html" data-requires-auth="true"><i class="fas fa-tv"></i> <span>Queue Board</span></a></li>
+      <li class="ps-emergency"><a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i> <span>Emergency</span></a></li>
+    </ul>
+
+    <button class="ps-logout" onclick="patientLogout()">
+      <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+    </button>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="ps-main">
+
+    <!-- Welcome Hero -->
+    <div class="ph-hero">
+      <div class="ph-hero-decor">
+        <div class="ph-decor-circle c1"></div>
+        <div class="ph-decor-circle c2"></div>
+      </div>
+      <div class="ph-hero-inner">
+        <div class="ph-welcome-badge"><i class="fas fa-circle-check"></i> Logged In</div>
+        <h1>Hello, <span id="patientHomeName" class="gradient-text">Patient</span> 👋</h1>
+        <p>What would you like to do today?</p>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="ph-section">
+      <div class="ph-grid">
+
+        <a href="booking.html" data-requires-auth="true" class="ph-card ph-card-primary">
+          <div class="ph-card-icon"><i class="fas fa-calendar-plus"></i></div>
+          <div class="ph-card-body"><h3>Book Appointment</h3><p>Choose doctor, get token instantly</p></div>
+          <div class="ph-card-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="ph-card-badge">Quick</div>
+        </a>
+
+        <a href="symptom-analyzer.html" data-requires-auth="true" class="ph-card ph-card-green">
+          <div class="ph-card-icon"><i class="fas fa-brain"></i></div>
+          <div class="ph-card-body"><h3>AI Symptom Analyzer</h3><p>Get department suggestion by AI</p></div>
+          <div class="ph-card-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="ph-card-badge" style="background:rgba(255,255,255,0.25);">AI</div>
+        </a>
+
+        <a href="chatbot.html" data-requires-auth="true" class="ph-card ph-card-purple">
+          <div class="ph-card-icon"><i class="fas fa-robot"></i></div>
+          <div class="ph-card-body"><h3>AI Chatbot</h3><p>Ask anything, get instant answers</p></div>
+          <div class="ph-card-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="ph-card-badge" style="background:rgba(255,255,255,0.25);">24/7</div>
+        </a>
+
+        <a href="queue-display.html" data-requires-auth="true" class="ph-card ph-card-indigo">
+          <div class="ph-card-icon"><i class="fas fa-tv"></i></div>
+          <div class="ph-card-body"><h3>Live Queue Board</h3><p>Track your token in real-time</p></div>
+          <div class="ph-card-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="ph-card-badge" style="background:rgba(255,255,255,0.25);">Live</div>
+        </a>
+
+        <a href="emergency-booking.html" class="ph-card ph-card-red">
+          <div class="ph-card-icon"><i class="fas fa-triangle-exclamation"></i></div>
+          <div class="ph-card-body"><h3>Emergency Booking</h3><p>Priority appointment for urgent cases</p></div>
+          <div class="ph-card-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="ph-card-badge" style="background:rgba(255,255,255,0.25);">Priority</div>
+        </a>
+
+        <a href="booking.html" data-requires-auth="true" class="ph-card ph-card-amber">
+          <div class="ph-card-icon"><i class="fas fa-clock-rotate-left"></i></div>
+          <div class="ph-card-body"><h3>My Appointments</h3><p>View and manage your bookings</p></div>
+          <div class="ph-card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+
+      </div>
+
+      <div class="ph-info-strip">
+        <div class="ph-info-item"><i class="fas fa-shield-halved" style="color:#0891b2;"></i><span>Your data is secure & private</span></div>
+        <div class="ph-info-item"><i class="fas fa-clock" style="color:#059669;"></i><span>Real-time queue updates</span></div>
+        <div class="ph-info-item"><i class="fas fa-phone" style="color:#dc2626;"></i><span>Emergency: 108</span></div>
+      </div>
+    </div>
+
+  </div><!-- end ps-main -->
 
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="js/main.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const titleEl = document.getElementById('patientHomeName');
       const session = getCurrentUser();
-      const fullName = session && session.user && session.user.name ? session.user.name : '';
-
-      if (titleEl && fullName) {
-        titleEl.textContent = fullName;
-      }
+      if (!session) { window.location.href = 'auth.html'; return; }
+      const name = session.user && session.user.name ? session.user.name : 'Patient';
+      const firstName = name.split(' ')[0];
+      document.getElementById('patientHomeName').textContent = firstName;
+      document.getElementById('sidebarUserName').textContent = firstName;
+      document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
     });
+
+    function patientLogout() {
+      const session = getCurrentUser();
+      if (session && session.token) {
+        fetch(API_BASE + '/api/patients/logout', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: session.token })
+        }).catch(() => {});
+      }
+      clearCurrentUser();
+      window.location.href = 'index.html';
+    }
   </script>
 </body>
 </html>

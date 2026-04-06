@@ -177,28 +177,130 @@ body {
   padding: 0.5rem;
 }
 
+/* ---- Sidebar Layout ---- */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.92);
+  border-right: 1px solid rgba(8, 145, 178, 0.12);
+  box-shadow: 4px 0 24px rgba(8, 145, 178, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0 1rem 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--primary-dark);
+  padding: 0 1.2rem 1.4rem 1.2rem;
+  border-bottom: 1px solid rgba(8, 145, 178, 0.1);
+  margin-bottom: 1rem;
+}
+
+.sidebar-logo i {
+  font-size: 1.6rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.sidebar-logo span {
+  background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.sidebar-nav {
+  list-style: none;
+  flex: 1;
+  padding: 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sidebar-nav a {
+  text-decoration: none;
+  color: #475569;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-nav a:hover {
+  color: var(--primary-dark);
+  background: rgba(8, 145, 178, 0.08);
+}
+
+.sidebar-nav a.active {
+  color: var(--primary-dark);
+  background: rgba(8, 145, 178, 0.13);
+  font-weight: 600;
+}
+
+.sidebar-nav a i {
+  font-size: 0.95rem;
+  width: 18px;
+  text-align: center;
+}
+
 /* Admin Logout Button */
 .admin-logout-btn {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   transition: all 0.3s;
-  margin-left: 8px;
+  margin: 0.75rem;
+  width: calc(100% - 1.5rem);
+  justify-content: center;
 }
 
 .admin-logout-btn:hover {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
+
+/* Main content offset for sidebar */
+.main-content {
+  margin-left: 220px;
+  min-width: 0;
+}
+
+/* Language button top-right */
+.lang-btn-wrapper {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 1100;
+}
+
+/* Hide old navbar */
+.navbar { display: none; }
 
 /* ---- Glass Card ---- */
 .glass-card {
@@ -683,7 +785,7 @@ textarea.form-control {
 
 /* ---- Page Header ---- */
 .page-header {
-  padding-top: 100px;
+  padding-top: 2rem;
   padding-bottom: 2rem;
   text-align: center;
   position: relative;

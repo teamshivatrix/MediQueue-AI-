@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambulance - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ---- Ambulance Alert Overlay ---- */
+    #ambAlertOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      pointer-events: none;
+      animation: ambFlash 0.6s ease-in-out infinite;
+    }
+    @keyframes ambFlash {
+      0%, 100% { background: rgba(220,38,38,0); }
+      50%       { background: rgba(220,38,38,0.18); }
+    }
+    #ambAlertBanner {
+      display: none;
+      position: fixed;
+      top: 0; left: 220px; right: 0;
+      z-index: 9100;
+      background: linear-gradient(135deg, #7f1d1d, #dc2626);
+      color: white;
+      padding: 0.85rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(220,38,38,0.5);
+      animation: bannerSlide 0.4s ease;
+    }
+    @keyframes bannerSlide {
+      from { transform: translateY(-100%); }
+      to   { transform: translateY(0); }
+    }
+    .amb-card {
+      background: white;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      transition: all 0.3s;
+    }
+    .amb-card.new-alert {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.2), 0 8px 24px rgba(220,38,38,0.25);
+      animation: cardPulse 1s ease-in-out 5;
+    }
+    @keyframes cardPulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(220,38,38,0.2), 0 8px 24px rgba(220,38,38,0.25); }
+      50%       { box-shadow: 0 0 0 6px rgba(220,38,38,0.35), 0 12px 32px rgba(220,38,38,0.4); }
+    }
+    .amb-status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.78rem; font-weight: 700;
+      padding: 0.25rem 0.7rem; border-radius: 999px;
+    }
+    .status-pending    { background:#fee2e2; color:#dc2626; }
+    .status-dispatched { background:#fef3c7; color:#d97706; }
+    .status-arrived    { background:#d1fae5; color:#059669; }
+    .status-completed  { background:#f1f5f9; color:#64748b; }
+
+    /* Map modal */
+    #mapModal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(2,6,23,0.75); backdrop-filter: blur(4px);
+      z-index: 9500; align-items: center; justify-content: center; padding: 16px;
+    }
+    #mapModal.open { display: flex; }
+    #mapModalInner {
+      background: white; border-radius: 20px; overflow: hidden;
+      width: 100%; max-width: 700px; box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+    }
+    #mapModalHeader {
+      background: linear-gradient(135deg,#7f1d1d,#dc2626);
+      color: white; padding: 1rem 1.4rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #mapFrame { width: 100%; height: 420px; border: none; }
+  </style>
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=ambulance.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }})
+        .catch(()=>{});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Red flash overlay -->
+  <div id="ambAlertOverlay"></div>
+  <!-- Alert banner -->
+  <div id="ambAlertBanner">
+    <i class="fas fa-truck-medical" style="font-size:1.3rem;"></i>
+    <span id="ambAlertText">New ambulance request received!</span>
+    <button onclick="dismissAlert()" style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 12px;border-radius:8px;cursor:pointer;font-weight:600;">Dismiss</button>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <a href="admin-dashboard.html" class="sidebar-logo">
+      <i class="fas fa-hospital"></i>
+      <span>MediQueue<br>Admin</span>
+    </a>
+    <ul class="sidebar-nav">
+      <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+      <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+      <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
+      <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    </ul>
+    <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1><i class="fas fa-truck-medical" style="color:#dc2626;"></i> Ambulance Requests</h1>
+      <p>Live incoming ambulance requests with real-time tracking</p>
+    </div>
+
+    <div class="container">
+      <!-- Stats row -->
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <div class="dash-stat-card" style="flex:1; min-width:140px;">
+          <div class="dash-stat-header">
+            <div><div class="dash-stat-label">Total Requests</div><div class="dash-stat-value" id="statTotal">0</div></div>
+            <div class="dash-stat-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c);"><i class="fas fa-truck-medical"></i></div>
+          </div>
+        </div>
+        <div class="dash-stat-card" style="flex:1; min-width:140px;">
+          <div class="dash-stat-header">
+            <div><div class="dash-stat-label">Pending</div><div class="dash-stat-value" id="statPending" style="color:#dc2626;">0</div></div>
+            <div class="dash-stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-clock"></i></div>
+          </div>
+        </div>
+        <div class="dash-stat-card" style="flex:1; min-width:140px;">
+          <div class="dash-stat-header">
+            <div><div class="dash-stat-label">Dispatched</div><div class="dash-stat-value" id="statDispatched" style="color:#d97706;">0</div></div>
+            <div class="dash-stat-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);"><i class="fas fa-location-arrow"></i></div>
+          </div>
+        </div>
+        <div class="dash-stat-card" style="flex:1; min-width:140px;">
+          <div class="dash-stat-header">
+            <div><div class="dash-stat-label">Completed</div><div class="dash-stat-value" id="statCompleted" style="color:#10b981;">0</div></div>
+            <div class="dash-stat-icon" style="background:linear-gradient(135deg,#10b981,#047857);"><i class="fas fa-check-circle"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requests list -->
+      <div id="ambRequestsList">
+        <p style="text-align:center; color:#64748b; padding:3rem;"><i class="fas fa-truck-medical" style="font-size:2rem; opacity:0.3; display:block; margin-bottom:0.5rem;"></i>No ambulance requests yet. Waiting for incoming requests...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Modal -->
+  <div id="mapModal">
+    <div id="mapModalInner">
+      <div id="mapModalHeader">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-map-marker-alt" style="font-size:1.2rem;"></i>
+          <div>
+            <div style="font-weight:800; font-size:1rem;" id="mapModalName">Patient Location</div>
+            <div style="font-size:0.78rem; opacity:0.85;" id="mapModalAddr"></div>
+          </div>
+        </div>
+        <button onclick="closeMapModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;"><i class="fas fa-times"></i></button>
+      </div>
+      <iframe id="mapFrame" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div style="padding:0.75rem 1.2rem; display:flex; gap:0.75rem; border-top:1px solid #e2e8f0;">
+        <a id="googleMapsLink" href="#" target="_blank" class="btn-primary btn-sm" style="text-decoration:none;"><i class="fas fa-external-link-alt"></i> Open in Google Maps</a>
+        <a id="wazeLink" href="#" target="_blank" class="btn-outline btn-sm" style="text-decoration:none;"><i class="fas fa-route"></i> Navigate (Waze)</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  </div><!-- end main-content -->
+
+  <script src="js/main.js"></script>
+  <script src="js/ambulance-admin.js"></script>
+  <script>
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }).catch(()=>{});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

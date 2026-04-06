@@ -17,7 +17,11 @@ function resolveApiBase() {
   }
 
   const storedBase = sanitizeApiBase(localStorage.getItem('mq_api_base'));
-  if (storedBase) return storedBase;
+  if (storedBase) {
+    // If we're already on localhost:3000, ignore any stored base to avoid stale config
+    const currentIsLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '3000';
+    if (!currentIsLocal) return storedBase;
+  }
 
   const host = window.location.hostname;
   const port = window.location.port;
@@ -500,11 +504,17 @@ function renderLanguageControl() {
     </button>
   `;
 
-  const mobileToggle = navContainer.querySelector('.mobile-toggle');
-  if (mobileToggle) {
-    navContainer.insertBefore(wrapper, mobileToggle);
+  // Prefer dedicated slot, else fallback to before mobile-toggle
+  const slot = document.getElementById('langControlSlot');
+  if (slot) {
+    slot.appendChild(wrapper);
   } else {
-    navContainer.appendChild(wrapper);
+    const mobileToggle = navContainer.querySelector('.mobile-toggle');
+    if (mobileToggle) {
+      navContainer.insertBefore(wrapper, mobileToggle);
+    } else {
+      navContainer.appendChild(wrapper);
+    }
   }
 
   wrapper.querySelector('#langControlBtn').onclick = () => {
@@ -754,7 +764,7 @@ async function apiCall(endpoint, options = {}) {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        const err = new Error(errorData.error || `HTTP ${res.status}`);
+        const err = new Error(errorData.message || errorData.error || `HTTP ${res.status}`);
         err.status = res.status;
 
         // 404/405 often means wrong API origin in local preview; try next base.

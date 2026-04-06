@@ -302,7 +302,11 @@ function handleLogin(event) {
       }, 300);
     })
     .catch((err) => {
-      showToast('Login Failed', err.message || 'Invalid credentials', 'error');
+      const msg = err.message || 'Invalid credentials';
+      const friendlyMsg = msg.includes('401') || msg.toLowerCase().includes('invalid')
+        ? 'Account not found. Please create an account first or check your credentials.'
+        : msg;
+      showToast('Login Failed', friendlyMsg, 'error');
       setFormLoading('loginForm', false);
     });
 }

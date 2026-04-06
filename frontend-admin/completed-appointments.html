@@ -20,18 +20,29 @@
 <body>
   <div class="bg-pattern"></div>
 
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
-      <a href="admin-dashboard.html" class="nav-logo"><i class="fas fa-hospital"></i><span>MediQueue Admin</span></a>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
-        <li><a href="completed-appointments.html" class="active"><i class="fas fa-check-double"></i> Completed Records</a></li>
-        <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
-      </ul>
-      <button class="admin-logout-btn" onclick="adminLogout()" title="Logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
-      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')"><i class="fas fa-bars"></i></button>
-    </div>
-  </nav>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <a href="admin-dashboard.html" class="sidebar-logo">
+      <i class="fas fa-hospital"></i>
+      <span>MediQueue<br>Admin</span>
+    </a>
+    <ul class="sidebar-nav">
+      <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+      <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+      <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
+      <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      <li><a href="completed-appointments.html" class="active"><i class="fas fa-check-double"></i> Completed Records</a></li>
+      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    </ul>
+    <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <!-- Language button -->
+  <div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
 
   <div class="page-header">
     <h1><i class="fas fa-check-double" style="color: var(--success);"></i> Completed Records</h1>
@@ -64,6 +75,8 @@
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
+
+  </div><!-- end main-content -->
 
   <script src="js/main.js"></script>
   <script src="js/completed-appointments.js"></script>

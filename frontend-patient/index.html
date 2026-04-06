@@ -6,6 +6,7 @@
   <title>MediQueue AI - Smart Hospital Scheduler</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="bg-pattern"></div>
@@ -14,64 +15,62 @@
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <a href="index.html" class="nav-logo">
-        <i class="fas fa-hospital"></i>
-        <span>MediQueue AI</span>
+        <i class="fas fa-hospital-alt"></i>
+        <span>MediQueue <span style="-webkit-text-fill-color:var(--primary-light);background:none;">AI</span></span>
       </a>
-      <ul class="nav-links" id="navLinks">
-      </ul>
-      <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')">
-        <i class="fas fa-bars"></i>
-      </button>
+      <ul class="nav-links" id="navLinks"></ul>
+      <div style="display:flex;align-items:center;gap:0.6rem;">
+        <div id="langControlSlot"></div>
+        <button class="nav-ambulance-btn" onclick="openAmbulanceModal()">
+          <i class="fas fa-truck-medical"></i><span>Ambulance</span>
+        </button>
+        <button class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('show')">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
     </div>
   </nav>
 
-  <!-- Hero Section -->
+  <!-- Hero -->
   <section class="hero">
     <div class="hero-content">
       <div class="hero-text">
-        <div class="hero-kicker"><i class="fas fa-wave-square"></i> <span data-i18n="home.heroKicker">Next-Gen OPD Experience</span></div>
+        <div class="hero-kicker"><i class="fas fa-circle-dot"></i> <span data-i18n="home.heroKicker">Next-Gen OPD Experience</span></div>
         <h1>
           <span data-i18n="home.heroTitle1">Smart OPD Flow,</span><br>
           <span class="gradient-text" data-i18n="home.heroTitle2">Zero Queue Chaos</span><br>
           <span data-i18n="home.heroTitle3">Powered by AI Precision</span>
         </h1>
-        <p>
-          Book faster, route smarter, and reduce crowding in minutes. MediQueue AI helps hospitals
-          streamline appointments, prioritize urgent cases, and deliver a smoother patient journey
-          with real-time, predictive queue intelligence.
-        </p>
+        <p class="hero-desc">Book faster, route smarter, and reduce crowding in minutes. MediQueue AI helps hospitals streamline appointments with real-time, predictive queue intelligence.</p>
         <div class="hero-buttons">
-          <a href="emergency-booking.html" class="nav-emergency-btn" title="Emergency Appointment" data-i18n-title="home.emergency">
-            <i class="fas fa-triangle-exclamation"></i> <span data-i18n="home.emergency">Emergency Appointment</span>
-          </a>
+          <a href="auth.html" class="hero-cta-primary"><i class="fas fa-sign-in-alt"></i> <span data-i18n="home.login">Get Started</span></a>
+          <a href="emergency-booking.html" class="nav-emergency-btn"><i class="fas fa-triangle-exclamation"></i> <span data-i18n="home.emergency">Emergency</span></a>
+        </div>
+        <!-- Live stats strip -->
+        <div class="hero-stats-strip">
+          <div class="hss-item"><span class="hss-num" id="statPatients">0</span><span class="hss-label">Patients Today</span></div>
+          <div class="hss-div"></div>
+          <div class="hss-item"><span class="hss-num" id="statDoctors">0</span><span class="hss-label">Doctors Active</span></div>
+          <div class="hss-div"></div>
+          <div class="hss-item"><span class="hss-num" id="statWait">0</span><span class="hss-label">Avg Wait (min)</span></div>
+          <div class="hss-div"></div>
+          <div class="hss-item"><span class="hss-num" id="statCompleted">0</span><span class="hss-label">Completed</span></div>
         </div>
       </div>
+
       <div class="hero-visual">
-        <div class="hero-auth-3d">
-          <div class="hero-auth-shadow"></div>
-          <div class="hero-auth-panel">
-            <div class="hero-auth-badge"><i class="fas fa-lock"></i> Secure Patient Access</div>
-            <h3 data-i18n="home.welcome">Welcome to MediQueue AI</h3>
-            <p>Book appointments, use AI analyzer, and track queue only after secure login.</p>
-
-            <div class="hero-auth-actions">
-              <a href="auth.html" class="hero-auth-login">
-                <i class="fas fa-sign-in-alt"></i> <span data-i18n="home.login">Login</span>
-              </a>
-              <a href="auth.html?mode=signup" class="hero-auth-signup">
-                <i class="fas fa-user-plus"></i> <span data-i18n="home.create">Create Account</span>
-              </a>
-            </div>
-
-            <div class="hero-auth-mini-stats">
-              <div>
-                <span>Fast Access</span>
-                <strong>&lt; 30 sec</strong>
-              </div>
-              <div>
-                <span>Protected</span>
-                <strong>100% Session</strong>
-              </div>
+        <div class="hero-card-3d">
+          <div class="hc3d-glow"></div>
+          <div class="hc3d-inner">
+            <div class="hc3d-badge"><i class="fas fa-shield-halved"></i> Secure Patient Access</div>
+            <h3>Welcome to<br><strong>MediQueue AI</strong></h3>
+            <p style="font-size:0.88rem;color:#64748b;margin:0.5rem 0 1.2rem;">Book appointments, use AI analyzer, and track queue — all in one place.</p>
+            <a href="auth.html" class="hc3d-login-btn"><i class="fas fa-sign-in-alt"></i> Login to Continue</a>
+            <a href="auth.html?mode=signup" class="hc3d-signup-btn"><i class="fas fa-user-plus"></i> Create Account</a>
+            <div class="hc3d-features">
+              <div><i class="fas fa-bolt" style="color:#f59e0b;"></i> Instant Token</div>
+              <div><i class="fas fa-brain" style="color:#6366f1;"></i> AI Analyzer</div>
+              <div><i class="fas fa-tv" style="color:#0891b2;"></i> Live Queue</div>
             </div>
           </div>
         </div>
@@ -79,59 +78,79 @@
     </div>
   </section>
 
-  <!-- Stats Section -->
-  <section class="stats-section">
-    <div class="stats-grid">
-      <div class="stat-card glass-card animate-on-scroll">
-        <div class="stat-icon"><i class="fas fa-user-injured"></i></div>
-        <div class="stat-number" id="statPatients">0</div>
-        <div class="stat-label">Patients Today</div>
+  <!-- Services Section -->
+  <section class="services-section">
+    <div class="section-header animate-on-scroll">
+      <div class="section-tag">Our Services</div>
+      <h2>Everything You Need, In One Place</h2>
+      <p>Login once and access all smart hospital services instantly</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card animate-on-scroll">
+        <div class="sc-icon" style="background:linear-gradient(135deg,#0891b2,#0e7490);"><i class="fas fa-calendar-check"></i></div>
+        <h3>Smart Booking</h3>
+        <p>Book OPD appointments with AI-predicted wait times and instant token generation.</p>
+        <div class="sc-tag">Most Used</div>
       </div>
-      <div class="stat-card glass-card animate-on-scroll">
-        <div class="stat-icon"><i class="fas fa-user-md"></i></div>
-        <div class="stat-number" id="statDoctors">0</div>
-        <div class="stat-label">Active Doctors</div>
+      <div class="service-card animate-on-scroll">
+        <div class="sc-icon" style="background:linear-gradient(135deg,#059669,#047857);"><i class="fas fa-brain"></i></div>
+        <h3>AI Symptom Analyzer</h3>
+        <p>Describe your symptoms and get instant department recommendations powered by AI.</p>
+        <div class="sc-tag" style="background:#d1fae5;color:#065f46;">AI Powered</div>
       </div>
-      <div class="stat-card glass-card animate-on-scroll">
-        <div class="stat-icon"><i class="fas fa-clock"></i></div>
-        <div class="stat-number" id="statWait">0</div>
-        <div class="stat-label">Avg Wait (min)</div>
+      <div class="service-card animate-on-scroll">
+        <div class="sc-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);"><i class="fas fa-robot"></i></div>
+        <h3>AI Chatbot</h3>
+        <p>Ask anything about doctors, departments, or hospital processes — 24/7 assistance.</p>
+        <div class="sc-tag" style="background:#ede9fe;color:#4c1d95;">24/7</div>
       </div>
-      <div class="stat-card glass-card animate-on-scroll">
-        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-        <div class="stat-number" id="statCompleted">0</div>
-        <div class="stat-label">Completed Today</div>
+      <div class="service-card animate-on-scroll">
+        <div class="sc-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-tv"></i></div>
+        <h3>Live Queue Board</h3>
+        <p>Track your token in real-time. Know exactly when it's your turn without waiting.</p>
+        <div class="sc-tag" style="background:#f3e8ff;color:#6b21a8;">Real-time</div>
+      </div>
+      <div class="service-card animate-on-scroll">
+        <div class="sc-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c);"><i class="fas fa-truck-medical"></i></div>
+        <h3>Emergency Ambulance</h3>
+        <p>One-tap ambulance request with live GPS tracking. Help reaches you in minutes.</p>
+        <div class="sc-tag" style="background:#fee2e2;color:#991b1b;">Emergency</div>
+      </div>
+      <div class="service-card animate-on-scroll">
+        <div class="sc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-triangle-exclamation"></i></div>
+        <h3>Emergency Booking</h3>
+        <p>Skip the queue for critical cases. Emergency appointments get highest priority.</p>
+        <div class="sc-tag" style="background:#fef3c7;color:#92400e;">Priority</div>
       </div>
     </div>
   </section>
 
-  <!-- Features Section -->
-  <section class="features-section">
+  <!-- How it works -->
+  <section class="how-section">
     <div class="section-header animate-on-scroll">
-      <h2>Login First, Access Everything</h2>
-      <p>Once you login, you will land on your personal patient home with all smart options.</p>
+      <div class="section-tag">How It Works</div>
+      <h2>3 Simple Steps</h2>
     </div>
-    <div class="features-grid">
-      <div class="feature-card glass-card animate-on-scroll">
-        <div class="feature-icon" style="background:linear-gradient(135deg, #0891b2, #0e7490);">
-          <i class="fas fa-shield-alt"></i>
-        </div>
-        <h3>Secure Access</h3>
-        <p>Your data and actions are tied to your account for a personalized patient experience.</p>
+    <div class="steps-row">
+      <div class="step-card animate-on-scroll">
+        <div class="step-num">01</div>
+        <div class="step-icon"><i class="fas fa-user-plus"></i></div>
+        <h4>Create Account</h4>
+        <p>Sign up with your name, email and phone in under 30 seconds.</p>
       </div>
-      <div class="feature-card glass-card animate-on-scroll">
-        <div class="feature-icon" style="background:linear-gradient(135deg, #059669, #047857);">
-          <i class="fas fa-user-circle"></i>
-        </div>
-        <h3>Personal Home</h3>
-        <p>After login, you get a dedicated patient home page with all service options together.</p>
+      <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+      <div class="step-card animate-on-scroll">
+        <div class="step-num">02</div>
+        <div class="step-icon"><i class="fas fa-calendar-plus"></i></div>
+        <h4>Book Appointment</h4>
+        <p>Choose department, doctor and time slot. Get your token instantly.</p>
       </div>
-      <div class="feature-card glass-card animate-on-scroll">
-        <div class="feature-icon" style="background:linear-gradient(135deg, #6366f1, #4f46e5);">
-          <i class="fas fa-bolt"></i>
-        </div>
-        <h3>Fast Workflow</h3>
-        <p>Login once and continue quickly with booking, AI tools, chatbot, and live queue tracking.</p>
+      <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+      <div class="step-card animate-on-scroll">
+        <div class="step-num">03</div>
+        <div class="step-icon"><i class="fas fa-tv"></i></div>
+        <h4>Track Live Queue</h4>
+        <p>Monitor your position in real-time and arrive just in time.</p>
       </div>
     </div>
   </section>
@@ -140,14 +159,14 @@
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-brand">
-        <h3><i class="fas fa-hospital"></i> MediQueue AI</h3>
+        <h3><i class="fas fa-hospital-alt"></i> MediQueue AI</h3>
         <p>AI-Powered Government Hospital Check-up Scheduler. Making healthcare accessible, efficient, and smart for everyone.</p>
       </div>
       <div class="footer-links">
         <h4>Get Started</h4>
         <a href="auth.html">Login</a>
         <a href="auth.html?mode=signup">Create Account</a>
-        <a href="auth.html">Patient Access</a>
+        <a href="emergency-booking.html">Emergency Booking</a>
       </div>
       <div class="footer-links">
         <h4>Contact</h4>
@@ -161,12 +180,56 @@
     </div>
   </footer>
 
-  <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- Ambulance Modal -->
+  <div id="ambulanceModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(4px);z-index:5000;align-items:center;justify-content:center;padding:16px;">
+    <div style="width:100%;max-width:520px;background:white;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.3);overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;color:white;">
+          <i class="fas fa-truck-medical" style="font-size:1.4rem;"></i>
+          <div><div style="font-size:1.1rem;font-weight:800;">Emergency Ambulance</div><div style="font-size:0.78rem;opacity:0.85;">Fill details — help is on the way</div></div>
+        </div>
+        <button onclick="closeAmbulanceModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;"><i class="fas fa-times"></i></button>
+      </div>
+      <div style="padding:1.5rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+          <div>
+            <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-user"></i> Patient Name</label>
+            <input id="ambName" type="text" placeholder="Full name" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+          </div>
+          <div>
+            <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-phone"></i> Phone Number</label>
+            <input id="ambPhone" type="tel" placeholder="10-digit number" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+          </div>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-notes-medical"></i> Emergency Condition</label>
+          <textarea id="ambCondition" placeholder="Describe the emergency condition..." rows="3" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;resize:vertical;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+        </div>
+        <div style="margin-bottom:1.2rem;">
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-map-marker-alt" style="color:#dc2626;"></i> Pickup Location</label>
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+            <input id="ambLocation" type="text" placeholder="Enter address or use GPS..." style="flex:1;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+            <button onclick="getAmbulanceLocation()" id="gpsBtn" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border:none;border-radius:10px;padding:0 0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              <i class="fas fa-crosshairs"></i><span style="font-size:0.8rem;">GPS</span>
+            </button>
+          </div>
+          <div id="ambLocationStatus" style="font-size:0.78rem;color:#64748b;min-height:18px;"></div>
+          <div id="ambMapPreview" style="display:none;margin-top:0.5rem;border-radius:10px;overflow:hidden;border:1.5px solid #e2e8f0;height:140px;">
+            <iframe id="ambMapFrame" style="width:100%;height:100%;border:none;" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+        <button onclick="submitAmbulanceRequest()" style="width:100%;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;padding:0.85rem;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px rgba(220,38,38,0.4);">
+          <i class="fas fa-truck-medical"></i> Request Ambulance Now
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/main.js"></script>
+  <script src="js/ambulance.js"></script>
   <script>
-    // Load stats on home page
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const [statsRes, doctorsRes] = await Promise.all([
@@ -175,26 +238,17 @@
         ]);
         const stats = await statsRes.json();
         const doctors = await doctorsRes.json();
-
         animateCounter('statPatients', stats.totalToday || 0);
         animateCounter('statDoctors', doctors.length || 0);
         animateCounter('statWait', stats.avgWaitTime || 0);
         animateCounter('statCompleted', stats.completed || 0);
-      } catch (err) {
-        console.log('Could not load stats');
-      }
+      } catch (e) {}
     });
-
     function animateCounter(id, target) {
       const el = document.getElementById(id);
       if (!el) return;
-      let current = 0;
-      const step = Math.ceil(target / 40);
-      const timer = setInterval(() => {
-        current += step;
-        if (current >= target) { current = target; clearInterval(timer); }
-        el.textContent = current;
-      }, 30);
+      let c = 0; const step = Math.ceil(target / 40);
+      const t = setInterval(() => { c += step; if (c >= target) { c = target; clearInterval(t); } el.textContent = c; }, 30);
     }
   </script>
 </body>

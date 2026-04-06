@@ -457,5 +457,168 @@ router.post('/logout', (req, res) => {
   return res.json({ success: true });
 });
 
+// GET /api/patients/profile
+router.get('/profile', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+    const session = getSessionFromToken(token);
+    if (!session) return res.status(401).json({ success: false, message: 'Invalid session' });
+
+    const profileFields = ['name','email','phone','dateOfBirth','gender','bloodGroup',
+      'address','city','state','pincode','emergencyContactName','emergencyContactPhone',
+      'emergencyContactRelation','allergies','chronicConditions','currentMedications',
+      'profileComplete','createdAt'];
+
+    if (useMemory) {
+      const p = memoryPatients.find(p => String(p._id) === session.patientId);
+      if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+      const profile = {};
+      profileFields.forEach(f => { profile[f] = p[f] ?? ''; });
+      return res.json({ success: true, profile });
+    }
+
+    const Patient = require('../models/Patient');
+    const p = await Patient.findById(session.patientId).select(profileFields.join(' '));
+    if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+    return res.json({ success: true, profile: p });
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch profile' });
+  }
+});
+
+// PATCH /api/patients/profile
+router.patch('/profile', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
+    const session = getSessionFromToken(token);
+    if (!session) return res.status(401).json({ success: false, message: 'Invalid session' });
+
+    const allowed = ['name','dateOfBirth','gender','bloodGroup','address','city','state',
+      'pincode','emergencyContactName','emergencyContactPhone','emergencyContactRelation',
+      'allergies','chronicConditions','currentMedications'];
+
+    const updates = {};
+    allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+
+    // Check profile completeness
+    const required = ['dateOfBirth','gender','bloodGroup','address','city','emergencyContactName','emergencyContactPhone'];
+    const allFilled = required.every(f => updates[f] || req.body[f]);
+    updates.profileComplete = allFilled;
+
+    if (useMemory) {
+      const p = memoryPatients.find(p => String(p._id) === session.patientId);
+      if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+      Object.assign(p, updates);
+      if (updates.name) session.name = updates.name;
+      return res.json({ success: true, message: 'Profile updated', profileComplete: updates.profileComplete });
+    }
+
+    const Patient = require('../models/Patient');
+    const p = await Patient.findByIdAndUpdate(session.patientId, updates, { new: true });
+    if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+    if (updates.name) session.name = updates.name;
+    return res.json({ success: true, message: 'Profile updated', profileComplete: p.profileComplete });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update profile' });
+  }
+});
+
+// PATCH /api/patients/change-password
+router.patch('/change-password', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
+    const session = getSessionFromToken(token);
+    if (!session) return res.status(401).json({ success: false, message: 'Invalid session' });
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ success: false, message: 'Both current and new password required' });
+    if (newPassword.length < 6)
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+
+    if (useMemory) {
+      const p = memoryPatients.find(p => String(p._id) === session.patientId);
+      if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+      if (hashPassword(currentPassword, p.passwordSalt) !== p.passwordHash)
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      const { salt, hash } = createPasswordRecord(newPassword);
+      p.passwordSalt = salt; p.passwordHash = hash;
+      return res.json({ success: true, message: 'Password changed successfully' });
+    }
+
+    const Patient = require('../models/Patient');
+    const p = await Patient.findById(session.patientId);
+    if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+    if (hashPassword(currentPassword, p.passwordSalt) !== p.passwordHash)
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    const { salt, hash } = createPasswordRecord(newPassword);
+    p.passwordSalt = salt; p.passwordHash = hash;
+    await p.save();
+    return res.json({ success: true, message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to change password' });
+  }
+});
+
+// GET /api/patients/search?q=name_or_email  (admin only - no auth check for simplicity)
+router.get('/search', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q || q.length < 2) return res.json({ success: true, patients: [] });
+
+    const profileFields = 'name email phone dateOfBirth gender bloodGroup address city state pincode emergencyContactName emergencyContactPhone emergencyContactRelation allergies chronicConditions currentMedications profileComplete createdAt';
+
+    if (useMemory) {
+      const lower = q.toLowerCase();
+      const results = memoryPatients
+        .filter(p => p.name?.toLowerCase().includes(lower) || p.email?.toLowerCase().includes(lower) || p.phone?.includes(q))
+        .slice(0, 10)
+        .map(p => {
+          const obj = {};
+          profileFields.split(' ').forEach(f => { obj[f] = p[f] ?? ''; });
+          obj._id = p._id;
+          return obj;
+        });
+      return res.json({ success: true, patients: results });
+    }
+
+    const Patient = require('../models/Patient');
+    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const patients = await Patient.find({
+      $or: [{ name: regex }, { email: regex }, { phone: { $regex: q } }]
+    }).select(profileFields).limit(10);
+
+    return res.json({ success: true, patients });
+  } catch (err) {
+    console.error('Patient search error:', err);
+    return res.status(500).json({ success: false, message: 'Search failed' });
+  }
+});
+
+// GET /api/patients/:id/profile  (admin view full profile)
+router.get('/:id/profile', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const profileFields = 'name email phone dateOfBirth gender bloodGroup address city state pincode emergencyContactName emergencyContactPhone emergencyContactRelation allergies chronicConditions currentMedications profileComplete createdAt';
+
+    if (useMemory) {
+      const p = memoryPatients.find(p => String(p._id) === id);
+      if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+      const obj = {}; profileFields.split(' ').forEach(f => { obj[f] = p[f] ?? ''; }); obj._id = p._id;
+      return res.json({ success: true, patient: obj });
+    }
+
+    const Patient = require('../models/Patient');
+    const p = await Patient.findById(id).select(profileFields);
+    if (!p) return res.status(404).json({ success: false, message: 'Patient not found' });
+    return res.json({ success: true, patient: p });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch patient' });
+  }
+});
+
 module.exports = router;
 module.exports.setMemoryMode = setMemoryMode;

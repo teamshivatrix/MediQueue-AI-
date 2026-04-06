@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patients - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Search bar */
+    .search-wrap {
+      position: relative; margin-bottom: 1.5rem;
+    }
+    .search-input {
+      width: 100%; padding: 0.9rem 1rem 0.9rem 3rem;
+      border: 2px solid #e2e8f0; border-radius: 14px;
+      font-size: 1rem; font-family: inherit; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: white;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(8,145,178,0.1);
+    }
+    .search-icon {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      color: #94a3b8; font-size: 1rem; pointer-events: none;
+    }
+    .search-clear {
+      position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #94a3b8; cursor: pointer;
+      font-size: 1rem; display: none;
+    }
+
+    /* Suggestions dropdown */
+    .suggestions-box {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: white; border: 1.5px solid #e2e8f0; border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 100;
+      overflow: hidden; display: none;
+    }
+    .suggestion-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.75rem 1rem; cursor: pointer;
+      transition: background 0.15s; border-bottom: 1px solid #f8fafc;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: #f0f9ff; }
+    .sug-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #0891b2, #059669);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 0.9rem;
+    }
+    .sug-name { font-weight: 700; font-size: 0.92rem; color: #0f172a; }
+    .sug-meta { font-size: 0.78rem; color: #64748b; }
+    .sug-badge {
+      margin-left: auto; font-size: 0.68rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 6px;
+    }
+    .sug-badge.complete { background: #d1fae5; color: #065f46; }
+    .sug-badge.incomplete { background: #fef3c7; color: #92400e; }
+    .sug-no-result { padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.88rem; }
+
+    /* Profile modal */
+    #profileModal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(2,6,23,0.72); backdrop-filter: blur(4px);
+      z-index: 5000; align-items: flex-start; justify-content: center;
+      padding: 2rem 1rem; overflow-y: auto;
+    }
+    #profileModal.open { display: flex; }
+    .pm-inner {
+      background: white; border-radius: 20px; width: 100%; max-width: 680px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.25); overflow: hidden;
+      margin: auto;
+    }
+    .pm-header {
+      background: linear-gradient(135deg, #0891b2, #0e7490);
+      padding: 1.4rem 1.6rem; display: flex; align-items: center; gap: 14px;
+    }
+    .pm-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 800; color: white; flex-shrink: 0;
+    }
+    .pm-header-info { flex: 1; }
+    .pm-header-info h2 { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 2px; }
+    .pm-header-info p { font-size: 0.82rem; color: rgba(255,255,255,0.8); }
+    .pm-close {
+      background: rgba(255,255,255,0.2); border: none; color: white;
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+    }
+    .pm-body { padding: 1.5rem; }
+    .pm-section { margin-bottom: 1.4rem; }
+    .pm-section-title {
+      font-size: 0.72rem; font-weight: 800; color: #0891b2;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;
+    }
+    .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .pm-field { background: #f8fafc; border-radius: 10px; padding: 0.6rem 0.9rem; }
+    .pm-field-label { font-size: 0.7rem; color: #94a3b8; font-weight: 600; margin-bottom: 2px; }
+    .pm-field-value { font-size: 0.88rem; color: #0f172a; font-weight: 600; }
+    .pm-field-value.empty { color: #cbd5e1; font-style: italic; font-weight: 400; }
+    .pm-field.full { grid-column: 1 / -1; }
+    .pm-divider { height: 1px; background: #f1f5f9; margin: 1rem 0; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem; color: #94a3b8;
+    }
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3; }
+  </style>
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=admin-patients-search.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }})
+        .catch(()=>{});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <aside class="sidebar">
+    <a href="admin-dashboard.html" class="sidebar-logo">
+      <i class="fas fa-hospital"></i>
+      <span>MediQueue<br>Admin</span>
+    </a>
+    <ul class="sidebar-nav">
+      <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+      <li><a href="admin-patients-search.html" class="active"><i class="fas fa-user-injured"></i> Patients</a></li>
+      <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
+      <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    </ul>
+    <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1><i class="fas fa-user-injured" style="color:var(--primary);"></i> Patient Search</h1>
+      <p>Search patients by name or email and view their full profile</p>
+    </div>
+
+    <div class="container">
+
+      <!-- Search Box -->
+      <div class="search-wrap">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text" id="patientSearchInput" class="search-input"
+          placeholder="Type patient name or email (min 2 characters)..."
+          autocomplete="off"
+          oninput="onSearchInput(this.value)"
+        >
+        <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="suggestions-box" id="suggestionsBox"></div>
+      </div>
+
+      <!-- Results / Empty state -->
+      <div id="mainContent">
+        <div class="empty-state">
+          <i class="fas fa-user-magnifying-glass"></i>
+          <p style="font-size:1rem;font-weight:600;color:#64748b;">Search for a patient above</p>
+          <p style="font-size:0.85rem;margin-top:4px;">Type at least 2 characters to see suggestions</p>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- end main-content -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    let searchTimer = null;
+
+    function onSearchInput(val) {
+      const clearBtn = document.getElementById('searchClearBtn');
+      clearBtn.style.display = val ? 'block' : 'none';
+
+      clearTimeout(searchTimer);
+      if (val.trim().length < 2) {
+        hideSuggestions();
+        return;
+      }
+      searchTimer = setTimeout(() => fetchSuggestions(val.trim()), 280);
+    }
+
+    async function fetchSuggestions(q) {
+      try {
+        const res = await fetch(API_BASE + '/api/patients/search?q=' + encodeURIComponent(q));
+        const data = await res.json();
+        renderSuggestions(data.patients || [], q);
+      } catch (e) {
+        hideSuggestions();
+      }
+    }
+
+    function renderSuggestions(patients, q) {
+      const box = document.getElementById('suggestionsBox');
+      if (!patients.length) {
+        box.innerHTML = '<div class="sug-no-result"><i class="fas fa-user-slash"></i> No patients found for "<b>' + q + '</b>"</div>';
+        box.style.display = 'block';
+        return;
+      }
+
+      box.innerHTML = patients.map(p => {
+        const initial = (p.name || '?').charAt(0).toUpperCase();
+        const badge = p.profileComplete
+          ? '<span class="sug-badge complete"><i class="fas fa-check"></i> Complete</span>'
+          : '<span class="sug-badge incomplete"><i class="fas fa-clock"></i> Incomplete</span>';
+        return `
+          <div class="suggestion-item" onclick="viewProfile('${p._id}')">
+            <div class="sug-avatar">${initial}</div>
+            <div>
+              <div class="sug-name">${highlight(p.name || '—', q)}</div>
+              <div class="sug-meta">${highlight(p.email || '—', q)} &nbsp;•&nbsp; ${p.phone || '—'}</div>
+            </div>
+            ${badge}
+          </div>`;
+      }).join('');
+      box.style.display = 'block';
+    }
+
+    function highlight(text, q) {
+      if (!q) return text;
+      const regex = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      return text.replace(regex, '<mark style="background:#bae6fd;border-radius:3px;padding:0 2px;">$1</mark>');
+    }
+
+    function hideSuggestions() {
+      document.getElementById('suggestionsBox').style.display = 'none';
+    }
+
+    function clearSearch() {
+      document.getElementById('patientSearchInput').value = '';
+      document.getElementById('searchClearBtn').style.display = 'none';
+      hideSuggestions();
+    }
+
+    // Close suggestions on outside click
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.search-wrap')) hideSuggestions();
+    });
+
+    async function viewProfile(id) {
+      hideSuggestions();
+      window.location.href = 'admin-patient-profile.html?id=' + id;
+    }
+
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }).catch(()=>{});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Profile - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .profile-hero {
+      background: linear-gradient(135deg, #0891b2, #0e7490);
+      padding: 2.5rem 2rem; display: flex; align-items: center; gap: 1.8rem;
+      position: relative; overflow: hidden;
+    }
+    .profile-hero::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .profile-hero::after {
+      content: ''; position: absolute; bottom: -40px; right: 120px;
+      width: 140px; height: 140px; border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+    .ph-avatar {
+      width: 90px; height: 90px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(255,255,255,0.2);
+      border: 3px solid rgba(255,255,255,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; font-weight: 800; color: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .ph-info { flex: 1; position: relative; z-index: 1; }
+    .ph-info h1 { font-size: 1.8rem; font-weight: 900; color: white; margin-bottom: 4px; }
+    .ph-info p { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 8px; }
+    .ph-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .ph-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.75rem; font-weight: 700; padding: 0.28rem 0.75rem;
+      border-radius: 999px; background: rgba(255,255,255,0.18); color: white;
+    }
+    .ph-badge.complete { background: rgba(16,185,129,0.3); }
+    .ph-badge.incomplete { background: rgba(245,158,11,0.3); }
+    .ph-back {
+      position: absolute; top: 1.2rem; right: 1.5rem; z-index: 2;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      color: white; padding: 0.45rem 1rem; border-radius: 8px;
+      font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .ph-back:hover { background: rgba(255,255,255,0.25); }
+
+    /* Sections */
+    .profile-body { padding: 2rem; max-width: 900px; }
+    .ps-card {
+      background: white; border-radius: 16px; border: 1px solid #f1f5f9;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05); margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .ps-card-header {
+      padding: 1rem 1.4rem; border-bottom: 1px solid #f8fafc;
+      display: flex; align-items: center; gap: 10px;
+      background: #fafafa;
+    }
+    .ps-card-header i { font-size: 1rem; width: 20px; text-align: center; }
+    .ps-card-header h3 { font-size: 0.9rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ps-card-body { padding: 1.4rem; }
+
+    .pf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .pf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .pf-item { }
+    .pf-item.full { grid-column: 1 / -1; }
+    .pf-label { font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .pf-value { font-size: 0.95rem; font-weight: 600; color: #0f172a; }
+    .pf-value.empty { color: #cbd5e1; font-style: italic; font-weight: 400; font-size: 0.88rem; }
+
+    /* Blood group pill */
+    .blood-pill {
+      display: inline-block; background: linear-gradient(135deg,#dc2626,#b91c1c);
+      color: white; font-weight: 800; font-size: 1rem;
+      padding: 0.2rem 0.8rem; border-radius: 8px;
+    }
+
+    @media (max-width: 700px) {
+      .pf-grid { grid-template-columns: 1fr 1fr; }
+      .profile-hero { flex-direction: column; text-align: center; }
+      .ph-back { top: 0.8rem; right: 0.8rem; }
+    }
+  </style>
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }})
+        .catch(()=>{});
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <aside class="sidebar">
+    <a href="admin-dashboard.html" class="sidebar-logo">
+      <i class="fas fa-hospital"></i>
+      <span>MediQueue<br>Admin</span>
+    </a>
+    <ul class="sidebar-nav">
+      <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+      <li><a href="admin-patients-search.html" class="active"><i class="fas fa-user-injured"></i> Patients</a></li>
+      <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
+      <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    </ul>
+    <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+
+  <div class="main-content">
+
+    <!-- Profile Hero -->
+    <div class="profile-hero" id="profileHero">
+      <div class="ph-avatar" id="phAvatar">?</div>
+      <div class="ph-info">
+        <h1 id="phName">Loading...</h1>
+        <p id="phMeta">—</p>
+        <div class="ph-badges" id="phBadges"></div>
+      </div>
+      <a href="admin-patients-search.html" class="ph-back">
+        <i class="fas fa-arrow-left"></i> Back to Search
+      </a>
+    </div>
+
+    <!-- Profile Body -->
+    <div class="profile-body" id="profileBody">
+      <p style="text-align:center;color:#94a3b8;padding:3rem;"><i class="fas fa-spinner fa-spin"></i> Loading profile...</p>
+    </div>
+
+  </div><!-- end main-content -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const patientId = params.get('id');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!patientId) {
+        document.getElementById('profileBody').innerHTML = '<p style="text-align:center;color:#ef4444;padding:3rem;">No patient ID provided.</p>';
+        return;
+      }
+      loadPatient(patientId);
+    });
+
+    async function loadPatient(id) {
+      try {
+        const res = await fetch(API_BASE + '/api/patients/' + id + '/profile');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        renderProfile(data.patient);
+      } catch (e) {
+        document.getElementById('profileBody').innerHTML = '<p style="text-align:center;color:#ef4444;padding:3rem;">Failed to load patient profile.</p>';
+      }
+    }
+
+    function val(v, fallback) {
+      return v ? `<span class="pf-value">${v}</span>` : `<span class="pf-value empty">${fallback || 'Not provided'}</span>`;
+    }
+
+    function renderProfile(p) {
+      const name = p.name || '—';
+      const initial = name.charAt(0).toUpperCase();
+      const joined = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'}) : '—';
+
+      // Hero
+      document.getElementById('phAvatar').textContent = initial;
+      document.getElementById('phName').textContent = name;
+      document.getElementById('phMeta').textContent = (p.email || '—') + '   •   ' + (p.phone || '—') + '   •   Joined ' + joined;
+      document.getElementById('phBadges').innerHTML = `
+        ${p.gender ? `<span class="ph-badge"><i class="fas fa-venus-mars"></i> ${p.gender.charAt(0).toUpperCase()+p.gender.slice(1)}</span>` : ''}
+        ${p.bloodGroup ? `<span class="ph-badge"><i class="fas fa-tint"></i> ${p.bloodGroup}</span>` : ''}
+        ${p.city ? `<span class="ph-badge"><i class="fas fa-map-marker-alt"></i> ${p.city}</span>` : ''}
+        <span class="ph-badge ${p.profileComplete ? 'complete' : 'incomplete'}">
+          <i class="fas fa-${p.profileComplete ? 'check-circle' : 'clock'}"></i>
+          ${p.profileComplete ? 'Profile Complete' : 'Incomplete'}
+        </span>
+      `;
+
+      // Body
+      document.getElementById('profileBody').innerHTML = `
+
+        <!-- Basic Info -->
+        <div class="ps-card">
+          <div class="ps-card-header">
+            <i class="fas fa-user" style="color:#0891b2;"></i>
+            <h3>Basic Information</h3>
+          </div>
+          <div class="ps-card-body">
+            <div class="pf-grid">
+              <div class="pf-item"><div class="pf-label">Full Name</div>${val(p.name)}</div>
+              <div class="pf-item"><div class="pf-label">Email</div>${val(p.email)}</div>
+              <div class="pf-item"><div class="pf-label">Phone</div>${val(p.phone)}</div>
+              <div class="pf-item"><div class="pf-label">Date of Birth</div>${val(p.dateOfBirth)}</div>
+              <div class="pf-item"><div class="pf-label">Gender</div>${val(p.gender ? p.gender.charAt(0).toUpperCase()+p.gender.slice(1) : '')}</div>
+              <div class="pf-item">
+                <div class="pf-label">Blood Group</div>
+                ${p.bloodGroup ? `<span class="blood-pill">${p.bloodGroup}</span>` : `<span class="pf-value empty">Not provided</span>`}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="ps-card">
+          <div class="ps-card-header">
+            <i class="fas fa-map-marker-alt" style="color:#dc2626;"></i>
+            <h3>Address</h3>
+          </div>
+          <div class="ps-card-body">
+            <div class="pf-grid">
+              <div class="pf-item full"><div class="pf-label">Full Address</div>${val(p.address)}</div>
+              <div class="pf-item"><div class="pf-label">City</div>${val(p.city)}</div>
+              <div class="pf-item"><div class="pf-label">State</div>${val(p.state)}</div>
+              <div class="pf-item"><div class="pf-label">Pincode</div>${val(p.pincode)}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="ps-card">
+          <div class="ps-card-header">
+            <i class="fas fa-phone-volume" style="color:#dc2626;"></i>
+            <h3>Emergency Contact</h3>
+          </div>
+          <div class="ps-card-body">
+            <div class="pf-grid">
+              <div class="pf-item"><div class="pf-label">Contact Name</div>${val(p.emergencyContactName)}</div>
+              <div class="pf-item"><div class="pf-label">Phone</div>${val(p.emergencyContactPhone)}</div>
+              <div class="pf-item"><div class="pf-label">Relation</div>${val(p.emergencyContactRelation)}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medical Info -->
+        <div class="ps-card">
+          <div class="ps-card-header">
+            <i class="fas fa-notes-medical" style="color:#059669;"></i>
+            <h3>Medical Information</h3>
+          </div>
+          <div class="ps-card-body">
+            <div class="pf-grid-2">
+              <div class="pf-item"><div class="pf-label">Known Allergies</div>${val(p.allergies)}</div>
+              <div class="pf-item"><div class="pf-label">Chronic Conditions</div>${val(p.chronicConditions)}</div>
+              <div class="pf-item full"><div class="pf-label">Current Medications</div>${val(p.currentMedications)}</div>
+            </div>
+          </div>
+        </div>
+
+      `;
+    }
+
+    function adminLogout() {
+      const token = sessionStorage.getItem('adminToken');
+      fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }).catch(()=>{});
+      sessionStorage.removeItem('adminToken');
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+</body>
+</html>

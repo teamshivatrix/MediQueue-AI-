@@ -160,11 +160,16 @@ function renderAdminLanguageControl() {
     if (mobileToggle) navContainer.insertBefore(wrap, mobileToggle);
     else navContainer.appendChild(wrap);
   } else {
-    wrap.style.position = 'fixed';
-    wrap.style.top = '14px';
-    wrap.style.right = '14px';
-    wrap.style.zIndex = '5600';
-    document.body.appendChild(wrap);
+    const langWrapper = document.getElementById('langBtnWrapper');
+    if (langWrapper) {
+      langWrapper.appendChild(wrap);
+    } else {
+      wrap.style.position = 'fixed';
+      wrap.style.top = '14px';
+      wrap.style.right = '14px';
+      wrap.style.zIndex = '5600';
+      document.body.appendChild(wrap);
+    }
   }
 
   wrap.querySelector('#adminLangControlBtn').onclick = () => {

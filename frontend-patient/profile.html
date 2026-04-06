@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .patient-sidebar {
+      position: fixed; top: 0; left: 0; width: 220px; height: 100vh; z-index: 1000;
+      background: rgba(255,255,255,0.93); backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(8,145,178,0.12); box-shadow: 4px 0 24px rgba(8,145,178,0.07);
+      display: flex; flex-direction: column; padding: 1.5rem 0 1rem;
+    }
+    .ps-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; font-size: 1.15rem; color: var(--primary-dark); padding: 0 1.2rem 1.4rem; border-bottom: 1px solid rgba(8,145,178,0.1); margin-bottom: 1rem; }
+    .ps-logo i { font-size: 1.6rem; color: var(--primary); flex-shrink: 0; }
+    .ps-logo span { background: linear-gradient(135deg, var(--primary-dark), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; }
+    .ps-user { margin: 0 0.75rem 0.75rem; background: linear-gradient(135deg, rgba(8,145,178,0.08), rgba(5,150,105,0.06)); border: 1px solid rgba(8,145,178,0.12); border-radius: 12px; padding: 0.65rem 0.9rem; display: flex; align-items: center; gap: 8px; }
+    .ps-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #0891b2, #059669); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+    .ps-user-name { font-size: 0.82rem; font-weight: 700; color: #0f172a; }
+    .ps-user-role { font-size: 0.7rem; color: #64748b; }
+    .ps-nav { list-style: none; flex: 1; padding: 0 0.75rem; display: flex; flex-direction: column; gap: 0.15rem; }
+    .ps-nav a { text-decoration: none; color: #475569; font-weight: 500; font-size: 0.9rem; padding: 0.65rem 1rem; border-radius: 10px; transition: all 0.25s; display: flex; align-items: center; gap: 10px; }
+    .ps-nav a:hover { color: var(--primary-dark); background: rgba(8,145,178,0.08); }
+    .ps-nav a.active { color: var(--primary-dark); background: rgba(8,145,178,0.13); font-weight: 600; }
+    .ps-nav a i { font-size: 0.95rem; width: 18px; text-align: center; }
+    .ps-nav .ps-emergency a { color: #dc2626; background: rgba(220,38,38,0.06); }
+    .ps-nav .ps-emergency a:hover { background: rgba(220,38,38,0.12); }
+    .ps-logout { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0.75rem; width: calc(100% - 1.5rem); justify-content: center; transition: all 0.3s; }
+    .ps-logout:hover { background: linear-gradient(135deg,#dc2626,#b91c1c); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+    .ps-main { margin-left: 220px; min-height: 100vh; padding: 2rem; }
+
+    /* Profile page styles */
+    .profile-header {
+      background: linear-gradient(135deg, #ecfeff, #f0fdf4);
+      border-radius: 20px; padding: 1.8rem 2rem;
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-bottom: 2rem; position: relative; overflow: hidden;
+    }
+    .profile-header::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(8,145,178,0.1), transparent);
+    }
+    .profile-avatar-big {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #0891b2, #059669);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800; color: white; flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(8,145,178,0.3);
+    }
+    .profile-header-info h2 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .profile-header-info p { font-size: 0.88rem; color: #64748b; }
+    .profile-complete-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.7rem;
+      border-radius: 999px; margin-top: 6px;
+    }
+    .badge-complete { background: #d1fae5; color: #065f46; }
+    .badge-incomplete { background: #fef3c7; color: #92400e; }
+
+    /* Section cards */
+    .profile-section {
+      background: white; border-radius: 16px; border: 1px solid #f1f5f9;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05); margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .profile-section-header {
+      padding: 1rem 1.4rem; border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .profile-section-header i { font-size: 1rem; color: var(--primary); }
+    .profile-section-header h3 { font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+    .profile-section-body { padding: 1.4rem; }
+
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .profile-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+    .pf-group { display: flex; flex-direction: column; gap: 4px; }
+    .pf-group label { font-size: 0.78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
+    .pf-group input, .pf-group select, .pf-group textarea {
+      padding: 0.6rem 0.9rem; border: 1.5px solid #e2e8f0; border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit; color: #0f172a;
+      transition: border-color 0.2s; background: #fafafa; outline: none;
+    }
+    .pf-group input:focus, .pf-group select:focus, .pf-group textarea:focus {
+      border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(8,145,178,0.08);
+    }
+    .pf-group textarea { resize: vertical; min-height: 70px; }
+    .pf-group.full { grid-column: 1 / -1; }
+
+    /* Password section */
+    .pwd-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+    .save-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.4rem; background: #f8fafc;
+      border-top: 1px solid #f1f5f9; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .save-bar-msg { font-size: 0.82rem; color: #64748b; }
+
+    .btn-save {
+      background: linear-gradient(135deg, #0891b2, #0e7490); color: white;
+      border: none; padding: 0.65rem 1.6rem; border-radius: 10px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      transition: all 0.25s; font-family: inherit;
+    }
+    .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(8,145,178,0.35); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    @media (max-width: 900px) {
+      .patient-sidebar { width: 64px; }
+      .ps-logo span, .ps-nav a span, .ps-user-name, .ps-user-role, .ps-logout span { display: none; }
+      .ps-user { justify-content: center; padding: 0.5rem; }
+      .ps-nav a { justify-content: center; padding: 0.65rem; }
+      .ps-logout { justify-content: center; padding: 10px; }
+      .ps-main { margin-left: 64px; padding: 1rem; }
+      .profile-grid, .profile-grid-3, .pwd-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <aside class="patient-sidebar">
+    <a href="patient-home.html" class="ps-logo">
+      <i class="fas fa-hospital-alt"></i>
+      <span>MediQueue<br>AI</span>
+    </a>
+    <div class="ps-user">
+      <div class="ps-user-avatar" id="userAvatar">P</div>
+      <div>
+        <div class="ps-user-name" id="sidebarUserName">Patient</div>
+        <div class="ps-user-role">Patient</div>
+      </div>
+    </div>
+    <ul class="ps-nav">
+      <li><a href="patient-home.html"><i class="fas fa-home"></i> <span>Home</span></a></li>
+      <li><a href="profile.html" class="active"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
+      <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
+      <li><a href="symptom-analyzer.html" data-requires-auth="true"><i class="fas fa-brain"></i> <span>AI Analyzer</span></a></li>
+      <li><a href="chatbot.html" data-requires-auth="true"><i class="fas fa-robot"></i> <span>AI Chatbot</span></a></li>
+      <li><a href="queue-display.html" data-requires-auth="true"><i class="fas fa-tv"></i> <span>Queue Board</span></a></li>
+      <li class="ps-emergency"><a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i> <span>Emergency</span></a></li>
+    </ul>
+    <button class="ps-logout" onclick="patientLogout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+  </aside>
+
+  <div class="ps-main">
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-avatar-big" id="bigAvatar">P</div>
+      <div class="profile-header-info">
+        <h2 id="headerName">Loading...</h2>
+        <p id="headerEmail">—</p>
+        <div class="profile-complete-badge badge-incomplete" id="completeBadge">
+          <i class="fas fa-clock"></i> Profile Incomplete
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. Basic Info -->
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <i class="fas fa-user"></i>
+        <h3>Basic Information</h3>
+      </div>
+      <div class="profile-section-body">
+        <div class="profile-grid">
+          <div class="pf-group">
+            <label>Full Name *</label>
+            <input type="text" id="pName" placeholder="Your full name">
+          </div>
+          <div class="pf-group">
+            <label>Email</label>
+            <input type="email" id="pEmail" placeholder="Email address" disabled style="opacity:0.6;cursor:not-allowed;">
+          </div>
+          <div class="pf-group">
+            <label>Phone</label>
+            <input type="tel" id="pPhone" placeholder="Phone number" disabled style="opacity:0.6;cursor:not-allowed;">
+          </div>
+          <div class="pf-group">
+            <label>Date of Birth *</label>
+            <input type="date" id="pDob">
+          </div>
+          <div class="pf-group">
+            <label>Gender *</label>
+            <select id="pGender">
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="pf-group">
+            <label>Blood Group *</label>
+            <select id="pBloodGroup">
+              <option value="">Select blood group</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <span class="save-bar-msg">* Required fields</span>
+        <button class="btn-save" onclick="saveBasicInfo()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+
+    <!-- 2. Address -->
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <i class="fas fa-map-marker-alt"></i>
+        <h3>Address</h3>
+      </div>
+      <div class="profile-section-body">
+        <div class="profile-grid">
+          <div class="pf-group full">
+            <label>Full Address *</label>
+            <textarea id="pAddress" placeholder="House no., Street, Area..."></textarea>
+          </div>
+          <div class="pf-group">
+            <label>City *</label>
+            <input type="text" id="pCity" placeholder="City">
+          </div>
+          <div class="pf-group">
+            <label>State</label>
+            <input type="text" id="pState" placeholder="State">
+          </div>
+          <div class="pf-group">
+            <label>Pincode</label>
+            <input type="text" id="pPincode" placeholder="6-digit pincode" maxlength="6">
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <span class="save-bar-msg">* Required fields</span>
+        <button class="btn-save" onclick="saveAddress()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+
+    <!-- 3. Emergency Contact -->
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <i class="fas fa-phone-volume" style="color:#dc2626;"></i>
+        <h3>Emergency Contact</h3>
+      </div>
+      <div class="profile-section-body">
+        <div class="profile-grid-3">
+          <div class="pf-group">
+            <label>Contact Name *</label>
+            <input type="text" id="pEcName" placeholder="Full name">
+          </div>
+          <div class="pf-group">
+            <label>Phone Number *</label>
+            <input type="tel" id="pEcPhone" placeholder="10-digit number" maxlength="10">
+          </div>
+          <div class="pf-group">
+            <label>Relation</label>
+            <select id="pEcRelation">
+              <option value="">Select relation</option>
+              <option>Father</option><option>Mother</option>
+              <option>Spouse</option><option>Sibling</option>
+              <option>Son</option><option>Daughter</option>
+              <option>Friend</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <span class="save-bar-msg">* Required fields</span>
+        <button class="btn-save" onclick="saveEmergencyContact()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+
+    <!-- 4. Medical Info -->
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <i class="fas fa-notes-medical" style="color:#059669;"></i>
+        <h3>Medical Information</h3>
+      </div>
+      <div class="profile-section-body">
+        <div class="profile-grid">
+          <div class="pf-group">
+            <label>Known Allergies</label>
+            <textarea id="pAllergies" placeholder="e.g. Penicillin, Dust, Pollen..."></textarea>
+          </div>
+          <div class="pf-group">
+            <label>Chronic Conditions</label>
+            <textarea id="pChronic" placeholder="e.g. Diabetes, Hypertension..."></textarea>
+          </div>
+          <div class="pf-group full">
+            <label>Current Medications</label>
+            <textarea id="pMedications" placeholder="e.g. Metformin 500mg, Aspirin 75mg..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <span class="save-bar-msg">Helps doctors provide better care</span>
+        <button class="btn-save" onclick="saveMedicalInfo()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+
+    <!-- 5. Change Password -->
+    <div class="profile-section">
+      <div class="profile-section-header">
+        <i class="fas fa-lock" style="color:#6366f1;"></i>
+        <h3>Change Password</h3>
+      </div>
+      <div class="profile-section-body">
+        <div class="pwd-grid">
+          <div class="pf-group">
+            <label>Current Password</label>
+            <input type="password" id="pCurrPwd" placeholder="Current password">
+          </div>
+          <div class="pf-group">
+            <label>New Password</label>
+            <input type="password" id="pNewPwd" placeholder="Min 6 characters">
+          </div>
+          <div class="pf-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="pConfirmPwd" placeholder="Re-enter new password">
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <span class="save-bar-msg">Use a strong password</span>
+        <button class="btn-save" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="changePassword()"><i class="fas fa-key"></i> Change Password</button>
+      </div>
+    </div>
+
+  </div><!-- end ps-main -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/main.js"></script>
+  <script src="js/profile.js"></script>
+  <script>
+    function patientLogout() {
+      const session = getCurrentUser();
+      if (session && session.token) {
+        fetch(API_BASE + '/api/patients/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: session.token }) }).catch(()=>{});
+      }
+      clearCurrentUser();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
