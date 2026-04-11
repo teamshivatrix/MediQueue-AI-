@@ -94,67 +94,108 @@ function applyAdminTranslations(root = document) {
 }
 
 function buildAdminLanguageModal() {
-  if (document.getElementById('adminLanguageModalOverlay')) return;
+  const existing = document.getElementById('adminLanguageModalOverlay');
+  if (existing) existing.remove();
+
+  const currentLang = getAdminLanguage();
+
   const overlay = document.createElement('div');
   overlay.id = 'adminLanguageModalOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(4px);z-index:5500;display:none;align-items:center;justify-content:center;padding:16px;';
   overlay.innerHTML = `
-    <div style="width:100%;max-width:660px;background:white;border-radius:18px;padding:18px;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
-      <h3 style="margin:0 0 0.35rem;font-size:1.25rem;font-weight:800;" data-i18n="lang.choose"></h3>
-      <p style="margin:0 0 0.8rem;color:#64748b;" data-i18n="lang.subtitle"></p>
-      <div style="font-size:0.8rem;color:#0e7490;font-weight:700;margin-bottom:0.5rem;" data-i18n="lang.quick"></div>
-      <div id="adminLangQuick" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:0.9rem;"></div>
-      <div style="font-size:0.8rem;color:#0e7490;font-weight:700;margin-bottom:0.5rem;" data-i18n="lang.more"></div>
-      <select id="adminLangSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid #cbd5e1;margin-bottom:0.9rem;"></select>
-      <div style="display:flex;justify-content:flex-end;">
-        <button id="adminLangContinue" class="btn-primary btn-sm" type="button" data-i18n="lang.continue"></button>
+    <div style="width:100%;max-width:560px;background:white;border-radius:18px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem;">
+        <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0891b2,#0e7490);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;flex-shrink:0;">
+          <i class="fas fa-language"></i>
+        </div>
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800;margin:0;">Choose Language / भाषा चुनें</h2>
+          <p style="font-size:0.8rem;color:#64748b;margin:0;">Select your preferred language</p>
+        </div>
+        <button onclick="document.getElementById('adminLanguageModalOverlay').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748b;padding:4px;line-height:1;">✕</button>
       </div>
+      <div id="adminLangGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:360px;overflow-y:auto;"></div>
     </div>
   `;
   document.body.appendChild(overlay);
 
-  const quickWrap = document.getElementById('adminLangQuick');
-  ['en', 'hi', 'ta', 'te'].forEach((code) => {
-    const lang = ADMIN_LANG_OPTIONS.find((l) => l.code === code);
-    if (!lang) return;
+  const grid = document.getElementById('adminLangGrid');
+  ADMIN_LANG_OPTIONS.forEach((lang) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'btn-outline btn-sm';
-    btn.style.justifyContent = 'center';
-    btn.textContent = `${lang.native} (${lang.label})`;
+    const isActive = lang.code === currentLang;
+    btn.style.cssText = `display:flex;align-items:center;gap:10px;padding:0.7rem 1rem;border-radius:12px;border:2px solid ${isActive ? '#0891b2' : '#e2e8f0'};background:${isActive ? '#ecfeff' : 'white'};cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:left;width:100%;`;
+    btn.innerHTML = `
+      <span style="font-size:1.05rem;font-weight:700;color:#0f172a;">${lang.native}</span>
+      <span style="font-size:0.72rem;color:#64748b;">${lang.label}</span>
+      ${isActive ? '<i class="fas fa-check-circle" style="margin-left:auto;color:#0891b2;font-size:1rem;"></i>' : ''}
+    `;
+    btn.onmouseover = () => { if (!isActive) btn.style.borderColor = '#94a3b8'; };
+    btn.onmouseout  = () => { if (!isActive) btn.style.borderColor = '#e2e8f0'; };
     btn.onclick = () => {
-      const select = document.getElementById('adminLangSelect');
-      select.value = code;
+      overlay.style.display = 'none';
+      applyGoogleTranslateAdmin(lang.code);
     };
-    quickWrap.appendChild(btn);
+    grid.appendChild(btn);
   });
+}
 
-  const select = document.getElementById('adminLangSelect');
-  ADMIN_LANG_OPTIONS.forEach((lang) => {
-    const option = document.createElement('option');
-    option.value = lang.code;
-    option.textContent = `${lang.native} - ${lang.label}`;
-    select.appendChild(option);
-  });
+function applyGoogleTranslateAdmin(langCode) {
+  localStorage.setItem(ADMIN_LANG_STORAGE_KEY, langCode);
+  if (langCode === 'en') {
+    sessionStorage.removeItem('mq_admin_translated_lang');
+    window.location.reload();
+    return;
+  }
+  sessionStorage.setItem('mq_admin_translated_lang', langCode);
+  translatePageContentAdmin(langCode);
+}
 
-  document.getElementById('adminLangContinue').onclick = () => {
-    localStorage.setItem(ADMIN_LANG_STORAGE_KEY, select.value);
-    document.documentElement.lang = select.value;
-    applyAdminTranslations(document);
-    overlay.style.display = 'none';
-  };
+async function translatePageContentAdmin(targetLang) {
+  if (targetLang === 'en') return;
+  const walker = document.createTreeWalker(
+    document.body, NodeFilter.SHOW_TEXT,
+    { acceptNode(node) {
+      const tag = node.parentElement && node.parentElement.tagName;
+      if (['SCRIPT','STYLE','NOSCRIPT','TEXTAREA'].includes(tag)) return NodeFilter.FILTER_REJECT;
+      if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
+      return NodeFilter.FILTER_ACCEPT;
+    }}
+  );
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  const chunkSize = 10;
+  for (let i = 0; i < nodes.length; i += chunkSize) {
+    const chunk = nodes.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (node) => {
+      const original = node.nodeValue.trim();
+      if (!original || original.length < 2) return;
+      try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(original)}&langpair=en|${targetLang}`);
+        const data = await res.json();
+        if (data.responseStatus === 200 && data.responseData.translatedText) {
+          node.nodeValue = data.responseData.translatedText;
+        }
+      } catch (_) {}
+    }));
+  }
+}
+
+function injectGoogleTranslateScriptAdmin() {
+  // No-op: Google Translate widget removed to prevent layout issues
 }
 
 function renderAdminLanguageControl() {
   if (document.getElementById('adminLangControlBtn')) return;
-  const navContainer = document.querySelector('.nav-container');
+
+  const currentLang = getAdminLanguage();
+  const langObj = ADMIN_LANG_OPTIONS.find(l => l.code === currentLang) || ADMIN_LANG_OPTIONS[0];
 
   const wrap = document.createElement('div');
-  wrap.style.display = 'flex';
-  wrap.style.alignItems = 'center';
-  wrap.style.gap = '8px';
-  wrap.innerHTML = `<button id="adminLangControlBtn" class="btn-outline btn-sm" type="button" style="padding:0.45rem 0.8rem;"><i class="fas fa-language"></i> <span id="adminLangFloatingLabel"></span></button>`;
+  wrap.style.cssText = 'display:flex;align-items:center;';
+  wrap.innerHTML = `<button id="adminLangControlBtn" class="btn-outline btn-sm" type="button" style="padding:0.45rem 0.8rem;display:flex;align-items:center;gap:6px;"><i class="fas fa-language"></i> <span id="adminLangFloatingLabel">${langObj.native}</span></button>`;
 
+  const navContainer = document.querySelector('.nav-container');
   if (navContainer) {
     const mobileToggle = navContainer.querySelector('.mobile-toggle');
     if (mobileToggle) navContainer.insertBefore(wrap, mobileToggle);
@@ -164,21 +205,14 @@ function renderAdminLanguageControl() {
     if (langWrapper) {
       langWrapper.appendChild(wrap);
     } else {
-      wrap.style.position = 'fixed';
-      wrap.style.top = '14px';
-      wrap.style.right = '14px';
-      wrap.style.zIndex = '5600';
+      wrap.style.cssText += 'position:fixed;top:14px;right:14px;z-index:5600;';
       document.body.appendChild(wrap);
     }
   }
 
   wrap.querySelector('#adminLangControlBtn').onclick = () => {
     buildAdminLanguageModal();
-    const overlay = document.getElementById('adminLanguageModalOverlay');
-    const select = document.getElementById('adminLangSelect');
-    select.value = getAdminLanguage();
-    applyAdminTranslations(overlay);
-    overlay.style.display = 'flex';
+    document.getElementById('adminLanguageModalOverlay').style.display = 'flex';
   };
 }
 
@@ -186,6 +220,11 @@ function initAdminLanguageExperience() {
   renderAdminLanguageControl();
   document.documentElement.lang = getAdminLanguage();
   applyAdminTranslations(document);
+
+  const translatedLang = sessionStorage.getItem('mq_admin_translated_lang');
+  if (translatedLang && translatedLang !== 'en') {
+    translatePageContentAdmin(translatedLang);
+  }
 }
 
 // ---- Toast Notifications ----

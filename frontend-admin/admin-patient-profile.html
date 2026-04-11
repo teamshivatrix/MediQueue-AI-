@@ -113,6 +113,8 @@
       <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
       <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
       <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+      <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+      <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
       <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
     </ul>
     <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -163,9 +165,113 @@
         const data = await res.json();
         if (!data.success) throw new Error(data.message);
         renderProfile(data.patient);
+        // Load appointments, prescriptions, lab reports in parallel
+        loadPatientHistory(data.patient.phone);
       } catch (e) {
         document.getElementById('profileBody').innerHTML = '<p style="text-align:center;color:#ef4444;padding:3rem;">Failed to load patient profile.</p>';
       }
+    }
+
+    async function loadPatientHistory(phone) {
+      if (!phone) return;
+      const cleanPhone = String(phone).replace(/\D/g, '');
+
+      const [aptsRes, prescsRes, labsRes] = await Promise.allSettled([
+        fetch(API_BASE + '/api/appointments?phone=' + cleanPhone),
+        fetch(API_BASE + '/api/prescriptions?phone=' + cleanPhone),
+        fetch(API_BASE + '/api/lab-reports?phone=' + cleanPhone)
+      ]);
+
+      const apts   = aptsRes.status   === 'fulfilled' ? await aptsRes.value.json().catch(()=>[])   : [];
+      const prescs = prescsRes.status === 'fulfilled' ? await prescsRes.value.json().catch(()=>[]) : [];
+      const labs   = labsRes.status   === 'fulfilled' ? await labsRes.value.json().catch(()=>[])   : [];
+
+      renderHistory(apts, prescs, labs);
+    }
+
+    function renderHistory(apts, prescs, labs) {
+      const body = document.getElementById('profileBody');
+
+      // Appointments section
+      const aptsHtml = `
+        <div class="ps-card" style="margin-top:1.5rem;">
+          <div class="ps-card-header">
+            <i class="fas fa-calendar-check" style="color:#0891b2;"></i>
+            <h3>Appointment History <span style="font-size:0.75rem;font-weight:600;color:#64748b;margin-left:6px;">(${apts.length} total)</span></h3>
+          </div>
+          <div class="ps-card-body" style="padding:0;">
+            ${!apts.length ? '<p style="text-align:center;color:#94a3b8;padding:1.5rem;">No appointments found</p>' :
+              apts.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(apt => `
+                <div style="display:flex;align-items:center;gap:1rem;padding:0.9rem 1.4rem;border-bottom:1px solid #f8fafc;flex-wrap:wrap;">
+                  <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0891b2,#0e7490);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.85rem;flex-shrink:0;">#${apt.tokenNumber}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${apt.department} <span style="color:#64748b;font-weight:400;">· ${apt.doctorName}</span></div>
+                    <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${apt.date} · ${formatTime(apt.timeSlot)} · ${apt.symptoms ? apt.symptoms.substring(0,60)+'...' : ''}</div>
+                  </div>
+                  <span style="font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;background:${apt.status==='completed'?'#d1fae5':apt.status==='in-progress'?'#fef3c7':'#f1f5f9'};color:${apt.status==='completed'?'#065f46':apt.status==='in-progress'?'#92400e':'#475569'};">${apt.status}</span>
+                </div>`).join('')}
+          </div>
+        </div>`;
+
+      // Prescriptions section
+      const prescsHtml = `
+        <div class="ps-card" style="margin-top:1.5rem;">
+          <div class="ps-card-header">
+            <i class="fas fa-file-prescription" style="color:#6366f1;"></i>
+            <h3>Prescriptions <span style="font-size:0.75rem;font-weight:600;color:#64748b;margin-left:6px;">(${prescs.length} total)</span></h3>
+          </div>
+          <div class="ps-card-body" style="padding:0;">
+            ${!prescs.length ? '<p style="text-align:center;color:#94a3b8;padding:1.5rem;">No prescriptions found</p>' :
+              prescs.map(p => `
+                <div style="padding:1rem 1.4rem;border-bottom:1px solid #f8fafc;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;">
+                    <div>
+                      <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${p.diagnosis}</div>
+                      <div style="font-size:0.78rem;color:#0891b2;margin-top:2px;"><i class="fas fa-user-md"></i> ${p.doctorName} · ${p.visitDate}</div>
+                    </div>
+                    ${p.nextVisitDate ? `<span style="font-size:0.72rem;background:#f0fdf4;color:#059669;padding:3px 10px;border-radius:999px;font-weight:600;"><i class="fas fa-calendar"></i> Next: ${p.nextVisitDate}</span>` : ''}
+                  </div>
+                  ${p.medicines && p.medicines.length ? `
+                    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;">
+                      ${p.medicines.filter(m=>m.name).map(m=>`
+                        <span style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:3px 10px;font-size:0.78rem;color:#374151;">
+                          <i class="fas fa-capsules" style="color:#0891b2;"></i> ${m.name} ${m.dosage?'· '+m.dosage:''} ${m.duration?'· '+m.duration:''}
+                        </span>`).join('')}
+                    </div>` : ''}
+                  ${p.instructions ? `<div style="font-size:0.78rem;color:#64748b;margin-top:0.4rem;"><i class="fas fa-info-circle" style="color:#f59e0b;"></i> ${p.instructions}</div>` : ''}
+                  ${p.attachments && p.attachments.length ? `
+                    <div style="margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+                      ${p.attachments.map(a=>`<a href="${a.url}" target="_blank" style="font-size:0.75rem;color:#059669;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:2px 8px;text-decoration:none;"><i class="fas fa-paperclip"></i> ${a.name||'File'}</a>`).join('')}
+                    </div>` : ''}
+                </div>`).join('')}
+          </div>
+        </div>`;
+
+      // Lab Reports section
+      const labsHtml = `
+        <div class="ps-card" style="margin-top:1.5rem;">
+          <div class="ps-card-header">
+            <i class="fas fa-flask" style="color:#059669;"></i>
+            <h3>Lab Reports <span style="font-size:0.75rem;font-weight:600;color:#64748b;margin-left:6px;">(${labs.length} total)</span></h3>
+          </div>
+          <div class="ps-card-body" style="padding:0;">
+            ${!labs.length ? '<p style="text-align:center;color:#94a3b8;padding:1.5rem;">No lab reports found</p>' :
+              labs.map(r => `
+                <div style="display:flex;align-items:center;gap:1rem;padding:0.9rem 1.4rem;border-bottom:1px solid #f8fafc;flex-wrap:wrap;">
+                  <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#059669,#047857);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;flex-shrink:0;"><i class="fas fa-flask"></i></div>
+                  <div style="flex:1;">
+                    <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${r.reportType}</div>
+                    <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.date} · ${r.uploadedBy} ${r.notes?'· '+r.notes:''}</div>
+                  </div>
+                  <div style="display:flex;gap:0.4rem;">
+                    <a href="${r.fileUrl}" target="_blank" class="btn-primary btn-sm" style="font-size:0.75rem;padding:0.3rem 0.7rem;"><i class="fas fa-eye"></i> View</a>
+                    <a href="${r.fileUrl}" download class="btn-outline btn-sm" style="font-size:0.75rem;padding:0.3rem 0.7rem;"><i class="fas fa-download"></i></a>
+                  </div>
+                </div>`).join('')}
+          </div>
+        </div>`;
+
+      body.insertAdjacentHTML('beforeend', aptsHtml + prescsHtml + labsHtml);
     }
 
     function val(v, fallback) {
@@ -273,3 +379,4 @@
   </script>
 </body>
 </html>
+

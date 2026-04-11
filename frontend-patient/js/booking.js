@@ -4,8 +4,9 @@ let allDoctors = [];
 let selectedDoctor = null;
 
 function defaultSlots() {
+  // 24/7 slots — every 30 min from 00:00 to 23:30
   const slots = [];
-  for (let h = 9; h <= 16; h++) {
+  for (let h = 0; h < 24; h++) {
     const hh = String(h).padStart(2, '0');
     slots.push(`${hh}:00`, `${hh}:30`);
   }
@@ -131,19 +132,17 @@ function loadTimeSlots() {
   const timeSlotSelect = document.getElementById('timeSlot');
 
   timeSlotSelect.innerHTML = '<option value="">Select time slot</option>';
-
   if (!doctorId) return;
 
   selectedDoctor = allDoctors.find(d => d._id === doctorId);
-  if (!selectedDoctor || !selectedDoctor.availableSlots) return;
+  if (!selectedDoctor) return;
 
-  const validSlots = getFilteredFutureSlots(selectedDoctor.availableSlots);
-  if (validSlots.length === 0) {
-    timeSlotSelect.innerHTML = '<option value="">No future slots available</option>';
-    return;
-  }
+  // Use doctor's slots or full 24/7 default
+  const slots = (Array.isArray(selectedDoctor.availableSlots) && selectedDoctor.availableSlots.length > 0)
+    ? selectedDoctor.availableSlots
+    : defaultSlots();
 
-  validSlots.forEach(slot => {
+  slots.forEach(slot => {
     const option = document.createElement('option');
     option.value = slot;
     option.textContent = formatTime(slot);

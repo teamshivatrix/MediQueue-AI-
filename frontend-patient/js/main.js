@@ -114,7 +114,64 @@ const TRANSLATIONS = {
     'emergency.title': 'Emergency Appointment',
     'emergency.subtitle': 'Quick booking for urgent and critical cases (no login required)',
     'emergency.nav': 'Emergency',
-    'emergency.book': 'Book Emergency Appointment'
+    'emergency.book': 'Book Emergency Appointment',
+    'nav.home': 'Home',
+    'nav.book': 'Book',
+    'nav.analyzer': 'AI Analyzer',
+    'nav.chatbot': 'Chatbot',
+    'nav.queue': 'Queue',
+    'nav.profile': 'My Profile',
+    'nav.emergency': 'Emergency',
+    'nav.logout': 'Logout',
+    'booking.title': 'Book Appointment',
+    'booking.subtitle': 'Fill in your details and book your hospital visit in minutes',
+    'booking.patientInfo': 'Patient Information',
+    'booking.allRequired': 'All fields are required for booking',
+    'booking.name': 'Patient Name',
+    'booking.age': 'Age',
+    'booking.phone': 'Phone Number',
+    'booking.date': 'Appointment Date',
+    'booking.symptoms': 'Symptoms',
+    'booking.department': 'Department',
+    'booking.doctor': 'Select Doctor',
+    'booking.timeSlot': 'Time Slot',
+    'booking.reset': 'Reset',
+    'booking.submit': 'Book Appointment',
+    'booking.success': 'Appointment Booked!',
+    'booking.viewQueue': 'View Queue',
+    'booking.bookAnother': 'Book Another',
+    'booking.aiSuggest': 'AI: Suggest Department',
+    'queue.nowServing': 'Now Serving',
+    'queue.nextInQueue': 'Next in Queue',
+    'queue.waiting': 'Waiting',
+    'queue.completed': 'Completed',
+    'queue.totalToday': 'Total Today',
+    'queue.waitingQueue': 'Waiting Queue',
+    'queue.backHome': 'Back to Home',
+    'analyzer.title': 'AI Symptom Analyzer',
+    'analyzer.subtitle': 'Describe your symptoms and our AI will recommend the right department',
+    'analyzer.describe': 'Describe Your Symptoms',
+    'analyzer.placeholder': 'Example: I have been experiencing chest pain...',
+    'analyzer.quickSelect': 'Quick Select:',
+    'analyzer.analyzeBtn': 'Analyze Symptoms with AI',
+    'analyzer.confidence': 'AI Confidence',
+    'analyzer.analysis': 'AI Analysis',
+    'analyzer.recommendations': 'Recommendations',
+    'analyzer.bookBtn': 'Book Appointment',
+    'analyzer.analyzeAgain': 'Analyze Again',
+    'chatbot.title': 'AI Hospital Assistant',
+    'chatbot.subtitle': 'Ask anything about our hospital services, appointments, and more',
+    'chatbot.placeholder': 'Type your message...',
+    'chatbot.online': 'Online',
+    'profile.title': 'My Profile',
+    'profile.basicInfo': 'Basic Information',
+    'profile.address': 'Address',
+    'profile.emergencyContact': 'Emergency Contact',
+    'profile.medicalInfo': 'Medical Information',
+    'profile.changePassword': 'Change Password',
+    'profile.save': 'Save',
+    'profile.incomplete': 'Profile Incomplete',
+    'profile.complete': 'Profile Complete'
   },
   hi: {
     'lang.choose': 'अपनी भाषा चुनें',
@@ -170,7 +227,64 @@ const TRANSLATIONS = {
     'emergency.title': 'आपातकालीन अपॉइंटमेंट',
     'emergency.subtitle': 'तत्काल और गंभीर मामलों के लिए जल्दी बुकिंग',
     'emergency.nav': 'आपातकाल',
-    'emergency.book': 'आपातकालीन अपॉइंटमेंट बुक करें'
+    'emergency.book': 'आपातकालीन अपॉइंटमेंट बुक करें',
+    'nav.home': 'होम',
+    'nav.book': 'बुक',
+    'nav.analyzer': 'एआई विश्लेषक',
+    'nav.chatbot': 'चैटबॉट',
+    'nav.queue': 'क्यू',
+    'nav.profile': 'मेरी प्रोफ़ाइल',
+    'nav.emergency': 'आपातकाल',
+    'nav.logout': 'लॉगआउट',
+    'booking.title': 'अपॉइंटमेंट बुक करें',
+    'booking.subtitle': 'अपनी जानकारी भरें और मिनटों में अस्पताल विज़िट बुक करें',
+    'booking.patientInfo': 'रोगी की जानकारी',
+    'booking.allRequired': 'बुकिंग के लिए सभी फ़ील्ड आवश्यक हैं',
+    'booking.name': 'रोगी का नाम',
+    'booking.age': 'आयु',
+    'booking.phone': 'फ़ोन नंबर',
+    'booking.date': 'अपॉइंटमेंट तिथि',
+    'booking.symptoms': 'लक्षण',
+    'booking.department': 'विभाग',
+    'booking.doctor': 'डॉक्टर चुनें',
+    'booking.timeSlot': 'समय स्लॉट',
+    'booking.reset': 'रीसेट',
+    'booking.submit': 'अपॉइंटमेंट बुक करें',
+    'booking.success': 'अपॉइंटमेंट बुक हो गई!',
+    'booking.viewQueue': 'क्यू देखें',
+    'booking.bookAnother': 'और बुक करें',
+    'booking.aiSuggest': 'एआई: विभाग सुझाएं',
+    'queue.nowServing': 'अभी सेवा में',
+    'queue.nextInQueue': 'अगला क्यू में',
+    'queue.waiting': 'प्रतीक्षारत',
+    'queue.completed': 'पूर्ण',
+    'queue.totalToday': 'आज कुल',
+    'queue.waitingQueue': 'प्रतीक्षा सूची',
+    'queue.backHome': 'होम पर वापस',
+    'analyzer.title': 'एआई लक्षण विश्लेषक',
+    'analyzer.subtitle': 'अपने लक्षण बताएं और एआई सही विभाग सुझाएगा',
+    'analyzer.describe': 'अपने लक्षण बताएं',
+    'analyzer.placeholder': 'उदाहरण: मुझे 2 दिनों से सीने में दर्द है...',
+    'analyzer.quickSelect': 'त्वरित चयन:',
+    'analyzer.analyzeBtn': 'एआई से लक्षण विश्लेषण करें',
+    'analyzer.confidence': 'एआई विश्वास',
+    'analyzer.analysis': 'एआई विश्लेषण',
+    'analyzer.recommendations': 'सिफारिशें',
+    'analyzer.bookBtn': 'अपॉइंटमेंट बुक करें',
+    'analyzer.analyzeAgain': 'फिर से विश्लेषण करें',
+    'chatbot.title': 'एआई हॉस्पिटल असिस्टेंट',
+    'chatbot.subtitle': 'हमारी अस्पताल सेवाओं के बारे में कुछ भी पूछें',
+    'chatbot.placeholder': 'अपना संदेश टाइप करें...',
+    'chatbot.online': 'ऑनलाइन',
+    'profile.title': 'मेरी प्रोफ़ाइल',
+    'profile.basicInfo': 'बुनियादी जानकारी',
+    'profile.address': 'पता',
+    'profile.emergencyContact': 'आपातकालीन संपर्क',
+    'profile.medicalInfo': 'चिकित्सा जानकारी',
+    'profile.changePassword': 'पासवर्ड बदलें',
+    'profile.save': 'सहेजें',
+    'profile.incomplete': 'प्रोफ़ाइल अधूरी',
+    'profile.complete': 'प्रोफ़ाइल पूर्ण'
   },
   ta: {
     'lang.choose': 'உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்',
@@ -226,7 +340,64 @@ const TRANSLATIONS = {
     'emergency.title': 'அவசர முன்பதிவு',
     'emergency.subtitle': 'அவசர நிலைக்கு உடனடி முன்பதிவு',
     'emergency.nav': 'அவசரம்',
-    'emergency.book': 'அவசர முன்பதிவை பதிவு செய்'
+    'emergency.book': 'அவசர முன்பதிவை பதிவு செய்',
+    'nav.home': 'முகப்பு',
+    'nav.book': 'முன்பதிவு',
+    'nav.analyzer': 'AI பகுப்பாய்வு',
+    'nav.chatbot': 'சாட்பாட்',
+    'nav.queue': 'வரிசை',
+    'nav.profile': 'என் சுயவிவரம்',
+    'nav.emergency': 'அவசரம்',
+    'nav.logout': 'வெளியேறு',
+    'booking.title': 'நியமனம் பதிவு',
+    'booking.subtitle': 'விவரங்களை நிரப்பி நிமிடங்களில் மருத்துவமனை வருகையை பதிவு செய்யுங்கள்',
+    'booking.patientInfo': 'நோயாளர் தகவல்',
+    'booking.allRequired': 'பதிவுக்கு அனைத்து புலங்களும் தேவை',
+    'booking.name': 'நோயாளர் பெயர்',
+    'booking.age': 'வயது',
+    'booking.phone': 'தொலைபேசி எண்',
+    'booking.date': 'நியமன தேதி',
+    'booking.symptoms': 'அறிகுறிகள்',
+    'booking.department': 'துறை',
+    'booking.doctor': 'மருத்துவர் தேர்வு',
+    'booking.timeSlot': 'நேர இடம்',
+    'booking.reset': 'மீட்டமை',
+    'booking.submit': 'நியமனம் பதிவு',
+    'booking.success': 'நியமனம் பதிவாகிவிட்டது!',
+    'booking.viewQueue': 'வரிசை பார்',
+    'booking.bookAnother': 'மேலும் பதிவு',
+    'booking.aiSuggest': 'AI: துறை பரிந்துரை',
+    'queue.nowServing': 'இப்போது சேவையில்',
+    'queue.nextInQueue': 'வரிசையில் அடுத்தது',
+    'queue.waiting': 'காத்திருக்கிறது',
+    'queue.completed': 'முடிந்தது',
+    'queue.totalToday': 'இன்று மொத்தம்',
+    'queue.waitingQueue': 'காத்திருப்பு வரிசை',
+    'queue.backHome': 'முகப்புக்கு திரும்பு',
+    'analyzer.title': 'AI அறிகுறி பகுப்பாய்வு',
+    'analyzer.subtitle': 'உங்கள் அறிகுறிகளை விவரிக்கவும், AI சரியான துறையை பரிந்துரைக்கும்',
+    'analyzer.describe': 'உங்கள் அறிகுறிகளை விவரிக்கவும்',
+    'analyzer.placeholder': 'உதாரணம்: எனக்கு 2 நாட்களாக மார்பு வலி உள்ளது...',
+    'analyzer.quickSelect': 'விரைவு தேர்வு:',
+    'analyzer.analyzeBtn': 'AI மூலம் அறிகுறிகளை பகுப்பாய்வு செய்',
+    'analyzer.confidence': 'AI நம்பிக்கை',
+    'analyzer.analysis': 'AI பகுப்பாய்வு',
+    'analyzer.recommendations': 'பரிந்துரைகள்',
+    'analyzer.bookBtn': 'நியமனம் பதிவு',
+    'analyzer.analyzeAgain': 'மீண்டும் பகுப்பாய்வு',
+    'chatbot.title': 'AI மருத்துவமனை உதவியாளர்',
+    'chatbot.subtitle': 'எங்கள் மருத்துவமனை சேவைகளைப் பற்றி எதையும் கேளுங்கள்',
+    'chatbot.placeholder': 'உங்கள் செய்தியை தட்டச்சு செய்யுங்கள்...',
+    'chatbot.online': 'ஆன்லைன்',
+    'profile.title': 'என் சுயவிவரம்',
+    'profile.basicInfo': 'அடிப்படை தகவல்',
+    'profile.address': 'முகவரி',
+    'profile.emergencyContact': 'அவசர தொடர்பு',
+    'profile.medicalInfo': 'மருத்துவ தகவல்',
+    'profile.changePassword': 'கடவுச்சொல் மாற்று',
+    'profile.save': 'சேமி',
+    'profile.incomplete': 'சுயவிவரம் முழுமையடையவில்லை',
+    'profile.complete': 'சுயவிவரம் முழுமையானது'
   },
   te: {
     'lang.choose': 'మీ భాషను ఎంచుకోండి',
@@ -418,118 +589,172 @@ async function syncLanguagePreference(lang) {
   }
 }
 
-function speakLanguagePrompt() {
-  if (!window.speechSynthesis) return;
-  const utter = new SpeechSynthesisUtterance(t('lang.choose'));
-  utter.lang = getCurrentLanguage();
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
+// ---- Google Translate Integration ----
+// Uses cookie-based approach — no widget injected, no layout breaking.
+// Sets googtrans cookie and reloads; Google's CDN handles the translation.
+
+function applyGoogleTranslate(langCode) {
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  const value = langCode === 'en' ? '/en/en' : `/en/${langCode}`;
+
+  // Must set cookie on both domain variants for Google Translate to pick it up
+  if (!isLocalhost) {
+    document.cookie = `googtrans=${value};path=/;domain=.${hostname}`;
+  }
+  document.cookie = `googtrans=${value};path=/;domain=${hostname}`;
+  document.cookie = `googtrans=${value};path=/`;
+
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, langCode);
+  window.location.reload();
+}
+
+function getCurrentGoogleLang() {
+  const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (saved) return saved;
+  const match = document.cookie.match(/googtrans=\/en\/([a-z]{2})/);
+  return match ? match[1] : 'en';
+}
+
+// ---- Language Translation (MyMemory API — no widget, no layout break) ----
+
+function getCurrentGoogleLang() {
+  return localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'en';
+}
+
+function applyGoogleTranslate(langCode) {
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, langCode);
+  if (langCode === 'en') {
+    // Restore original — reload without translation
+    sessionStorage.removeItem('mq_translated_lang');
+    window.location.reload();
+    return;
+  }
+  sessionStorage.setItem('mq_translated_lang', langCode);
+  translatePageContent(langCode);
+}
+
+async function translatePageContent(targetLang) {
+  if (targetLang === 'en') return;
+
+  // Collect all text nodes in body (skip script/style/noscript)
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const tag = node.parentElement && node.parentElement.tagName;
+        if (['SCRIPT','STYLE','NOSCRIPT','TEXTAREA'].includes(tag)) return NodeFilter.FILTER_REJECT;
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  // Batch translate in chunks of 10
+  const chunkSize = 10;
+  for (let i = 0; i < nodes.length; i += chunkSize) {
+    const chunk = nodes.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (node) => {
+      const original = node.nodeValue.trim();
+      if (!original || original.length < 2) return;
+      try {
+        const res = await fetch(
+          `https://api.mymemory.translated.net/get?q=${encodeURIComponent(original)}&langpair=en|${targetLang}`
+        );
+        const data = await res.json();
+        if (data.responseStatus === 200 && data.responseData.translatedText) {
+          node.nodeValue = data.nodeValue = data.responseData.translatedText;
+        }
+      } catch (_) {}
+    }));
+  }
 }
 
 function buildLanguageModal() {
-  if (document.getElementById('languageModalOverlay')) return;
+  // Remove old modal so it rebuilds fresh with correct active state each time
+  const existing = document.getElementById('languageModalOverlay');
+  if (existing) existing.remove();
+
+  const currentLang = getCurrentGoogleLang();
 
   const overlay = document.createElement('div');
   overlay.id = 'languageModalOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.75);backdrop-filter:blur(6px);z-index:5000;display:none;align-items:center;justify-content:center;padding:16px;';
   overlay.innerHTML = `
-    <div style="width:100%;max-width:720px;background:white;border-radius:20px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.35);">
-      <h2 id="languageModalTitle" style="font-size:1.5rem;font-weight:800;margin:0 0 0.4rem;"></h2>
-      <p id="languageModalSub" style="color:#475569;margin:0 0 1rem;"></p>
-      <div style="font-size:0.82rem;font-weight:700;color:#0e7490;margin-bottom:0.5rem;" data-i18n="lang.quick"></div>
-      <div id="langQuickButtons" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1rem;"></div>
-      <div style="font-size:0.82rem;font-weight:700;color:#0e7490;margin-bottom:0.5rem;" data-i18n="lang.more"></div>
-      <select id="langMoreSelect" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:0.5rem;"></select>
-      <div id="langDetected" style="font-size:0.78rem;color:#64748b;margin-bottom:0.8rem;"></div>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:0.9rem;font-size:0.88rem;color:#0f172a;">
-        <input type="checkbox" id="easyModeToggle" />
-        <span id="easyModeLabelText"></span>
-      </label>
-      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-        <button id="langVoiceBtn" class="btn-outline btn-sm" type="button"></button>
-        <button id="langContinueBtn" class="btn-primary" type="button"></button>
+    <div style="width:100%;max-width:560px;background:white;border-radius:20px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,0.35);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.2rem;">
+        <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0891b2,#0e7490);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;flex-shrink:0;">
+          <i class="fas fa-language"></i>
+        </div>
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800;margin:0;">Choose Language / भाषा चुनें</h2>
+          <p style="font-size:0.8rem;color:#64748b;margin:0;">Select your preferred language</p>
+        </div>
+        <button onclick="document.getElementById('languageModalOverlay').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#64748b;padding:4px;line-height:1;">✕</button>
       </div>
+      <div id="langGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:360px;overflow-y:auto;"></div>
     </div>
   `;
   document.body.appendChild(overlay);
 
-  const quickCodes = ['en', 'hi', 'ta', 'te'];
-  const quickWrap = document.getElementById('langQuickButtons');
-  quickCodes.forEach((code) => {
-    const lang = getAvailableLanguage(code);
+  const grid = document.getElementById('langGrid');
+  LANGUAGE_OPTIONS.forEach((lang) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'btn-outline btn-sm';
-    btn.style.justifyContent = 'center';
-    btn.dataset.code = code;
-    btn.textContent = `${lang.native} (${lang.label})`;
+    const isActive = lang.code === currentLang;
+    btn.style.cssText = `display:flex;align-items:center;gap:10px;padding:0.7rem 1rem;border-radius:12px;border:2px solid ${isActive ? '#0891b2' : '#e2e8f0'};background:${isActive ? '#ecfeff' : 'white'};cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:left;width:100%;`;
+    btn.innerHTML = `
+      <span style="font-size:1.05rem;font-weight:700;color:#0f172a;">${lang.native}</span>
+      <span style="font-size:0.72rem;color:#64748b;">${lang.label}</span>
+      ${isActive ? '<i class="fas fa-check-circle" style="margin-left:auto;color:#0891b2;font-size:1rem;"></i>' : ''}
+    `;
+    btn.onmouseover = () => { if (!isActive) btn.style.borderColor = '#94a3b8'; };
+    btn.onmouseout  = () => { if (!isActive) btn.style.borderColor = '#e2e8f0'; };
     btn.onclick = () => {
-      document.getElementById('langMoreSelect').value = code;
+      overlay.style.display = 'none';
+      applyGoogleTranslate(lang.code);
     };
-    quickWrap.appendChild(btn);
+    grid.appendChild(btn);
   });
-
-  const select = document.getElementById('langMoreSelect');
-  LANGUAGE_OPTIONS.forEach((lang) => {
-    const opt = document.createElement('option');
-    opt.value = lang.code;
-    opt.textContent = `${lang.native} - ${lang.label}`;
-    select.appendChild(opt);
-  });
-
-  document.getElementById('langVoiceBtn').onclick = speakLanguagePrompt;
-  document.getElementById('langContinueBtn').onclick = async () => {
-    const lang = select.value;
-    const easy = document.getElementById('easyModeToggle').checked;
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
-    applyEasyMode(easy);
-    await syncLanguagePreference(lang);
-    setLanguage(lang, true);
-    overlay.style.display = 'none';
-  };
 }
 
 function renderLanguageControl() {
-  const navContainer = document.querySelector('.nav-container');
-  if (!navContainer || document.getElementById('langControlBtn')) return;
+  if (document.getElementById('langControlBtn')) return;
+
+  const currentLang = getCurrentGoogleLang();
+  const langObj = LANGUAGE_OPTIONS.find(l => l.code === currentLang) || LANGUAGE_OPTIONS[0];
 
   const wrapper = document.createElement('div');
-  wrapper.style.display = 'flex';
-  wrapper.style.alignItems = 'center';
-  wrapper.style.gap = '8px';
+  wrapper.style.cssText = 'display:flex;align-items:center;';
   wrapper.innerHTML = `
-    <button id="langControlBtn" class="btn-outline btn-sm" type="button" style="padding:0.45rem 0.8rem;">
+    <button id="langControlBtn" class="btn-outline btn-sm" type="button" style="padding:0.45rem 0.8rem;display:flex;align-items:center;gap:6px;">
       <i class="fas fa-language"></i>
-      <span id="langFloatingLabel"></span>
+      <span id="langFloatingLabel">${langObj.native}</span>
     </button>
   `;
 
-  // Prefer dedicated slot, else fallback to before mobile-toggle
   const slot = document.getElementById('langControlSlot');
   if (slot) {
     slot.appendChild(wrapper);
   } else {
-    const mobileToggle = navContainer.querySelector('.mobile-toggle');
-    if (mobileToggle) {
-      navContainer.insertBefore(wrapper, mobileToggle);
+    const navContainer = document.querySelector('.nav-container');
+    if (navContainer) {
+      const mobileToggle = navContainer.querySelector('.mobile-toggle');
+      if (mobileToggle) navContainer.insertBefore(wrapper, mobileToggle);
+      else navContainer.appendChild(wrapper);
     } else {
-      navContainer.appendChild(wrapper);
+      wrapper.style.cssText += 'position:fixed;top:14px;right:14px;z-index:5600;';
+      document.body.appendChild(wrapper);
     }
   }
 
   wrapper.querySelector('#langControlBtn').onclick = () => {
     buildLanguageModal();
-    const overlay = document.getElementById('languageModalOverlay');
-    const select = document.getElementById('langMoreSelect');
-    const easyToggle = document.getElementById('easyModeToggle');
-    const detected = detectBrowserLanguage();
-    select.value = getCurrentLanguage();
-    easyToggle.checked = getEasyMode();
-    const detectedLine = document.getElementById('langDetected');
-    const d = getAvailableLanguage(detected);
-    detectedLine.textContent = `${t('lang.detected')}: ${d.native} (${d.label})`;
-    overlay.style.display = 'flex';
-    applyTranslations(overlay);
+    document.getElementById('languageModalOverlay').style.display = 'flex';
   };
 }
 
@@ -538,31 +763,31 @@ function setLanguage(lang, syncRemote = false) {
   localStorage.setItem(LANGUAGE_STORAGE_KEY, finalLang);
   document.documentElement.lang = finalLang;
   applyTranslations(document);
-  if (syncRemote) {
-    syncLanguagePreference(finalLang);
-  }
+  if (syncRemote) syncLanguagePreference(finalLang);
+}
+
+function speakLanguagePrompt() {
+  if (!window.speechSynthesis) return;
+  const utter = new SpeechSynthesisUtterance('Choose your language');
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
 }
 
 function initLanguageExperience() {
   injectEasyModeStyles();
   renderLanguageControl();
-  const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  const preferred = saved || detectBrowserLanguage();
-  setLanguage(preferred, false);
   applyEasyMode(getEasyMode());
 
-  if (!saved) {
-    buildLanguageModal();
-    const overlay = document.getElementById('languageModalOverlay');
-    const select = document.getElementById('langMoreSelect');
-    const detected = detectBrowserLanguage();
-    select.value = detected;
-    const detectedLine = document.getElementById('langDetected');
-    const d = getAvailableLanguage(detected);
-    detectedLine.textContent = `${t('lang.detected')}: ${d.native} (${d.label})`;
-    document.getElementById('easyModeToggle').checked = getEasyMode();
-    applyTranslations(overlay);
-    overlay.style.display = 'flex';
+  const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (saved) {
+    document.documentElement.lang = saved;
+    applyTranslations(document);
+  }
+
+  // Re-apply translation if user had selected a non-English language
+  const translatedLang = sessionStorage.getItem('mq_translated_lang');
+  if (translatedLang && translatedLang !== 'en') {
+    translatePageContent(translatedLang);
   }
 }
 

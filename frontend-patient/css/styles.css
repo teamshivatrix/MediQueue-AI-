@@ -2699,3 +2699,5 @@ textarea.form-control {
   .services-grid { grid-template-columns: 1fr; }
   .ph-grid { grid-template-columns: 1fr; }
 }
+
+/* Google Translate widget fully removed — no CSS overrides needed */

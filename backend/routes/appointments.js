@@ -6,6 +6,27 @@ const mongoose = require('mongoose');
 let memoryAppointments = [];
 let useMemory = false;
 
+// SSE clients for real-time appointment notifications
+const appointmentSSEClients = new Set();
+
+function broadcastNewAppointment(appointment) {
+  const data = JSON.stringify(appointment);
+  appointmentSSEClients.forEach(client => {
+    try { client.write(`event: new_appointment\ndata: ${data}\n\n`); } catch (_) {}
+  });
+}
+
+// GET /api/appointments/events — SSE stream for admin notifications
+router.get('/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  res.write('event: connected\ndata: {}\n\n');
+  appointmentSSEClients.add(res);
+  req.on('close', () => appointmentSSEClients.delete(res));
+});
+
 const setMemoryMode = (val) => { useMemory = val; };
 
 // Generate unique appointment ID
@@ -106,7 +127,11 @@ router.post('/', async (req, res) => {
       const Appointment = require('../models/Appointment');
       const newAppointment = new Appointment(appointmentData);
       await newAppointment.save();
+      appointmentData._id = newAppointment._id;
     }
+
+    // Broadcast to all admin SSE clients
+    broadcastNewAppointment(appointmentData);
 
     res.status(201).json({
       message: 'Appointment booked successfully!',
@@ -121,7 +146,7 @@ router.post('/', async (req, res) => {
 // GET /api/appointments - Get all appointments
 router.get('/', async (req, res) => {
   try {
-    const { date, department, status, doctorId, priority } = req.query;
+    const { date, department, status, doctorId, priority, phone } = req.query;
     let appointments;
 
     if (useMemory) {
@@ -131,6 +156,7 @@ router.get('/', async (req, res) => {
       if (status) appointments = appointments.filter(a => a.status === status);
       if (doctorId) appointments = appointments.filter(a => a.doctorId === doctorId);
       if (priority) appointments = appointments.filter(a => a.priority === priority);
+      if (phone) appointments = appointments.filter(a => String(a.phone||'').replace(/\D/g,'') === String(phone).replace(/\D/g,''));
       appointments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else {
       const Appointment = require('../models/Appointment');
@@ -140,6 +166,7 @@ router.get('/', async (req, res) => {
       if (status) filter.status = status;
       if (doctorId) filter.doctorId = doctorId;
       if (priority) filter.priority = priority;
+      if (phone) filter.phone = String(phone).replace(/\D/g,'');
       appointments = await Appointment.find(filter).sort({ createdAt: -1 });
     }
 

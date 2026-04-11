@@ -39,6 +39,8 @@ const aiRoutes = require('./routes/ai');
 const patientRoutes = require('./routes/patients');
 const emergencyRoutes = require('./routes/emergency');
 const ambulanceRoutes = require('./routes/ambulance');
+const prescriptionRoutes = require('./routes/prescriptions');
+const labReportRoutes = require('./routes/labReports');
 
 // API routes
 app.use('/api/appointments', appointmentRoutes);
@@ -47,6 +49,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/ambulance', ambulanceRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/lab-reports', labReportRoutes);
 
 // Admin authentication
 const crypto = require('crypto');

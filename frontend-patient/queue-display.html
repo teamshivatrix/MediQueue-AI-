@@ -199,7 +199,17 @@
   <!-- Queue Header -->
   <div class="queue-header-bar">
     <div class="logo"><i class="fas fa-hospital"></i> <span>MediQueue AI</span></div>
-    <div class="datetime" id="currentDateTime">--</div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <select id="deptFilter" onchange="applyDeptFilter()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.82rem;cursor:pointer;outline:none;">
+        <option value="">All Departments</option>
+        <option>General Medicine</option><option>Cardiology</option>
+        <option>Orthopedics</option><option>Neurology</option>
+        <option>Pediatrics</option><option>Dermatology</option>
+        <option>ENT</option><option>Ophthalmology</option>
+        <option>Gastroenterology</option><option>Psychiatry</option>
+      </select>
+      <div class="datetime" id="currentDateTime">--</div>
+    </div>
     <a href="/patient/patient-home.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
   </div>
 

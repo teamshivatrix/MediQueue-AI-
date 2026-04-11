@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Medical Records - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+<div class="bg-pattern"></div>
+
+<aside class="patient-sidebar">
+  <a href="patient-home.html" class="ps-logo"><i class="fas fa-hospital-alt"></i><span>MediQueue<br>AI</span></a>
+  <div class="ps-user">
+    <div class="ps-user-avatar" id="userAvatar">P</div>
+    <div>
+      <div class="ps-user-name" id="sidebarUserName">Patient</div>
+      <div class="ps-user-role">Patient</div>
+    </div>
+  </div>
+  <ul class="ps-nav">
+    <li><a href="patient-home.html"><i class="fas fa-home"></i> <span>Home</span></a></li>
+    <li><a href="profile.html"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
+    <li><a href="my-records.html" class="active"><i class="fas fa-file-medical"></i> <span>My Records</span></a></li>
+    <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
+    <li><a href="symptom-analyzer.html" data-requires-auth="true"><i class="fas fa-brain"></i> <span>AI Analyzer</span></a></li>
+    <li><a href="chatbot.html" data-requires-auth="true"><i class="fas fa-robot"></i> <span>AI Chatbot</span></a></li>
+    <li><a href="queue-display.html" data-requires-auth="true"><i class="fas fa-tv"></i> <span>Queue Board</span></a></li>
+    <li class="ps-emergency"><a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i> <span>Emergency</span></a></li>
+  </ul>
+  <button class="ps-logout" onclick="patientLogout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+</aside>
+
+<div class="ps-main" style="padding:2rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.6rem;font-weight:900;color:#0f172a;margin-bottom:0.25rem;"><i class="fas fa-file-medical" style="color:var(--primary);"></i> My Medical Records</h1>
+    <p style="color:#64748b;font-size:0.9rem;">Your prescriptions and lab reports from all visits</p>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;border-bottom:2px solid #f1f5f9;padding-bottom:0;flex-wrap:wrap;">
+    <button id="tabAppointments" onclick="switchTab('appointments')" style="padding:0.6rem 1.2rem;border:none;background:none;font-weight:700;font-size:0.9rem;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer;margin-bottom:-2px;"><i class="fas fa-calendar-check"></i> Appointments</button>
+    <button id="tabPrescriptions" onclick="switchTab('prescriptions')" style="padding:0.6rem 1.2rem;border:none;background:none;font-weight:600;font-size:0.9rem;color:#64748b;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-2px;"><i class="fas fa-file-prescription"></i> Prescriptions</button>
+    <button id="tabLabReports" onclick="switchTab('labreports')" style="padding:0.6rem 1.2rem;border:none;background:none;font-weight:600;font-size:0.9rem;color:#64748b;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-2px;"><i class="fas fa-flask"></i> Lab Reports</button>
+  </div>
+
+  <!-- Appointments Tab -->
+  <div id="appointmentsTab">
+    <div id="aptList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading...</div></div>
+  </div>
+
+  <!-- Prescriptions Tab -->
+  <div id="prescriptionsTab" style="display:none;">
+    <div id="prescList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading...</div></div>
+  </div>
+
+  <!-- Lab Reports Tab -->
+  <div id="labreportsTab" style="display:none;">
+    <div id="labList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading...</div></div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/main.js"></script>
+<script>
+  let patientPhone = '';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const session = getCurrentUser();
+    if (!session) { window.location.href = 'auth.html'; return; }
+
+    const name = session.user.name || 'Patient';
+    const firstName = name.split(' ')[0];
+    document.getElementById('sidebarUserName').textContent = firstName;
+    document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+
+    patientPhone = session.user.phone || '';
+    loadAppointments();
+    loadPrescriptions();
+    loadLabReports();
+  });
+
+  const TABS = ['appointments', 'prescriptions', 'labreports'];
+  function switchTab(tab) {
+    TABS.forEach(t => {
+      const el = document.getElementById(t + 'Tab');
+      const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1).replace('labreports','LabReports').replace('appointments','Appointments').replace('prescriptions','Prescriptions'));
+      if (el) el.style.display = t === tab ? 'block' : 'none';
+      if (btn) {
+        const active = t === tab;
+        btn.style.fontWeight = active ? '700' : '600';
+        btn.style.color = active ? 'var(--primary)' : '#64748b';
+        btn.style.borderBottom = active ? '2px solid var(--primary)' : '2px solid transparent';
+      }
+    });
+  }
+
+  // ---- Appointments ----
+  async function loadAppointments() {
+    if (!patientPhone) return;
+    try {
+      const res = await fetch(API_BASE + '/api/appointments?phone=' + encodeURIComponent(patientPhone));
+      const data = await res.json();
+      renderAppointments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      document.getElementById('aptList').innerHTML = '<p style="color:#dc2626;text-align:center;padding:2rem;">Failed to load appointments</p>';
+    }
+  }
+
+  function renderAppointments(list) {
+    const el = document.getElementById('aptList');
+    if (!list.length) {
+      el.innerHTML = '<div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-calendar" style="font-size:2.5rem;opacity:0.3;"></i><br><br>No appointments yet</div>';
+      return;
+    }
+    const sorted = list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    el.innerHTML = sorted.map(apt => {
+      const statusColor = apt.status === 'completed' ? '#059669' : apt.status === 'in-progress' ? '#d97706' : apt.status === 'cancelled' ? '#dc2626' : '#0891b2';
+      const statusBg = apt.status === 'completed' ? '#f0fdf4' : apt.status === 'in-progress' ? '#fffbeb' : apt.status === 'cancelled' ? '#fef2f2' : '#ecfeff';
+      const canCancel = apt.status === 'waiting';
+      return `
+        <div data-apt-id="${apt._id||apt.appointmentId}" style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0891b2,#0e7490);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.9rem;flex-shrink:0;">#${apt.tokenNumber}</div>
+              <div>
+                <div style="font-weight:700;color:#0f172a;font-size:0.95rem;">${apt.department}</div>
+                <div style="font-size:0.8rem;color:#64748b;margin-top:2px;"><i class="fas fa-user-md"></i> ${apt.doctorName} · ${apt.date} · ${formatTime(apt.timeSlot)}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+              <span class="apt-status" style="background:${statusBg};color:${statusColor};font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">${apt.status.charAt(0).toUpperCase()+apt.status.slice(1)}</span>
+              ${canCancel ? `<button onclick="cancelAppointment('${apt._id||apt.appointmentId}', this)" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-times"></i> Cancel</button>` : ''}
+            </div>
+          </div>
+          ${apt.symptoms ? `<div style="margin-top:0.75rem;font-size:0.82rem;color:#475569;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;"><i class="fas fa-notes-medical" style="color:#0891b2;"></i> ${apt.symptoms}</div>` : ''}
+          ${apt.estimatedWaitTime ? `<div style="margin-top:0.5rem;font-size:0.78rem;color:#64748b;"><i class="fas fa-clock"></i> Est. wait: ${apt.estimatedWaitTime} min</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  async function cancelAppointment(id, btnEl) {
+    if (!confirm('Cancel this appointment?')) return;
+    // Immediately update UI
+    const card = btnEl.closest('[data-apt-id]');
+    if (card) {
+      const statusEl = card.querySelector('.apt-status');
+      if (statusEl) {
+        statusEl.textContent = 'Cancelled';
+        statusEl.style.background = '#fef2f2';
+        statusEl.style.color = '#dc2626';
+      }
+      btnEl.remove();
+    }
+    try {
+      await fetch(API_BASE + '/api/appointments/' + id + '/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+      });
+      showToast('Cancelled', 'Appointment cancelled', 'success');
+    } catch (err) {
+      showToast('Error', 'Failed to cancel', 'error');
+      loadAppointments(); // reload on error to restore correct state
+    }
+  }
+
+  async function loadPrescriptions() {
+    if (!patientPhone) return;
+    try {
+      const res = await fetch(API_BASE + '/api/prescriptions?phone=' + encodeURIComponent(patientPhone));
+      const data = await res.json();
+      renderPrescriptions(data);
+    } catch (err) {
+      document.getElementById('prescList').innerHTML = '<p style="color:#dc2626;text-align:center;padding:2rem;">Failed to load prescriptions</p>';
+    }
+  }
+
+  async function loadLabReports() {
+    if (!patientPhone) return;
+    try {
+      const res = await fetch(API_BASE + '/api/lab-reports?phone=' + encodeURIComponent(patientPhone));
+      const data = await res.json();
+      renderLabReports(data);
+    } catch (err) {
+      document.getElementById('labList').innerHTML = '<p style="color:#dc2626;text-align:center;padding:2rem;">Failed to load lab reports</p>';
+    }
+  }
+
+  function renderPrescriptions(list) {
+    const el = document.getElementById('prescList');
+    if (!list.length) {
+      el.innerHTML = '<div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-file-prescription" style="font-size:2.5rem;opacity:0.3;"></i><br><br>No prescriptions yet</div>';
+      return;
+    }
+    el.innerHTML = list.map(p => `
+      <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.3rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+          <div>
+            <div style="font-size:0.82rem;font-weight:700;color:#0891b2;"><i class="fas fa-user-md"></i> ${p.doctorName} ${p.department ? '· ' + p.department : ''}</div>
+            <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">Visit: ${p.visitDate} ${p.nextVisitDate ? '· Next visit: <strong style="color:#059669;">' + p.nextVisitDate + '</strong>' : ''}</div>
+          </div>
+          <span style="background:#ecfeff;color:#0e7490;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Prescription</span>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:0.75rem;margin-bottom:0.75rem;">
+          <div style="font-size:0.8rem;font-weight:700;color:#374151;margin-bottom:3px;">Diagnosis</div>
+          <div style="font-size:0.88rem;color:#0f172a;">${p.diagnosis}</div>
+        </div>
+        ${p.medicines && p.medicines.length ? `
+        <div style="margin-bottom:0.75rem;">
+          <div style="font-size:0.8rem;font-weight:700;color:#374151;margin-bottom:6px;"><i class="fas fa-pills" style="color:#059669;"></i> Medicines</div>
+          ${p.medicines.map(m => `
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:0.83rem;">
+              <i class="fas fa-capsules" style="color:#0891b2;width:14px;"></i>
+              <strong>${m.name}</strong>
+              ${m.dosage ? `<span style="color:#64748b;">· ${m.dosage}</span>` : ''}
+              ${m.duration ? `<span style="color:#64748b;">· ${m.duration}</span>` : ''}
+              ${m.instructions ? `<span style="color:#059669;">· ${m.instructions}</span>` : ''}
+            </div>`).join('')}
+        </div>` : ''}
+        ${p.instructions ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:0.75rem;"><i class="fas fa-info-circle" style="color:#f59e0b;"></i> ${p.instructions}</div>` : ''}
+        ${p.attachments && p.attachments.length ? `
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+          ${p.attachments.map(a => `<a href="${a.url}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:0.78rem;color:#059669;text-decoration:none;font-weight:600;"><i class="fas fa-paperclip"></i> ${a.name || 'Attachment'}</a>`).join('')}
+        </div>` : ''}
+        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;">
+          <button onclick="printPrescription(this)" data-presc='${JSON.stringify({doctorName:p.doctorName,department:p.department,visitDate:p.visitDate,nextVisitDate:p.nextVisitDate,diagnosis:p.diagnosis,medicines:p.medicines,instructions:p.instructions}).replace(/'/g,"&#39;")}' style="background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-size:0.78rem;font-weight:600;padding:5px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-print"></i> Print / PDF</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderLabReports(list) {
+    const el = document.getElementById('labList');
+    if (!list.length) {
+      el.innerHTML = '<div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-flask" style="font-size:2.5rem;opacity:0.3;"></i><br><br>No lab reports yet</div>';
+      return;
+    }
+    el.innerHTML = list.map(r => `
+      <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.3rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#059669,#047857);display:flex;align-items:center;justify-content:center;color:white;font-size:0.9rem;flex-shrink:0;"><i class="fas fa-flask"></i></div>
+            <div>
+              <div style="font-weight:700;color:#0f172a;font-size:0.95rem;">${r.reportType}</div>
+              <div style="font-size:0.78rem;color:#64748b;">${r.date} · Uploaded by ${r.uploadedBy}</div>
+            </div>
+          </div>
+          ${r.notes ? `<div style="font-size:0.82rem;color:#475569;margin-top:4px;margin-left:44px;">${r.notes}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <a href="${r.fileUrl}" target="_blank" class="btn-primary btn-sm"><i class="fas fa-eye"></i> View</a>
+          <a href="${r.fileUrl}" download class="btn-outline btn-sm"><i class="fas fa-download"></i> Download</a>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function printPrescription(btn) {
+    const p = JSON.parse(btn.getAttribute('data-presc'));
+    const session = getCurrentUser();
+    const patientName = session && session.user ? session.user.name : 'Patient';
+
+    const medsHtml = (p.medicines||[]).filter(m=>m.name).map(m=>
+      `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;">${m.name}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;">${m.dosage||'-'}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;">${m.duration||'-'}</td><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;">${m.instructions||'-'}</td></tr>`
+    ).join('');
+
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>Prescription - ${patientName}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:30px;color:#0f172a;max-width:700px;margin:0 auto;}
+      .header{border-bottom:3px solid #0891b2;padding-bottom:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;}
+      .logo{font-size:1.4rem;font-weight:900;color:#0891b2;}
+      .rx{font-size:2.5rem;font-weight:900;color:#0891b2;opacity:0.15;position:absolute;right:30px;top:30px;}
+      h2{font-size:1rem;margin:0 0 4px;color:#64748b;font-weight:400;}
+      .section{margin-bottom:16px;}
+      .label{font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+      .value{font-size:0.95rem;color:#0f172a;}
+      table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+      th{background:#f8fafc;padding:8px;text-align:left;font-size:0.75rem;color:#64748b;text-transform:uppercase;}
+      .footer{margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;font-size:0.78rem;color:#94a3b8;text-align:center;}
+      @media print{body{padding:15px;}}
+    </style></head><body>
+    <div style="position:relative;">
+      <div class="rx">Rx</div>
+      <div class="header">
+        <div><div class="logo">🏥 MediQueue AI</div><div style="font-size:0.8rem;color:#64748b;">Government Hospital · Digital Prescription</div></div>
+        <div style="text-align:right;font-size:0.82rem;color:#64748b;">Date: ${p.visitDate}<br>${p.nextVisitDate?'Next Visit: '+p.nextVisitDate:''}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="section"><div class="label">Patient</div><div class="value">${patientName}</div></div>
+        <div class="section"><div class="label">Doctor</div><div class="value">${p.doctorName} ${p.department?'· '+p.department:''}</div></div>
+      </div>
+      <div class="section"><div class="label">Diagnosis</div><div class="value" style="background:#f8fafc;padding:10px;border-radius:8px;">${p.diagnosis}</div></div>
+      ${medsHtml ? `<div class="section"><div class="label">Medicines</div><table><thead><tr><th>Medicine</th><th>Dosage</th><th>Duration</th><th>Instructions</th></tr></thead><tbody>${medsHtml}</tbody></table></div>` : ''}
+      ${p.instructions ? `<div class="section"><div class="label">Instructions</div><div class="value">${p.instructions}</div></div>` : ''}
+      <div class="footer">This is a digitally generated prescription from MediQueue AI · For medical use only</div>
+    </div>
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>`);
+    win.document.close();
+  }
+
+  function patientLogout() {
+    const session = getCurrentUser();
+    if (session && session.token) {
+      fetch(API_BASE + '/api/patients/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: session.token }) }).catch(()=>{});
+    }
+    clearCurrentUser();
+    window.location.href = 'index.html';
+  }
+</script>
+
+<style>
+  .patient-sidebar { position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(255,255,255,0.93);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem; }
+  .ps-logo { display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:var(--primary-dark);padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem; }
+  .ps-logo i { font-size:1.6rem;color:var(--primary);flex-shrink:0; }
+  .ps-logo span { background:linear-gradient(135deg,var(--primary-dark),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2; }
+  .ps-user { margin:0 0.75rem 0.75rem;background:linear-gradient(135deg,rgba(8,145,178,0.08),rgba(5,150,105,0.06));border:1px solid rgba(8,145,178,0.12);border-radius:12px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:8px; }
+  .ps-user-avatar { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;flex-shrink:0; }
+  .ps-user-name { font-size:0.82rem;font-weight:700;color:#0f172a; }
+  .ps-user-role { font-size:0.7rem;color:#64748b; }
+  .ps-nav { list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column;gap:0.15rem; }
+  .ps-nav a { text-decoration:none;color:#475569;font-weight:500;font-size:0.9rem;padding:0.65rem 1rem;border-radius:10px;transition:all 0.25s;display:flex;align-items:center;gap:10px; }
+  .ps-nav a:hover { color:var(--primary-dark);background:rgba(8,145,178,0.08); }
+  .ps-nav a.active { color:var(--primary-dark);background:rgba(8,145,178,0.13);font-weight:600; }
+  .ps-nav a i { font-size:0.95rem;width:18px;text-align:center; }
+  .ps-nav .ps-emergency a { color:#dc2626;background:rgba(220,38,38,0.06); }
+  .ps-logout { background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none;padding:10px 16px;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0.75rem;width:calc(100% - 1.5rem);justify-content:center; }
+  .ps-main { margin-left:220px;min-height:100vh; }
+  @media(max-width:900px) {
+    .patient-sidebar { width:64px; }
+    .ps-logo span,.ps-nav a span,.ps-user-name,.ps-user-role,.ps-logout span { display:none; }
+    .ps-user { justify-content:center;padding:0.5rem; }
+    .ps-nav a { justify-content:center;padding:0.65rem; }
+    .ps-logout { justify-content:center;padding:10px; }
+    .ps-main { margin-left:64px; }
+  }
+</style>
+</body>
+</html>

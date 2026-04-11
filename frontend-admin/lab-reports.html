@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Reports - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=lab-reports.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }}).catch(()=>{});
+    })();
+  </script>
+</head>
+<body>
+<div class="bg-pattern"></div>
+
+<aside class="sidebar">
+  <a href="admin-dashboard.html" class="sidebar-logo"><i class="fas fa-hospital"></i><span>MediQueue<br>Admin</span></a>
+  <ul class="sidebar-nav">
+    <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+    <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+    <li><a href="patients.html"><i class="fas fa-users"></i> Appointments</a></li>
+    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+    <li><a href="lab-reports.html" class="active"><i class="fas fa-flask"></i> Lab Reports</a></li>
+    <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+    <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed</a></li>
+    <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+  </ul>
+  <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</aside>
+
+<div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fas fa-flask" style="color:var(--secondary);"></i> Lab Reports</h1>
+    <p>Upload and manage patient lab reports</p>
+  </div>
+
+  <div class="container">
+    <!-- Upload Form -->
+    <div class="form-card" style="background:white;border-radius:16px;padding:1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);margin-bottom:1.5rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#0f172a;"><i class="fas fa-upload" style="color:var(--primary);"></i> Upload New Report</h3>
+      <form id="uploadForm" onsubmit="return false;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Patient Name *</label>
+            <input type="text" class="form-control" id="rPatientName" placeholder="Full name" required>
+          </div>
+          <div class="form-group">
+            <label>Patient Phone *</label>
+            <input type="tel" class="form-control" id="rPatientPhone" placeholder="10-digit number" required oninput="autoFillLabName(this.value)">
+          </div>
+          <div class="form-group">
+            <label>Report Type *</label>
+            <select class="form-control" id="rReportType" required>
+              <option value="">Select type</option>
+              <option>Blood Test</option>
+              <option>Urine Test</option>
+              <option>X-Ray</option>
+              <option>MRI</option>
+              <option>CT Scan</option>
+              <option>ECG</option>
+              <option>Ultrasound</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" class="form-control" id="rDate">
+          </div>
+          <div class="form-group full-width">
+            <label>Notes</label>
+            <textarea class="form-control" id="rNotes" rows="2" placeholder="Any additional notes..."></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>Report File (PDF / Image) *</label>
+            <input type="file" class="form-control" id="rFile" accept=".pdf,.jpg,.jpeg,.png" required>
+          </div>
+        </div>
+        <div style="margin-top:1rem;display:flex;gap:1rem;">
+          <button type="button" class="btn-primary" onclick="uploadReport()"><i class="fas fa-upload"></i> Upload Report</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Search -->
+    <div style="background:white;border-radius:16px;padding:1.2rem 1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);margin-bottom:1.5rem;">
+      <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.9rem;color:#0f172a;"><i class="fas fa-search" style="color:var(--secondary);"></i> Search Patient Lab Reports</h3>
+      <div style="position:relative;max-width:420px;">
+        <input type="text" class="form-control" id="searchLabName"
+          placeholder="Type patient name (min 2 chars)..."
+          autocomplete="off"
+          oninput="onLabSearchInput(this.value)">
+        <div id="labSearchSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
+      </div>
+      <div id="reportsList" style="margin-top:1rem;"><p style="color:#64748b;font-size:0.88rem;">Type a patient name to search lab reports</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('rDate').value = new Date().toISOString().split('T')[0];
+  });
+
+  async function uploadReport() {
+    const name = document.getElementById('rPatientName').value.trim();
+    const phone = document.getElementById('rPatientPhone').value.trim();
+    const type = document.getElementById('rReportType').value;
+    const date = document.getElementById('rDate').value;
+    const notes = document.getElementById('rNotes').value.trim();
+    const file = document.getElementById('rFile').files[0];
+
+    if (!name || !phone || !type || !file) {
+      showToast('Missing Fields', 'Please fill all required fields and select a file', 'warning');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('patientName', name);
+    formData.append('patientPhone', phone);
+    formData.append('reportType', type);
+    formData.append('date', date);
+    formData.append('notes', notes);
+    formData.append('uploadedBy', 'Admin');
+    formData.append('file', file);
+
+    try {
+      showToast('Uploading...', 'Please wait', 'info');
+      const res = await fetch(API_BASE + '/api/lab-reports', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Uploaded!', 'Lab report uploaded successfully', 'success');
+        document.getElementById('uploadForm').reset();
+        document.getElementById('rDate').value = new Date().toISOString().split('T')[0];
+      } else {
+        showToast('Error', data.error || 'Upload failed', 'error');
+      }
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  }
+
+  let labSearchDebounce = null;
+  let labPhoneDebounce = null;
+
+  async function autoFillLabName(phone) {
+    const clean = String(phone).replace(/\D/g, '');
+    if (clean.length !== 10) return;
+    clearTimeout(labPhoneDebounce);
+    labPhoneDebounce = setTimeout(async () => {
+      try {
+        const res = await fetch(API_BASE + '/api/patients/search?q=' + clean);
+        const json = await res.json();
+        const patients = Array.isArray(json) ? json : (json.patients || []);
+        const match = patients.find(p => String(p.phone||'').replace(/\D/g,'') === clean);
+        if (match) {
+          document.getElementById('rPatientName').value = match.name;
+          document.getElementById('rPatientName').style.background = '#f0fdf4';
+          setTimeout(() => document.getElementById('rPatientName').style.background = '', 1500);
+        }
+      } catch (_) {}
+    }, 400);
+  }
+  let labSelectedPhone = '';
+
+  async function onLabSearchInput(val) {
+    const suggestions = document.getElementById('labSearchSuggestions');
+    clearTimeout(labSearchDebounce);
+    if (val.length < 2) { suggestions.style.display = 'none'; return; }
+
+    labSearchDebounce = setTimeout(async () => {
+      try {
+        const res = await fetch(API_BASE + '/api/patients/search?q=' + encodeURIComponent(val));
+        const json = await res.json();
+        const patients = Array.isArray(json) ? json : (json.patients || []);
+        if (!patients.length) {
+          suggestions.innerHTML = '<div style="padding:0.75rem 1rem;color:#94a3b8;font-size:0.85rem;">No patients found</div>';
+          suggestions.style.display = 'block';
+          return;
+        }
+        suggestions.innerHTML = patients.map(p => `
+          <div onclick="selectLabPatient('${(p.name||'').replace(/'/g,"\\'")}','${p.phone||''}')"
+            style="display:flex;align-items:center;gap:10px;padding:0.65rem 1rem;cursor:pointer;border-bottom:1px solid #f8fafc;transition:background 0.15s;"
+            onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='white'">
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#059669,#047857);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">${(p.name||'?').charAt(0).toUpperCase()}</div>
+            <div>
+              <div style="font-weight:700;color:#0f172a;font-size:0.88rem;">${p.name}</div>
+              <div style="font-size:0.75rem;color:#64748b;">${p.phone||''}</div>
+            </div>
+          </div>`).join('');
+        suggestions.style.display = 'block';
+      } catch (_) {}
+    }, 300);
+  }
+
+  function selectLabPatient(name, phone) {
+    labSelectedPhone = phone;
+    document.getElementById('searchLabName').value = name;
+    document.getElementById('labSearchSuggestions').style.display = 'none';
+    // Auto-fill upload form
+    document.getElementById('rPatientName').value = name;
+    document.getElementById('rPatientPhone').value = phone;
+    searchReports();
+  }
+
+  async function searchReports() {
+    const phone = labSelectedPhone;
+    if (!phone) return;
+    try {
+      const res = await fetch(API_BASE + '/api/lab-reports?phone=' + encodeURIComponent(phone));
+      const reports = await res.json();
+      renderReports(reports);
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#searchLabName') && !e.target.closest('#labSearchSuggestions')) {
+      document.getElementById('labSearchSuggestions').style.display = 'none';
+    }
+  });
+
+  function renderReports(reports) {
+    const el = document.getElementById('reportsList');
+    if (!reports.length) { el.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No reports found</p>'; return; }
+
+    el.innerHTML = reports.map(r => `
+      <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <div>
+          <div style="font-weight:700;color:#0f172a;">${r.patientName} <span style="font-size:0.78rem;color:#64748b;">· ${r.patientPhone}</span></div>
+          <div style="font-size:0.85rem;color:#0891b2;font-weight:600;margin-top:2px;"><i class="fas fa-flask"></i> ${r.reportType}</div>
+          <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.date} · Uploaded by ${r.uploadedBy}</div>
+          ${r.notes ? `<div style="font-size:0.78rem;color:#475569;margin-top:4px;">${r.notes}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <a href="${r.fileUrl}" target="_blank" class="btn-primary btn-sm"><i class="fas fa-eye"></i> View</a>
+          <a href="${r.fileUrl}" download class="btn-outline btn-sm"><i class="fas fa-download"></i></a>
+          <button class="btn-outline btn-sm" style="color:#dc2626;border-color:#dc2626;" onclick="deleteReport('${r._id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function deleteReport(id) {
+    if (!confirm('Delete this report?')) return;
+    await fetch(API_BASE + '/api/lab-reports/' + id, { method: 'DELETE' });
+    showToast('Deleted', 'Report deleted', 'success');
+    if (labSelectedPhone) searchReports();
+  }
+
+  function adminLogout() {
+    const token = sessionStorage.getItem('adminToken');
+    fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) }).catch(()=>{});
+    sessionStorage.removeItem('adminToken');
+    window.location.href = 'admin-login.html';
+  }
+</script>
+</body>
+</html>

@@ -6,11 +6,11 @@
       "use": "@vercel/node"
     },
     {
-      "src": "frontend-patient/**",
+      "src": "frontend-patient/**/*",
       "use": "@vercel/static"
     },
     {
-      "src": "frontend-admin/**",
+      "src": "frontend-admin/**/*",
       "use": "@vercel/static"
     }
   ],
@@ -20,68 +20,45 @@
       "dest": "/api/index.js"
     },
     {
-      "src": "/",
-      "dest": "/frontend-patient/index.html"
+      "src": "/patient/css/(.*)",
+      "dest": "/frontend-patient/css/$1"
     },
     {
-      "src": "/patient/?",
-      "dest": "/frontend-patient/index.html"
+      "src": "/patient/js/(.*)",
+      "dest": "/frontend-patient/js/$1"
     },
     {
-      "src": "/admin/?",
-      "dest": "/frontend-admin/admin-login.html"
+      "src": "/admin/css/(.*)",
+      "dest": "/frontend-admin/css/$1"
     },
     {
-      "src": "/patient/(.*)",
+      "src": "/admin/js/(.*)",
+      "dest": "/frontend-admin/js/$1"
+    },
+    {
+      "src": "/patient/(.+)",
       "dest": "/frontend-patient/$1"
     },
     {
-      "src": "/admin/(.*)",
+      "src": "/admin/(.+)",
       "dest": "/frontend-admin/$1"
     },
     {
-      "src": "/index.html",
+      "src": "/patient/?$",
       "dest": "/frontend-patient/index.html"
     },
     {
-      "src": "/auth.html",
-      "dest": "/frontend-patient/auth.html"
-    },
-    {
-      "src": "/patient-home.html",
-      "dest": "/frontend-patient/patient-home.html"
-    },
-    {
-      "src": "/emergency-booking.html",
-      "dest": "/frontend-patient/emergency-booking.html"
-    },
-    {
-      "src": "/booking.html",
-      "dest": "/frontend-patient/booking.html"
-    },
-    {
-      "src": "/symptom-analyzer.html",
-      "dest": "/frontend-patient/symptom-analyzer.html"
-    },
-    {
-      "src": "/chatbot.html",
-      "dest": "/frontend-patient/chatbot.html"
-    },
-    {
-      "src": "/queue-display.html",
-      "dest": "/frontend-patient/queue-display.html"
-    },
-    {
-      "src": "/admin-login.html",
+      "src": "/admin/?$",
       "dest": "/frontend-admin/admin-login.html"
     },
     {
-      "src": "/admin-dashboard.html",
-      "dest": "/frontend-admin/admin-dashboard.html"
+      "src": "/$",
+      "headers": { "Location": "/patient/index.html" },
+      "status": 302
     },
     {
-      "src": "/doctor-management.html",
-      "dest": "/frontend-admin/doctor-management.html"
+      "src": "/(.*\\.html)$",
+      "dest": "/api/index.js"
     }
   ]
 }
