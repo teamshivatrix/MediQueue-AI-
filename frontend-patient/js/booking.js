@@ -70,6 +70,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (document.getElementById('doctor').value) loadTimeSlots();
     });
   }
+
+  // Auto-fill from logged-in session
+  const session = getCurrentUser();
+  if (session && session.user) {
+    const u = session.user;
+    if (u.name)  document.getElementById('patientName').value  = u.name;
+    if (u.phone) document.getElementById('patientPhone').value = u.phone;
+
+    // Age from dateOfBirth if available
+    if (u.dateOfBirth) {
+      const dob = new Date(u.dateOfBirth);
+      const age = Math.floor((new Date() - dob) / (365.25 * 24 * 60 * 60 * 1000));
+      if (age > 0 && age < 120) document.getElementById('patientAge').value = age;
+    }
+
+    // Fetch full profile for age if not in session
+    if (!u.dateOfBirth && u.id) {
+      fetch(API_BASE + '/api/patients/profile', {
+        headers: { 'Authorization': 'Bearer ' + session.token }
+      }).then(r => r.json()).then(data => {
+        if (data.patient && data.patient.dateOfBirth) {
+          const dob = new Date(data.patient.dateOfBirth);
+          const age = Math.floor((new Date() - dob) / (365.25 * 24 * 60 * 60 * 1000));
+          if (age > 0 && age < 120) document.getElementById('patientAge').value = age;
+        }
+      }).catch(() => {});
+    }
+  }
 });
 
 function getFilteredFutureSlots(slots) {
