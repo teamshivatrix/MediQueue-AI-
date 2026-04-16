@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Services - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .patient-sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(255,255,255,0.93);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem;}
+    .ps-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:var(--primary-dark);padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem;}
+    .ps-logo i{font-size:1.6rem;color:var(--primary);flex-shrink:0;}
+    .ps-logo span{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+    .ps-user{margin:0 0.75rem 0.75rem;background:linear-gradient(135deg,rgba(8,145,178,0.08),rgba(5,150,105,0.06));border:1px solid rgba(8,145,178,0.12);border-radius:12px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:8px;}
+    .ps-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;flex-shrink:0;}
+    .ps-user-name{font-size:0.82rem;font-weight:700;color:#0f172a;}
+    .ps-user-role{font-size:0.7rem;color:#64748b;}
+    .ps-nav{list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column;overflow-y:auto;}
+    .ps-nav a{text-decoration:none;color:#475569;font-weight:600;font-size:0.9rem;padding:0.65rem 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;}
+    .ps-nav a:hover{color:var(--primary-dark);background:rgba(8,145,178,0.08);}
+    .ps-nav a.active{color:var(--primary-dark);background:rgba(8,145,178,0.13);}
+    .ps-nav a i{font-size:0.95rem;width:18px;text-align:center;}
+    .ps-nav .ps-emergency a{color:#dc2626;background:rgba(220,38,38,0.06);}
+    .ps-logout{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none;padding:10px 16px;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0.75rem;width:calc(100% - 1.5rem);justify-content:center;}
+    .ps-main{margin-left:220px;min-height:100vh;padding:2rem;}
+    @media(max-width:900px){.patient-sidebar{width:64px;}.ps-logo span,.ps-nav a span,.ps-user-name,.ps-user-role,.ps-logout span{display:none;}.ps-user{justify-content:center;padding:0.5rem;}.ps-nav a{justify-content:center;padding:0.65rem;}.ps-logout{justify-content:center;padding:10px;}.ps-main{margin-left:64px;}}
+
+    .service-hero{border-radius:20px;overflow:hidden;margin-bottom:1.5rem;position:relative;height:180px;display:flex;align-items:flex-end;}
+    .service-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+    .service-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(2,6,23,0.8),transparent);}
+    .service-hero-text{position:relative;z-index:1;padding:1.2rem 1.5rem;color:white;}
+    .service-hero-text h2{font-size:1.4rem;font-weight:900;margin:0 0 4px;}
+    .service-hero-text p{font-size:0.85rem;opacity:0.85;margin:0;}
+
+    .service-tabs{display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+    .stab{padding:0.5rem 1.2rem;border:2px solid #e2e8f0;border-radius:12px;background:white;font-size:0.85rem;font-weight:600;color:#475569;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+    .stab.active{background:var(--primary);color:white;border-color:var(--primary);}
+
+    .report-card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.2rem;margin-bottom:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+    .status-pill{display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;}
+    .status-pending{background:#fef3c7;color:#92400e;}
+    .status-sample_collected{background:#dbeafe;color:#1e40af;}
+    .status-processing{background:#ede9fe;color:#4c1d95;}
+    .status-ready{background:#d1fae5;color:#065f46;}
+
+    .timeline{position:relative;padding-left:1.5rem;}
+    .timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:#e2e8f0;}
+    .timeline-item{position:relative;margin-bottom:1.2rem;}
+    .timeline-dot{position:absolute;left:-1.5rem;top:4px;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 2px #e2e8f0;}
+    .timeline-dot.done{background:var(--primary);box-shadow:0 0 0 2px var(--primary);}
+    .timeline-dot.pending{background:#e2e8f0;}
+
+    .booking-card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.3rem;margin-bottom:1rem;cursor:pointer;transition:all 0.2s;}
+    .booking-card:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(8,145,178,0.12);}
+  </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<aside class="patient-sidebar">
+  <a href="patient-home.html" class="ps-logo"><i class="fas fa-hospital-alt"></i><span>MediQueue<br>AI</span></a>
+  <div class="ps-user">
+    <div class="ps-user-avatar" id="userAvatar">P</div>
+    <div><div class="ps-user-name" id="sidebarUserName">Patient</div><div class="ps-user-role">Patient</div></div>
+  </div>
+  <ul class="ps-nav">
+    <li><a href="patient-home.html"><i class="fas fa-home"></i> <span>Home</span></a></li>
+    <li><a href="profile.html"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
+    <li><a href="my-records.html"><i class="fas fa-file-medical"></i> <span>My Records</span></a></li>
+    <li><a href="hospital-services.html" class="active"><i class="fas fa-hospital"></i> <span>Hospital Services</span></a></li>
+    
+    <li><a href="medicine-store.html"><i class="fas fa-pills"></i> <span>Medicine Store</span></a></li>
+    <li><a href="booking.html"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
+    <li><a href="symptom-analyzer.html"><i class="fas fa-brain"></i> <span>AI Analyzer</span></a></li>
+    <li><a href="chatbot.html"><i class="fas fa-robot"></i> <span>AI Chatbot</span></a></li>
+    <li><a href="queue-display.html"><i class="fas fa-tv"></i> <span>Queue Board</span></a></li>
+    <li class="ps-emergency"><a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i> <span>Emergency</span></a></li>
+  </ul>
+  <button class="ps-logout" onclick="patientLogout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+</aside>
+
+<div class="ps-main">
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.6rem;font-weight:900;color:#0f172a;margin-bottom:0.25rem;"><i class="fas fa-hospital" style="color:var(--primary);"></i> Hospital Services</h1>
+    <p style="color:#64748b;font-size:0.9rem;">Your diagnostic reports, lab results and ward records</p>
+  </div>
+
+  <!-- Service Tabs -->
+  <div class="service-tabs">
+    <button class="stab active" onclick="switchService('all',this)"><i class="fas fa-th-large"></i> All Reports</button>
+    <button class="stab" onclick="switchService('Diagnostic',this)"><i class="fas fa-x-ray"></i> Diagnostic / Imaging</button>
+    <button class="stab" onclick="switchService('Laboratory',this)"><i class="fas fa-flask"></i> Laboratory</button>
+    <button class="stab" onclick="switchService('Ward',this)"><i class="fas fa-bed"></i> Ward / Inpatient</button>
+    <button class="stab" onclick="switchService('timeline',this)"><i class="fas fa-timeline"></i> Timeline</button>
+  </div>
+
+  <!-- Hero Images -->
+  <div id="serviceHero" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.5rem;">
+    <div class="service-hero">
+      <img src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=600&q=80" alt="Diagnostic">
+      <div class="service-hero-overlay"></div>
+      <div class="service-hero-text"><h2>Diagnostic</h2><p>MRI, CT Scan, X-Ray, Ultrasound</p></div>
+    </div>
+    <div class="service-hero">
+      <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&q=80" alt="Laboratory">
+      <div class="service-hero-overlay"></div>
+      <div class="service-hero-text"><h2>Laboratory</h2><p>Blood Test, Urine, Biopsy, COVID</p></div>
+    </div>
+    <div class="service-hero">
+      <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80" alt="Ward">
+      <div class="service-hero-overlay"></div>
+      <div class="service-hero-text"><h2>Ward / Inpatient</h2><p>General Ward, ICU, NICU, PICU</p></div>
+    </div>
+  </div>
+
+  <!-- Reports Section -->
+  <div id="reportsSection">
+    <div id="reportsList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading your reports...</div></div>
+  </div>
+
+  <!-- Timeline Section -->
+  <div id="timelineSection" style="display:none;">
+    <div id="timelineContent"></div>
+  </div>
+
+  <!-- Book a Test Section -->
+  <div id="bookSection" style="display:none;">
+    <div style="background:white;border-radius:16px;padding:1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#0f172a;"><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Book a Diagnostic / Lab Test</h3>
+      <p style="font-size:0.88rem;color:#64748b;margin-bottom:1.2rem;">Select a test and book an appointment. Our team will contact you to confirm the slot.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;">
+        ${['MRI','CT Scan','X-Ray','Ultrasound','Blood Test (CBC)','Blood Sugar','Thyroid Test','Urine Test','Lipid Profile','HbA1c','Vitamin D','COVID Test'].map(t => `
+          <div class="booking-card" onclick="bookTest('${t}')">
+            <div style="font-weight:700;color:#0f172a;font-size:0.9rem;margin-bottom:4px;">${t}</div>
+            <div style="font-size:0.75rem;color:#64748b;">Click to book appointment</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+let patientPhone = '';
+let allReports = [];
+let currentService = 'all';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const session = getCurrentUser();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  const name = session.user.name || 'Patient';
+  const firstName = name.split(' ')[0];
+  document.getElementById('sidebarUserName').textContent = firstName;
+  document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+  patientPhone = session.user.phone || '';
+  await loadAllReports();
+});
+
+async function loadAllReports() {
+  if (!patientPhone) return;
+  try {
+    const res = await fetch(API_BASE + '/api/hospital-reports?phone=' + encodeURIComponent(patientPhone));
+    allReports = await res.json();
+    renderReports('all');
+    renderTimeline();
+  } catch(err) {
+    document.getElementById('reportsList').innerHTML = '<p style="color:#dc2626;text-align:center;padding:2rem;">Failed to load reports</p>';
+  }
+}
+
+function switchService(type, btn) {
+  currentService = type;
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.getElementById('reportsSection').style.display = ['all','Diagnostic','Laboratory','Ward'].includes(type) ? 'block' : 'none';
+  document.getElementById('timelineSection').style.display = type === 'timeline' ? 'block' : 'none';
+  document.getElementById('bookSection').style.display = type === 'book' ? 'block' : 'none';
+  document.getElementById('serviceHero').style.display = type === 'book' ? 'none' : 'grid';
+
+  if (['all','Diagnostic','Laboratory','Ward'].includes(type)) renderReports(type);
+}
+
+const STATUS_LABELS = { pending:'Pending', sample_collected:'Sample Collected', processing:'Processing', ready:'Report Ready ?' };
+const STATUS_CLASSES = { pending:'status-pending', sample_collected:'status-sample_collected', processing:'status-processing', ready:'status-ready' };
+const SERVICE_ICONS = { Diagnostic:'fa-x-ray', Laboratory:'fa-flask', Ward:'fa-bed' };
+const SERVICE_COLORS = { Diagnostic:'#0891b2', Laboratory:'#059669', Ward:'#6366f1' };
+
+function renderReports(filter) {
+  const el = document.getElementById('reportsList');
+  const list = filter === 'all' ? allReports : allReports.filter(r => r.serviceType === filter);
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-file-medical" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>No ${filter === 'all' ? '' : filter} reports yet</div>`;
+    return;
+  }
+  el.innerHTML = list.map(r => `
+    <div class="report-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,${SERVICE_COLORS[r.serviceType]||'#0891b2'},${SERVICE_COLORS[r.serviceType]||'#0891b2'}99);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;flex-shrink:0;">
+            <i class="fas ${SERVICE_ICONS[r.serviceType]||'fa-file-medical'}"></i>
+          </div>
+          <div>
+            <div style="font-weight:800;color:#0f172a;font-size:0.95rem;">${r.reportType}</div>
+            <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.serviceType} � ${r.date} ${r.price?'� ?'+r.price:''}</div>
+          </div>
+        </div>
+        <span class="status-pill ${STATUS_CLASSES[r.status]||'status-pending'}">${STATUS_LABELS[r.status]||r.status}</span>
+      </div>
+      ${r.notes?`<div style="font-size:0.82rem;color:#475569;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;"><i class="fas fa-info-circle" style="color:#0891b2;"></i> ${r.notes}</div>`:''}
+      <!-- Status Progress -->
+      <div style="display:flex;gap:0;margin-bottom:${r.fileUrl?'0.75rem':'0'};">
+        ${['pending','sample_collected','processing','ready'].map((s,i) => {
+          const steps = ['pending','sample_collected','processing','ready'];
+          const currentIdx = steps.indexOf(r.status);
+          const done = i <= currentIdx;
+          return `<div style="flex:1;text-align:center;">
+            <div style="height:4px;background:${done?'var(--primary)':'#e2e8f0'};${i===0?'border-radius:4px 0 0 4px':''}${i===3?'border-radius:0 4px 4px 0':''}"></div>
+            <div style="font-size:0.6rem;color:${done?'var(--primary)':'#94a3b8'};margin-top:3px;font-weight:600;">${['Pending','Collected','Processing','Ready'][i]}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${r.fileUrl?`<div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+        <a href="${r.fileUrl}" target="_blank" class="btn-primary btn-sm"><i class="fas fa-eye"></i> View Report</a>
+        <a href="${r.fileUrl}" download class="btn-outline btn-sm"><i class="fas fa-download"></i> Download</a>
+      </div>`:''}
+    </div>`).join('');
+}
+
+function renderTimeline() {
+  const el = document.getElementById('timelineContent');
+  if (!allReports.length) { el.innerHTML = '<div style="text-align:center;padding:3rem;color:#64748b;">No medical history yet</div>'; return; }
+  const sorted = [...allReports].sort((a,b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = `<div class="timeline">${sorted.map(r => `
+    <div class="timeline-item">
+      <div class="timeline-dot ${r.status==='ready'?'done':'pending'}"></div>
+      <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:0.9rem 1.1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.4rem;">
+          <div>
+            <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${r.reportType}</div>
+            <div style="font-size:0.75rem;color:#64748b;">${r.serviceType} � ${r.date}</div>
+          </div>
+          <span class="status-pill ${STATUS_CLASSES[r.status]||'status-pending'}">${STATUS_LABELS[r.status]||r.status}</span>
+        </div>
+        ${r.notes?`<div style="font-size:0.78rem;color:#475569;margin-top:6px;">${r.notes}</div>`:''}
+        ${r.fileUrl?`<a href="${r.fileUrl}" target="_blank" style="font-size:0.75rem;color:var(--primary);font-weight:600;margin-top:6px;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-file"></i> View Report</a>`:''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function bookTest(testName) {
+  window.location.href = `booking.html?symptoms=${encodeURIComponent(testName + ' test required')}`;
+}
+
+function patientLogout() {
+  const s = getCurrentUser();
+  if (s&&s.token) fetch(API_BASE+'/api/patients/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:s.token})}).catch(()=>{});
+  clearCurrentUser();
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>
+

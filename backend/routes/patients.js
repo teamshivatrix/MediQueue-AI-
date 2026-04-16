@@ -1,12 +1,13 @@
 const express = require('express');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const { sendOtpToPhone } = require('../services/sms');
 
 const router = express.Router();
 
 let useMemory = false;
 let memoryPatients = [];
-const patientSessions = new Map();
+const patientSessions = new Map(); // fallback for memory mode
 const otpResetStore = new Map();
 const resetTokenStore = new Map();
 
@@ -30,6 +31,39 @@ function createPasswordRecord(password) {
   return { salt, hash };
 }
 
+// ---- MongoDB-backed sessions ----
+async function saveSessionToDB(token, session) {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return;
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await db.collection('patient_sessions').replaceOne(
+      { token },
+      { token, ...session, expiresAt },
+      { upsert: true }
+    );
+    // Create TTL index if not exists (runs once, ignored if exists)
+    db.collection('patient_sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {});
+  } catch (_) {}
+}
+
+async function getSessionFromDB(token) {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return null;
+    const session = await db.collection('patient_sessions').findOne({ token, expiresAt: { $gt: new Date() } });
+    return session || null;
+  } catch (_) { return null; }
+}
+
+async function deleteSessionFromDB(token) {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return;
+    await db.collection('patient_sessions').deleteOne({ token });
+  } catch (_) {}
+}
+
 function createSession(patient) {
   const token = crypto.randomBytes(32).toString('hex');
   const session = {
@@ -42,8 +76,12 @@ function createSession(patient) {
     createdAt: Date.now()
   };
 
-  patientSessions.set(token, session);
-  setTimeout(() => patientSessions.delete(token), 24 * 60 * 60 * 1000);
+  if (useMemory) {
+    patientSessions.set(token, session);
+    setTimeout(() => patientSessions.delete(token), 24 * 60 * 60 * 1000);
+  } else {
+    saveSessionToDB(token, session);
+  }
 
   return {
     token,
@@ -58,9 +96,10 @@ function createSession(patient) {
   };
 }
 
-function getSessionFromToken(token) {
+async function getSessionFromToken(token) {
   if (!token) return null;
-  return patientSessions.get(token) || null;
+  if (useMemory) return patientSessions.get(token) || null;
+  return await getSessionFromDB(token);
 }
 
 function hashOtp(otp) {
@@ -376,9 +415,9 @@ router.post('/forgot-password/reset', async (req, res) => {
   }
 });
 
-router.post('/verify', (req, res) => {
+router.post('/verify', async (req, res) => {
   const { token } = req.body;
-  const session = getSessionFromToken(token);
+  const session = await getSessionFromToken(token);
 
   if (!session) {
     return res.status(401).json({ valid: false });
@@ -400,7 +439,7 @@ router.post('/verify', (req, res) => {
 router.patch('/preferences', async (req, res) => {
   try {
     const { token, preferredLanguage, easyMode } = req.body;
-    const session = getSessionFromToken(token);
+    const session = await getSessionFromToken(token);
 
     if (!session) {
       return res.status(401).json({ success: false, message: 'Invalid session' });
@@ -449,10 +488,11 @@ router.patch('/preferences', async (req, res) => {
   }
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
   const { token } = req.body;
   if (token) {
     patientSessions.delete(token);
+    await deleteSessionFromDB(token);
   }
   return res.json({ success: true });
 });
@@ -461,7 +501,7 @@ router.post('/logout', (req, res) => {
 router.get('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-    const session = getSessionFromToken(token);
+    const session = await getSessionFromToken(token);
     if (!session) return res.status(401).json({ success: false, message: 'Invalid session' });
 
     const profileFields = ['name','email','phone','dateOfBirth','gender','bloodGroup',
@@ -491,7 +531,7 @@ router.get('/profile', async (req, res) => {
 router.patch('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
-    const session = getSessionFromToken(token);
+    const session = await getSessionFromToken(token);
     if (!session) return res.status(401).json({ success: false, message: 'Invalid session' });
 
     const allowed = ['name','dateOfBirth','gender','bloodGroup','address','city','state',
@@ -529,7 +569,7 @@ router.patch('/profile', async (req, res) => {
 router.patch('/change-password', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '') || req.body.token;
-    const session = getSessionFromToken(token);
+    const session = await getSessionFromToken(token);
     if (!session) return res.status(401).json({ success: false, message: 'Invalid session' });
 
     const { currentPassword, newPassword } = req.body;
@@ -622,3 +662,4 @@ router.get('/:id/profile', async (req, res) => {
 
 module.exports = router;
 module.exports.setMemoryMode = setMemoryMode;
+

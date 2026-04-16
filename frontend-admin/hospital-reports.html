@@ -1,0 +1,455 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Reports - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=hospital-reports.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }}).catch(()=>{});
+    })();
+  </script>
+  <style>
+    .status-badge { display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px; }
+    .status-pending { background:#fef3c7;color:#92400e; }
+    .status-sample_collected { background:#dbeafe;color:#1e40af; }
+    .status-processing { background:#ede9fe;color:#4c1d95; }
+    .status-ready { background:#d1fae5;color:#065f46; }
+    .service-tab { padding:0.5rem 1.2rem;border:none;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;background:#f1f5f9;color:#475569;transition:all 0.2s; }
+    .service-tab.active { background:var(--primary);color:white; }
+  </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<aside class="sidebar">
+  <a href="admin-dashboard.html" class="sidebar-logo"><i class="fas fa-hospital"></i><span>MediQueue<br>Admin</span></a>
+  <ul class="sidebar-nav">
+    <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+    <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+    <li><a href="patients.html"><i class="fas fa-users"></i> Appointments</a></li>
+    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+    <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
+    <li><a href="hospital-reports.html" class="active"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+    <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+    <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed</a></li>
+    <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+  </ul>
+  <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</aside>
+<div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fas fa-x-ray" style="color:var(--primary);"></i> Hospital Reports</h1>
+    <p>Upload Diagnostic, Laboratory and Ward reports for patients</p>
+  </div>
+  <div class="container">
+
+    <!-- Search Patient -->
+    <div style="background:white;border-radius:16px;padding:1.2rem 1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);margin-bottom:1.5rem;">
+      <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.9rem;color:#0f172a;"><i class="fas fa-search" style="color:var(--primary);"></i> Search Patient</h3>
+      <div style="position:relative;max-width:420px;">
+        <input type="text" class="form-control" id="searchPatientName" placeholder="Type patient name (min 2 chars)..." autocomplete="off" oninput="onPatientSearch(this.value)">
+        <div id="patientSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
+      </div>
+      <div id="selectedPatientInfo" style="display:none;margin-top:0.75rem;padding:0.6rem 1rem;background:#ecfeff;border-radius:10px;font-size:0.85rem;color:#0e7490;font-weight:600;"></div>
+    </div>
+
+    <!-- Upload Form -->
+    <div style="background:white;border-radius:16px;padding:1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);margin-bottom:1.5rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#0f172a;"><i class="fas fa-upload" style="color:var(--primary);"></i> Upload New Report</h3>
+
+      <!-- Service Type Tabs -->
+      <div style="display:flex;gap:0.5rem;margin-bottom:1.2rem;flex-wrap:wrap;">
+        <button class="service-tab active" onclick="setServiceType('Diagnostic',this)"><i class="fas fa-x-ray"></i> Diagnostic / Imaging</button>
+        <button class="service-tab" onclick="setServiceType('Laboratory',this)"><i class="fas fa-flask"></i> Laboratory / Pathology</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Patient Name *</label>
+          <input type="text" class="form-control" id="rPatientName" placeholder="Full name" required>
+        </div>
+        <div class="form-group">
+          <label>Patient Phone *</label>
+          <input type="tel" class="form-control" id="rPatientPhone" placeholder="10-digit number" required oninput="autoFillFromPhone(this.value)">
+        </div>
+        <div class="form-group">
+          <label>Report Type *</label>
+          <select class="form-control" id="rReportType" required></select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-control" id="rStatus">
+            <option value="pending">Pending</option>
+            <option value="sample_collected">Sample Collected</option>
+            <option value="processing">Processing</option>
+            <option value="ready">Ready</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" class="form-control" id="rDate">
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <input type="number" class="form-control" id="rPrice" placeholder="0" min="0">
+        </div>
+        <div class="form-group full-width">
+          <label>Notes</label>
+          <textarea class="form-control" id="rNotes" rows="2" placeholder="Additional notes..."></textarea>
+        </div>
+        <div class="form-group full-width">
+          <label>Report File (PDF / Image) — optional</label>
+          <input type="file" class="form-control" id="rFile" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+      </div>
+      <button type="button" class="btn-primary" onclick="uploadReport()"><i class="fas fa-upload"></i> Upload Report</button>
+    </div>
+
+    <!-- Reports List -->
+    <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+      <div style="position:relative;flex:1;max-width:350px;">
+        <input type="text" class="form-control" id="searchPhone" placeholder="Search by phone or name..." oninput="onSearchReports(this.value)">
+        <div id="searchSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:0.4rem;">
+        <button class="service-tab active" id="filterAll" onclick="filterReports('',this)">All</button>
+        <button class="service-tab" id="filterDiag" onclick="filterReports('Diagnostic',this)">Diagnostic</button>
+        <button class="service-tab" id="filterLab" onclick="filterReports('Laboratory',this)">Laboratory</button>
+        <button class="service-tab" id="filterWard" onclick="filterReports('Ward',this)">Ward</button>
+      </div>
+    </div>
+    <div id="reportsList"><p style="color:#64748b;text-align:center;padding:2rem;">Search patient to view reports</p></div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+const SERVICE_TYPES = {
+  Diagnostic: ['MRI','CT Scan','X-Ray','Ultrasound / Sonography','PET Scan','Mammography','DEXA Scan','Echocardiography','Angiography'],
+  Laboratory: ['Blood Test (CBC)','Blood Sugar (Glucose)','Thyroid Test (TSH/T3/T4)','Urine Test','Stool Test','Biopsy','COVID / Viral Testing','Liver Function Test','Kidney Function Test','Lipid Profile','HbA1c','Vitamin D','Vitamin B12','Dengue Test','Malaria Test','Pregnancy Test','Culture & Sensitivity'],
+  Ward: ['General Ward Admission','Private Room','Deluxe Room','ICU Admission','NICU (Newborn ICU)','PICU (Children ICU)','Surgery Record','Discharge Summary','Nursing Notes','Vital Signs Record']
+};
+
+let currentServiceType = 'Diagnostic';
+let selectedPhone = '';
+let allReports = [];
+let currentFilter = '';
+let phoneDebounce = null;
+let searchDebounce = null;
+
+async function onSearchReports(val) {
+  const sugg = document.getElementById('searchSuggestions');
+  clearTimeout(searchDebounce);
+  if (val.length < 2) { sugg.style.display = 'none'; return; }
+  searchDebounce = setTimeout(async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/patients/search?q=' + encodeURIComponent(val));
+      const json = await res.json();
+      const patients = Array.isArray(json) ? json : (json.patients || []);
+      if (!patients.length) { sugg.innerHTML = '<div style="padding:0.75rem 1rem;color:#94a3b8;font-size:0.85rem;">No patients found</div>'; sugg.style.display='block'; return; }
+      sugg.innerHTML = patients.map(p => `
+        <div onclick="selectSearchPatient('${(p.name||'').replace(/'/g,"\\'")}','${p.phone||''}')"
+          style="display:flex;align-items:center;gap:10px;padding:0.65rem 1rem;cursor:pointer;border-bottom:1px solid #f8fafc;"
+          onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='white'">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">${(p.name||'?').charAt(0).toUpperCase()}</div>
+          <div><div style="font-weight:700;color:#0f172a;font-size:0.88rem;">${p.name}</div><div style="font-size:0.75rem;color:#64748b;">${p.phone||''}</div></div>
+        </div>`).join('');
+      sugg.style.display = 'block';
+    } catch(_) {}
+  }, 300);
+}
+
+function selectSearchPatient(name, phone) {
+  document.getElementById('searchPhone').value = name + ' · ' + phone;
+  document.getElementById('searchSuggestions').style.display = 'none';
+  loadReports(phone);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#searchPhone') && !e.target.closest('#searchSuggestions'))
+    document.getElementById('searchSuggestions').style.display = 'none';
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('rDate').value = new Date().toISOString().split('T')[0];
+  updateReportTypeOptions('Diagnostic');
+});
+
+function setServiceType(type, btn) {
+  currentServiceType = type;
+  document.querySelectorAll('.service-tab').forEach(b => {
+    if (b.closest('.form-grid') === null && b.id === undefined) b.classList.remove('active');
+  });
+  document.querySelectorAll('[onclick^="setServiceType"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateReportTypeOptions(type);
+}
+
+function updateReportTypeOptions(type) {
+  const sel = document.getElementById('rReportType');
+  sel.innerHTML = SERVICE_TYPES[type].map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function autoFillFromPhone(phone) {
+  const clean = String(phone).replace(/\D/g,'');
+  if (clean.length !== 10) return;
+  clearTimeout(phoneDebounce);
+  phoneDebounce = setTimeout(async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/patients/search?q=' + clean);
+      const json = await res.json();
+      const patients = Array.isArray(json) ? json : (json.patients || []);
+      const match = patients.find(p => String(p.phone||'').replace(/\D/g,'') === clean);
+      if (match) {
+        document.getElementById('rPatientName').value = match.name;
+        document.getElementById('rPatientName').style.background = '#f0fdf4';
+        setTimeout(() => document.getElementById('rPatientName').style.background = '', 1500);
+      }
+    } catch(_) {}
+  }, 400);
+}
+
+async function onPatientSearch(val) {
+  const sugg = document.getElementById('patientSuggestions');
+  clearTimeout(searchDebounce);
+  if (val.length < 2) { sugg.style.display = 'none'; return; }
+  searchDebounce = setTimeout(async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/patients/search?q=' + encodeURIComponent(val));
+      const json = await res.json();
+      const patients = Array.isArray(json) ? json : (json.patients || []);
+      if (!patients.length) { sugg.innerHTML = '<div style="padding:0.75rem 1rem;color:#94a3b8;font-size:0.85rem;">No patients found</div>'; sugg.style.display='block'; return; }
+      sugg.innerHTML = patients.map(p => `
+        <div onclick="selectPatient('${(p.name||'').replace(/'/g,"\\'")}','${p.phone||''}')"
+          style="display:flex;align-items:center;gap:10px;padding:0.65rem 1rem;cursor:pointer;border-bottom:1px solid #f8fafc;"
+          onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='white'">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">${(p.name||'?').charAt(0).toUpperCase()}</div>
+          <div><div style="font-weight:700;color:#0f172a;font-size:0.88rem;">${p.name}</div><div style="font-size:0.75rem;color:#64748b;">${p.phone||''}</div></div>
+        </div>`).join('');
+      sugg.style.display = 'block';
+    } catch(_) {}
+  }, 300);
+}
+
+function selectPatient(name, phone) {
+  document.getElementById('searchPatientName').value = name;
+  document.getElementById('patientSuggestions').style.display = 'none';
+  document.getElementById('rPatientName').value = name;
+  document.getElementById('rPatientPhone').value = phone;
+  document.getElementById('searchPhone').value = phone;
+  const info = document.getElementById('selectedPatientInfo');
+  info.style.display = 'block';
+  info.innerHTML = `<i class="fas fa-user-check"></i> Selected: <strong>${name}</strong> · ${phone}`;
+  selectedPhone = phone;
+  loadReports(phone);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#searchPatientName') && !e.target.closest('#patientSuggestions'))
+    document.getElementById('patientSuggestions').style.display = 'none';
+});
+
+async function uploadReport() {
+  const name = document.getElementById('rPatientName').value.trim();
+  const phone = document.getElementById('rPatientPhone').value.trim();
+  const reportType = document.getElementById('rReportType').value;
+  const status = document.getElementById('rStatus').value;
+  const date = document.getElementById('rDate').value;
+  const price = document.getElementById('rPrice').value;
+  const notes = document.getElementById('rNotes').value.trim();
+  const file = document.getElementById('rFile').files[0];
+
+  if (!name || !phone || !reportType) { showToast('Missing Fields', 'Fill required fields', 'warning'); return; }
+
+  const formData = new FormData();
+
+  // EDIT MODE — update existing report
+  if (editingReportId) {
+    formData.append('reportType', reportType);
+    formData.append('status', status);
+    formData.append('date', date);
+    formData.append('price', price || '0');
+    formData.append('notes', notes);
+    if (file) formData.append('file', file);
+
+    try {
+      showToast('Updating...', 'Please wait', 'info');
+      const res = await fetch(API_BASE + '/api/hospital-reports/' + editingReportId, { method: 'PATCH', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Updated!', 'Report updated successfully', 'success');
+        cancelEdit();
+        if (phone) loadReports(phone);
+      } else { showToast('Error', data.error || 'Update failed', 'error'); }
+    } catch(err) { showToast('Error', err.message, 'error'); }
+    return;
+  }
+
+  // CREATE MODE — new report
+  formData.append('patientName', name);
+  formData.append('patientPhone', phone);
+  formData.append('serviceType', currentServiceType);
+  formData.append('reportType', reportType);
+  formData.append('status', status);
+  formData.append('date', date);
+  formData.append('price', price || '0');
+  formData.append('notes', notes);
+  formData.append('uploadedBy', 'Admin');
+  if (file) formData.append('file', file);
+
+  try {
+    showToast('Uploading...', 'Please wait', 'info');
+    const res = await fetch(API_BASE + '/api/hospital-reports', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Uploaded!', 'Report uploaded successfully', 'success');
+      document.getElementById('rFile').value = '';
+      document.getElementById('rNotes').value = '';
+      document.getElementById('rPrice').value = '';
+      if (phone) loadReports(phone);
+    } else { showToast('Error', data.error || 'Upload failed', 'error'); }
+  } catch(err) { showToast('Error', err.message, 'error'); }
+}
+
+async function loadReports(phone) {
+  selectedPhone = phone;
+  try {
+    const res = await fetch(API_BASE + '/api/hospital-reports?phone=' + encodeURIComponent(String(phone).replace(/\D/g,'')));
+    allReports = await res.json();
+    renderReports();
+  } catch(err) { showToast('Error', err.message, 'error'); }
+}
+
+function filterReports(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('[onclick^="filterReports"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderReports();
+}
+
+const STATUS_LABELS = { pending:'Pending', sample_collected:'Sample Collected', processing:'Processing', ready:'Ready ✓' };
+const STATUS_CLASSES = { pending:'status-pending', sample_collected:'status-sample_collected', processing:'status-processing', ready:'status-ready' };
+const SERVICE_ICONS = { Diagnostic:'fa-x-ray', Laboratory:'fa-flask', Ward:'fa-bed' };
+const SERVICE_COLORS = { Diagnostic:'#0891b2', Laboratory:'#059669', Ward:'#6366f1' };
+
+function renderReports() {
+  const el = document.getElementById('reportsList');
+  const list = currentFilter ? allReports.filter(r => r.serviceType === currentFilter) : allReports;
+  if (!list.length) { el.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">No reports found</p>'; return; }
+  el.innerHTML = list.map(r => `
+    <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:1.1rem 1.3rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,${SERVICE_COLORS[r.serviceType]||'#0891b2'},${SERVICE_COLORS[r.serviceType]||'#0891b2'}99);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;flex-shrink:0;">
+        <i class="fas ${SERVICE_ICONS[r.serviceType]||'fa-file-medical'}"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${r.reportType} <span style="font-size:0.75rem;color:#64748b;font-weight:400;">· ${r.serviceType}</span></div>
+        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.patientName} · ${r.date} ${r.price?'· ₹'+r.price:''}</div>
+        ${r.notes?`<div style="font-size:0.78rem;color:#475569;margin-top:2px;">${r.notes}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <select onchange="updateStatus('${r._id}',this.value)" style="font-size:0.75rem;padding:3px 8px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;">
+          ${['pending','sample_collected','processing','ready'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${STATUS_LABELS[s]}</option>`).join('')}
+        </select>
+        ${r.fileUrl?`<a href="${r.fileUrl}" target="_blank" class="btn-primary btn-sm" style="font-size:0.72rem;padding:0.28rem 0.6rem;"><i class="fas fa-eye"></i> View</a>`:'<span style="font-size:0.72rem;color:#94a3b8;">No file</span>'}
+        <button onclick="editReport('${r._id}')" style="background:none;border:1px solid #e2e8f0;color:#0891b2;cursor:pointer;font-size:0.72rem;padding:0.28rem 0.6rem;border-radius:6px;"><i class="fas fa-edit"></i> Edit</button>
+        <button onclick="deleteReport('${r._id}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.85rem;"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+async function updateStatus(id, status) {
+  try {
+    await fetch(API_BASE + '/api/hospital-reports/' + id + '/status', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
+    showToast('Updated', 'Status updated', 'success');
+    if (selectedPhone) loadReports(selectedPhone);
+  } catch(err) { showToast('Error', err.message, 'error'); }
+}
+
+async function deleteReport(id) {
+  if (!confirm('Delete this report?')) return;
+  await fetch(API_BASE + '/api/hospital-reports/' + id, { method:'DELETE' });
+  showToast('Deleted', 'Report deleted', 'success');
+  if (selectedPhone) loadReports(selectedPhone);
+}
+
+let editingReportId = null; // null = create mode, id = edit mode
+
+function editReport(id) {
+  const report = allReports.find(r => String(r._id) === String(id));
+  if (!report) return;
+
+  editingReportId = id;
+
+  // Scroll to upload form
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Pre-fill patient info
+  document.getElementById('rPatientName').value = report.patientName;
+  document.getElementById('rPatientPhone').value = report.patientPhone;
+
+  // Set service type tab
+  const tabBtn = [...document.querySelectorAll('[onclick^="setServiceType"]')]
+    .find(b => b.getAttribute('onclick').includes(`'${report.serviceType}'`));
+  if (tabBtn) setServiceType(report.serviceType, tabBtn);
+
+  setTimeout(() => {
+    document.getElementById('rReportType').value = report.reportType;
+    document.getElementById('rStatus').value = report.status;
+    document.getElementById('rDate').value = report.date;
+    document.getElementById('rPrice').value = report.price || '';
+    document.getElementById('rNotes').value = report.notes || '';
+  }, 100);
+
+  // Change button to "Update Report"
+  const btn = document.querySelector('[onclick="uploadReport()"]');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-save"></i> Update Report';
+    btn.style.background = 'linear-gradient(135deg,#059669,#047857)';
+  }
+
+  // Add cancel button if not exists
+  if (!document.getElementById('cancelEditBtn')) {
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancelEditBtn';
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn-outline';
+    cancelBtn.style.marginLeft = '0.5rem';
+    cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel Edit';
+    cancelBtn.onclick = cancelEdit;
+    btn.parentElement.appendChild(cancelBtn);
+  }
+
+  showToast('Edit Mode', `Editing: ${report.reportType} for ${report.patientName}`, 'info');
+}
+
+function cancelEdit() {
+  editingReportId = null;
+  const btn = document.querySelector('[onclick="uploadReport()"]');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-upload"></i> Upload Report';
+    btn.style.background = '';
+  }
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  if (cancelBtn) cancelBtn.remove();
+  document.getElementById('rFile').value = '';
+  document.getElementById('rNotes').value = '';
+  document.getElementById('rPrice').value = '';
+}
+
+function adminLogout() {
+  const token = sessionStorage.getItem('adminToken');
+  fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) }).catch(()=>{});
+  sessionStorage.removeItem('adminToken');
+  window.location.href = 'admin-login.html';
+}
+</script>
+</body>
+</html>

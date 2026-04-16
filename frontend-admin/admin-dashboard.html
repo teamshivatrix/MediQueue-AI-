@@ -37,6 +37,8 @@
       <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> <span data-i18n="admin.navCompleted">Completed Records</span></a></li>
       <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
       <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
+      <li><a href="hospital-reports.html"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+      <li><a href="bed-management.html"><i class="fas fa-bed"></i> Bed Management</a></li>
       <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> <span data-i18n="admin.navQueue">Queue Board</span></a></li>
     </ul>
     <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> <span data-i18n="admin.logout">Logout</span></button>
@@ -118,6 +120,10 @@
         <h3><i class="fas fa-tasks"></i> Queue Status Overview</h3>
         <div class="chart-wrapper"><canvas id="statusChart"></canvas></div>
       </div>
+      <div class="chart-card">
+        <h3><i class="fas fa-bed"></i> Bed Occupancy</h3>
+        <div class="chart-wrapper"><canvas id="bedChart"></canvas></div>
+      </div>
     </div>
 
     <!-- View Patients Button -->
@@ -145,4 +151,6 @@
   </script>
 </body>
 </html>
+
+
 

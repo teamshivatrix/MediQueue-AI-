@@ -797,7 +797,11 @@ function redirectToAuth(targetPath) {
 }
 
 function enforceProtectedPatientPages() {
-  const protectedPages = ['patient-home.html', 'booking.html', 'symptom-analyzer.html', 'chatbot.html', 'queue-display.html'];
+  const protectedPages = [
+    'patient-home.html', 'booking.html', 'symptom-analyzer.html',
+    'chatbot.html', 'queue-display.html', 'my-records.html',
+    'profile.html', 'medicine-store.html'
+  ];
   const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
 
   // Admin can open queue board directly from admin portal.
@@ -867,7 +871,11 @@ async function validateCurrentUserSession() {
     if (!res.ok) {
       clearCurrentUser();
       const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
-      const protectedPages = ['patient-home.html', 'booking.html', 'symptom-analyzer.html', 'chatbot.html', 'queue-display.html'];
+      const protectedPages = [
+        'patient-home.html', 'booking.html', 'symptom-analyzer.html',
+        'chatbot.html', 'queue-display.html', 'my-records.html',
+        'profile.html', 'medicine-store.html'
+      ];
       if (protectedPages.includes(page)) redirectToAuth(page);
       return;
     }

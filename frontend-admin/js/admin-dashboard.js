@@ -1,6 +1,6 @@
 // MediQueue AI - Admin Dashboard JavaScript
 
-let deptChart, hourChart, doctorChart, statusChart;
+let deptChart, hourChart, doctorChart, statusChart, bedChart;
 let lastEmergencyAlertTimestamp = 0;
 let emergencyAlertTimer = null;
 let unreadAppointments = 0;
@@ -309,9 +309,10 @@ async function loadEmergencyAppointments() {
 
 async function loadDashboard() {
   try {
-    const [stats, appointments] = await Promise.all([
+    const [stats, appointments, beds] = await Promise.all([
       apiCall('/api/appointments/stats'),
-      apiCall('/api/appointments?date=' + new Date().toISOString().split('T')[0])
+      apiCall('/api/appointments?date=' + new Date().toISOString().split('T')[0]),
+      apiCall('/api/bed-management')
     ]);
 
     updateStatCards(stats);
@@ -319,6 +320,7 @@ async function loadDashboard() {
     renderHourChart(stats.hourlyStats);
     renderDoctorChart(stats.doctorWorkload);
     renderStatusChart(stats);
+    renderBedChart(beds || []);
     const activeAppointments = (appointments || []).filter((apt) => apt.status !== 'completed');
     const normalAppointments = activeAppointments.filter((apt) => String(apt.priority || '').toLowerCase() !== 'emergency');
     const emergencyAppointments = activeAppointments.filter((apt) => String(apt.priority || '').toLowerCase() === 'emergency');
@@ -512,6 +514,37 @@ function renderStatusChart(stats) {
           position: 'right',
           labels: { font: { size: 12 }, padding: 15, usePointStyle: true }
         }
+      }
+    }
+  });
+}
+
+function renderBedChart(beds) {
+  const ctx = document.getElementById('bedChart');
+  if (!ctx || !beds || !beds.length) return;
+
+  if (bedChart) bedChart.destroy();
+
+  const labels = beds.map(b => b.department.length > 12 ? b.department.substring(0,12)+'…' : b.department);
+  const available = beds.map(b => b.availableBeds || 0);
+  const occupied = beds.map(b => b.occupiedBeds || 0);
+
+  bedChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Available', data: available, backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 6 },
+        { label: 'Occupied', data: occupied, backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, padding: 10 } } },
+      scales: {
+        x: { stacked: false, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
       }
     }
   });

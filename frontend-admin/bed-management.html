@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bed Management - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=bed-management.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }}).catch(()=>{});
+    })();
+  </script>
+  <style>
+    .bed-card { background:white; border:1px solid #e2e8f0; border-radius:16px; padding:1.3rem; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition:all 0.2s; }
+    .bed-card:hover { box-shadow:0 6px 20px rgba(0,0,0,0.08); }
+    .bed-bar { height:10px; border-radius:999px; background:#f1f5f9; overflow:hidden; margin:0.5rem 0; }
+    .bed-bar-fill { height:100%; border-radius:999px; transition:width 0.5s ease; }
+    .bed-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+    .ward-badge { display:inline-block; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:999px; margin-bottom:6px; }
+  </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<aside class="sidebar">
+  <a href="admin-dashboard.html" class="sidebar-logo"><i class="fas fa-hospital"></i><span>MediQueue<br>Admin</span></a>
+  <ul class="sidebar-nav">
+    <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+    <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+    <li><a href="patients.html"><i class="fas fa-users"></i> Appointments</a></li>
+    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+    <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
+    <li><a href="hospital-reports.html"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+    <li><a href="bed-management.html" class="active"><i class="fas fa-bed"></i> Bed Management</a></li>
+    <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+    <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed</a></li>
+    <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+  </ul>
+  <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</aside>
+<div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fas fa-bed" style="color:var(--primary);"></i> Bed Management</h1>
+    <p>Department-wise bed availability and occupancy tracking</p>
+  </div>
+  <div class="container">
+
+    <!-- Summary Stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;" id="summaryStats">
+      <div class="dash-stat-card"><div class="dash-stat-header"><div><div class="dash-stat-label">Total Beds</div><div class="dash-stat-value" id="statTotal">0</div></div><div class="dash-stat-icon" style="background:linear-gradient(135deg,#0891b2,#0e7490);"><i class="fas fa-bed"></i></div></div></div>
+      <div class="dash-stat-card"><div class="dash-stat-header"><div><div class="dash-stat-label">Available</div><div class="dash-stat-value" id="statAvailable" style="color:var(--success);">0</div></div><div class="dash-stat-icon" style="background:linear-gradient(135deg,#10b981,#047857);"><i class="fas fa-check-circle"></i></div></div></div>
+      <div class="dash-stat-card"><div class="dash-stat-header"><div><div class="dash-stat-label">Occupied</div><div class="dash-stat-value" id="statOccupied" style="color:var(--warning);">0</div></div><div class="dash-stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-user-injured"></i></div></div></div>
+    </div>
+
+    <!-- Charts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-bar"></i> Available vs Occupied (by Department)</h3>
+        <div class="chart-wrapper"><canvas id="bedBarChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-pie"></i> Overall Occupancy</h3>
+        <div class="chart-wrapper"><canvas id="bedPieChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Form -->
+    <div style="background:white;border-radius:16px;padding:1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);margin-bottom:1.5rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#0f172a;" id="formTitle"><i class="fas fa-plus-circle" style="color:var(--primary);"></i> Add Ward / Department</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Department Name *</label>
+          <input type="text" class="form-control" id="bDept" placeholder="e.g. Cardiology ICU">
+        </div>
+        <div class="form-group">
+          <label>Ward Type *</label>
+          <select class="form-control" id="bWardType">
+            <option value="General Ward">General Ward</option>
+            <option value="Private Room">Private Room</option>
+            <option value="Deluxe Room">Deluxe Room</option>
+            <option value="ICU">ICU</option>
+            <option value="NICU">NICU (Newborn ICU)</option>
+            <option value="PICU">PICU (Children ICU)</option>
+            <option value="HDU">HDU (High Dependency Unit)</option>
+            <option value="Emergency Ward">Emergency Ward</option>
+            <option value="Maternity Ward">Maternity Ward</option>
+            <option value="Surgical Ward">Surgical Ward</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Total Beds *</label>
+          <input type="number" class="form-control" id="bTotal" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Occupied Beds</label>
+          <input type="number" class="form-control" id="bOccupied" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Price per Day (₹)</label>
+          <input type="number" class="form-control" id="bPrice" placeholder="0" min="0">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
+        <button class="btn-primary" onclick="saveBed()"><i class="fas fa-save"></i> <span id="saveBtnText">Add Ward</span></button>
+        <button class="btn-outline" id="cancelEditBedBtn" style="display:none;" onclick="cancelBedEdit()"><i class="fas fa-times"></i> Cancel</button>
+      </div>
+    </div>
+
+    <!-- Beds Grid -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <h3 style="font-size:1rem;font-weight:700;color:#0f172a;"><i class="fas fa-th-large" style="color:var(--primary);"></i> All Wards</h3>
+      <button class="btn-outline btn-sm" onclick="loadBeds()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+    <div class="bed-grid" id="bedGrid"><p style="color:#64748b;text-align:center;padding:2rem;">Loading...</p></div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+let editingDept = null;
+let bedBarChart = null;
+let bedPieChart = null;
+
+const WARD_COLORS = {
+  'General Ward':'#0891b2','Private Room':'#059669','Deluxe Room':'#6366f1',
+  'ICU':'#dc2626','NICU':'#f59e0b','PICU':'#8b5cf6',
+  'HDU':'#0e7490','Emergency Ward':'#b91c1c','Maternity Ward':'#ec4899','Surgical Ward':'#0369a1'
+};
+
+document.addEventListener('DOMContentLoaded', loadBeds);
+
+async function loadBeds() {
+  try {
+    const res = await fetch(API_BASE + '/api/bed-management');
+    const beds = await res.json();
+    renderBeds(beds);
+    updateStats(beds);
+    renderCharts(beds);
+  } catch(err) { showToast('Error', err.message, 'error'); }
+}
+
+function renderCharts(beds) {
+  if (!beds.length) return;
+
+  const labels = beds.map(b => b.department.length > 12 ? b.department.substring(0,12)+'…' : b.department);
+  const available = beds.map(b => b.availableBeds || 0);
+  const occupied = beds.map(b => b.occupiedBeds || 0);
+
+  // Bar Chart
+  if (bedBarChart) bedBarChart.destroy();
+  const barCtx = document.getElementById('bedBarChart').getContext('2d');
+  bedBarChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Available', data: available, backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 6 },
+        { label: 'Occupied', data: occupied, backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { stacked: false, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+  // Pie Chart — overall
+  const totalAvail = available.reduce((a,b) => a+b, 0);
+  const totalOcc = occupied.reduce((a,b) => a+b, 0);
+  if (bedPieChart) bedPieChart.destroy();
+  const pieCtx = document.getElementById('bedPieChart').getContext('2d');
+  bedPieChart = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Available', 'Occupied'],
+      datasets: [{ data: [totalAvail, totalOcc], backgroundColor: ['rgba(16,185,129,0.85)', 'rgba(245,158,11,0.85)'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} beds (${Math.round(ctx.raw/(totalAvail+totalOcc)*100)}%)` } }
+      }
+    }
+  });
+}
+
+function updateStats(beds) {
+  const total = beds.reduce((s,b) => s + (b.totalBeds||0), 0);
+  const occupied = beds.reduce((s,b) => s + (b.occupiedBeds||0), 0);
+  const available = total - occupied;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statAvailable').textContent = available;
+  document.getElementById('statOccupied').textContent = occupied;
+}
+
+function renderBeds(beds) {
+  const el = document.getElementById('bedGrid');
+  if (!beds.length) {
+    el.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;grid-column:1/-1;">No wards added yet. Add your first ward above.</p>';
+    return;
+  }
+  el.innerHTML = beds.map(b => {
+    const pct = b.totalBeds > 0 ? Math.round((b.occupiedBeds / b.totalBeds) * 100) : 0;
+    const color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f59e0b' : '#10b981';
+    const wardColor = WARD_COLORS[b.wardType] || '#0891b2';
+    return `
+    <div class="bed-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+        <div>
+          <span class="ward-badge" style="background:${wardColor}22;color:${wardColor};">${b.wardType}</span>
+          <div style="font-weight:800;font-size:1rem;color:#0f172a;">${b.department}</div>
+          ${b.pricePerDay ? `<div style="font-size:0.75rem;color:#64748b;">₹${b.pricePerDay}/day</div>` : ''}
+        </div>
+        <div style="display:flex;gap:0.4rem;">
+          <button onclick="editBed('${b.department.replace(/'/g,"\\'")}','${b.wardType}',${b.totalBeds},${b.occupiedBeds},${b.pricePerDay||0})" style="background:none;border:1px solid #e2e8f0;color:#0891b2;cursor:pointer;font-size:0.75rem;padding:4px 8px;border-radius:6px;"><i class="fas fa-edit"></i></button>
+          <button onclick="deleteBed('${b.department.replace(/'/g,"\\'")}')}" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.85rem;"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:#64748b;margin-bottom:4px;">
+        <span><i class="fas fa-check-circle" style="color:#10b981;"></i> Available: <strong style="color:#0f172a;">${b.availableBeds}</strong></span>
+        <span><i class="fas fa-user-injured" style="color:#f59e0b;"></i> Occupied: <strong style="color:#0f172a;">${b.occupiedBeds}</strong></span>
+        <span>Total: <strong style="color:#0f172a;">${b.totalBeds}</strong></span>
+      </div>
+      <div class="bed-bar"><div class="bed-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      <div style="font-size:0.72rem;color:${color};font-weight:700;text-align:right;">${pct}% occupied</div>
+      <!-- Quick update occupied -->
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #f1f5f9;">
+        <span style="font-size:0.78rem;color:#64748b;flex-shrink:0;">Update occupied:</span>
+        <input type="number" value="${b.occupiedBeds}" min="0" max="${b.totalBeds}" style="width:70px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.82rem;text-align:center;" id="occ_${b.department.replace(/\s+/g,'_')}">
+        <button onclick="quickUpdate('${b.department.replace(/'/g,"\\'")}','${b.department.replace(/\s+/g,'_')}')" class="btn-primary btn-sm" style="font-size:0.72rem;padding:0.28rem 0.6rem;"><i class="fas fa-check"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function quickUpdate(dept, deptId) {
+  const val = document.getElementById('occ_' + deptId).value;
+  try {
+    const res = await fetch(API_BASE + '/api/bed-management/' + encodeURIComponent(dept), {
+      method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ occupiedBeds: parseInt(val) })
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Updated', 'Bed count updated', 'success'); loadBeds(); }
+    else showToast('Error', data.error, 'error');
+  } catch(err) { showToast('Error', err.message, 'error'); }
+}
+
+async function saveBed() {
+  const dept = document.getElementById('bDept').value.trim();
+  const wardType = document.getElementById('bWardType').value;
+  const total = document.getElementById('bTotal').value;
+  const occupied = document.getElementById('bOccupied').value || '0';
+  const price = document.getElementById('bPrice').value || '0';
+  if (!dept || !total) { showToast('Missing', 'Department and total beds required', 'warning'); return; }
+  try {
+    const res = await fetch(API_BASE + '/api/bed-management', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ department: dept, wardType, totalBeds: total, occupiedBeds: occupied, pricePerDay: price })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Saved', editingDept ? 'Ward updated' : 'Ward added', 'success');
+      cancelBedEdit();
+      loadBeds();
+    } else showToast('Error', data.error, 'error');
+  } catch(err) { showToast('Error', err.message, 'error'); }
+}
+
+function editBed(dept, wardType, total, occupied, price) {
+  editingDept = dept;
+  document.getElementById('bDept').value = dept;
+  document.getElementById('bDept').disabled = true;
+  document.getElementById('bWardType').value = wardType;
+  document.getElementById('bTotal').value = total;
+  document.getElementById('bOccupied').value = occupied;
+  document.getElementById('bPrice').value = price;
+  document.getElementById('saveBtnText').textContent = 'Update Ward';
+  document.getElementById('cancelEditBedBtn').style.display = 'inline-flex';
+  document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit" style="color:var(--primary);"></i> Edit Ward';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelBedEdit() {
+  editingDept = null;
+  document.getElementById('bDept').value = '';
+  document.getElementById('bDept').disabled = false;
+  document.getElementById('bWardType').value = 'General Ward';
+  document.getElementById('bTotal').value = '';
+  document.getElementById('bOccupied').value = '';
+  document.getElementById('bPrice').value = '';
+  document.getElementById('saveBtnText').textContent = 'Add Ward';
+  document.getElementById('cancelEditBedBtn').style.display = 'none';
+  document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:var(--primary);"></i> Add Ward / Department';
+}
+
+async function deleteBed(dept) {
+  if (!confirm('Delete ' + dept + '?')) return;
+  await fetch(API_BASE + '/api/bed-management/' + encodeURIComponent(dept), { method: 'DELETE' });
+  showToast('Deleted', 'Ward deleted', 'success');
+  loadBeds();
+}
+
+function adminLogout() {
+  const token = sessionStorage.getItem('adminToken');
+  fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) }).catch(()=>{});
+  sessionStorage.removeItem('adminToken');
+  window.location.href = 'admin-login.html';
+}
+</script>
+</body>
+</html>

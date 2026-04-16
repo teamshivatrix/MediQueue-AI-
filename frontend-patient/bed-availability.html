@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bed Availability - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .patient-sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(255,255,255,0.93);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem;}
+    .ps-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:var(--primary-dark);padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem;}
+    .ps-logo i{font-size:1.6rem;color:var(--primary);flex-shrink:0;}
+    .ps-logo span{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+    .ps-user{margin:0 0.75rem 0.75rem;background:linear-gradient(135deg,rgba(8,145,178,0.08),rgba(5,150,105,0.06));border:1px solid rgba(8,145,178,0.12);border-radius:12px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:8px;}
+    .ps-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;flex-shrink:0;}
+    .ps-user-name{font-size:0.82rem;font-weight:700;color:#0f172a;}
+    .ps-user-role{font-size:0.7rem;color:#64748b;}
+    .ps-nav{list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column;overflow-y:auto;}
+    .ps-nav a{text-decoration:none;color:#475569;font-weight:600;font-size:0.9rem;padding:0.65rem 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;}
+    .ps-nav a:hover{color:var(--primary-dark);background:rgba(8,145,178,0.08);}
+    .ps-nav a.active{color:var(--primary-dark);background:rgba(8,145,178,0.13);}
+    .ps-nav a i{font-size:0.95rem;width:18px;text-align:center;}
+    .ps-nav .ps-emergency a{color:#dc2626;background:rgba(220,38,38,0.06);}
+    .ps-logout{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none;padding:10px 16px;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0.75rem;width:calc(100% - 1.5rem);justify-content:center;}
+    .ps-main{margin-left:220px;min-height:100vh;padding:2rem;}
+    @media(max-width:900px){.patient-sidebar{width:64px;}.ps-logo span,.ps-nav a span,.ps-user-name,.ps-user-role,.ps-logout span{display:none;}.ps-user{justify-content:center;padding:0.5rem;}.ps-nav a{justify-content:center;padding:0.65rem;}.ps-logout{justify-content:center;padding:10px;}.ps-main{margin-left:64px;}}
+    .bed-card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.3rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:all 0.2s;}
+    .bed-card:hover{box-shadow:0 6px 20px rgba(0,0,0,0.08);}
+    .bed-bar{height:10px;border-radius:999px;background:#f1f5f9;overflow:hidden;margin:0.5rem 0;}
+    .bed-bar-fill{height:100%;border-radius:999px;transition:width 0.8s ease;}
+    .avail-badge{display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:999px;}
+    .avail-high{background:#d1fae5;color:#065f46;}
+    .avail-mid{background:#fef3c7;color:#92400e;}
+    .avail-low{background:#fee2e2;color:#991b1b;}
+    .avail-none{background:#f1f5f9;color:#475569;}
+  </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<aside class="patient-sidebar">
+  <a href="patient-home.html" class="ps-logo"><i class="fas fa-hospital-alt"></i><span>MediQueue<br>AI</span></a>
+  <div class="ps-user">
+    <div class="ps-user-avatar" id="userAvatar">P</div>
+    <div><div class="ps-user-name" id="sidebarUserName">Patient</div><div class="ps-user-role">Patient</div></div>
+  </div>
+  <ul class="ps-nav">
+    <li><a href="patient-home.html"><i class="fas fa-home"></i> <span>Home</span></a></li>
+    <li><a href="profile.html"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
+    <li><a href="my-records.html"><i class="fas fa-file-medical"></i> <span>My Records</span></a></li>
+    <li><a href="hospital-services.html"><i class="fas fa-hospital"></i> <span>Hospital Services</span></a></li>
+    <li><a href="medicine-store.html"><i class="fas fa-pills"></i> <span>Medicine Store</span></a></li>
+    <li><a href="booking.html"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
+    <li><a href="symptom-analyzer.html"><i class="fas fa-brain"></i> <span>AI Analyzer</span></a></li>
+    <li><a href="chatbot.html"><i class="fas fa-robot"></i> <span>AI Chatbot</span></a></li>
+    <li><a href="queue-display.html"><i class="fas fa-tv"></i> <span>Queue Board</span></a></li>
+    <li class="ps-emergency"><a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i> <span>Emergency</span></a></li>
+  </ul>
+  <button class="ps-logout" onclick="patientLogout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+</aside>
+
+<div class="ps-main">
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.6rem;font-weight:900;color:#0f172a;margin-bottom:0.25rem;"><i class="fas fa-bed" style="color:var(--primary);"></i> Bed Availability</h1>
+    <p style="color:#64748b;font-size:0.9rem;">Real-time ward and bed availability across all departments</p>
+  </div>
+
+  <!-- Summary -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+    <div style="background:linear-gradient(135deg,#0891b2,#0e7490);border-radius:16px;padding:1.2rem;color:white;text-align:center;">
+      <div style="font-size:2rem;font-weight:900;" id="sumTotal">-</div>
+      <div style="font-size:0.82rem;opacity:0.85;">Total Beds</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#10b981,#047857);border-radius:16px;padding:1.2rem;color:white;text-align:center;">
+      <div style="font-size:2rem;font-weight:900;" id="sumAvail">-</div>
+      <div style="font-size:0.82rem;opacity:0.85;">Available</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:16px;padding:1.2rem;color:white;text-align:center;">
+      <div style="font-size:2rem;font-weight:900;" id="sumOcc">-</div>
+      <div style="font-size:0.82rem;opacity:0.85;">Occupied</div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.2rem;" id="wardFilters"></div>
+
+  <!-- Beds Grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;" id="bedGrid">
+    <div style="text-align:center;padding:3rem;color:#64748b;grid-column:1/-1;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading...</div>
+  </div>
+
+  <div style="margin-top:1.5rem;padding:1rem;background:#f0fdf4;border-radius:12px;font-size:0.82rem;color:#065f46;">
+    <i class="fas fa-info-circle"></i> Bed availability is updated in real-time by hospital staff. For emergency admission, call <strong>108</strong> or use the Emergency button.
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+let allBeds = [];
+let activeFilter = 'All';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Bed Availability is disabled for patients — redirect to home
+  window.location.replace('patient-home.html');
+});
+
+async function loadBeds() {
+  try {
+    const res = await fetch(API_BASE + '/api/bed-management');
+    allBeds = await res.json();
+    updateSummary();
+    renderFilters();
+    renderBeds();
+  } catch(err) {
+    document.getElementById('bedGrid').innerHTML = '<p style="color:#dc2626;text-align:center;padding:2rem;grid-column:1/-1;">Failed to load bed data</p>';
+  }
+}
+
+function updateSummary() {
+  const total = allBeds.reduce((s,b) => s+(b.totalBeds||0), 0);
+  const occ = allBeds.reduce((s,b) => s+(b.occupiedBeds||0), 0);
+  document.getElementById('sumTotal').textContent = total;
+  document.getElementById('sumAvail').textContent = total - occ;
+  document.getElementById('sumOcc').textContent = occ;
+}
+
+function renderFilters() {
+  const wardTypes = ['All', ...new Set(allBeds.map(b => b.wardType))];
+  document.getElementById('wardFilters').innerHTML = wardTypes.map(w => `
+    <button onclick="setFilter('${w}',this)" style="padding:0.38rem 0.9rem;border-radius:999px;border:1.5px solid ${w===activeFilter?'var(--primary)':'#e2e8f0'};background:${w===activeFilter?'var(--primary)':'white'};color:${w===activeFilter?'white':'#475569'};font-size:0.8rem;font-weight:600;cursor:pointer;">${w}</button>
+  `).join('');
+}
+
+function setFilter(type, btn) {
+  activeFilter = type;
+  renderFilters();
+  renderBeds();
+}
+
+const WARD_COLORS = {
+  'General Ward':'#0891b2','Private Room':'#059669','Deluxe Room':'#6366f1',
+  'ICU':'#dc2626','NICU':'#f59e0b','PICU':'#8b5cf6',
+  'HDU':'#0e7490','Emergency Ward':'#b91c1c','Maternity Ward':'#ec4899','Surgical Ward':'#0369a1'
+};
+
+function renderBeds() {
+  const list = activeFilter === 'All' ? allBeds : allBeds.filter(b => b.wardType === activeFilter);
+  const el = document.getElementById('bedGrid');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:3rem;color:#64748b;grid-column:1/-1;"><i class="fas fa-bed" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>No bed data available</div>';
+    return;
+  }
+  el.innerHTML = list.map(b => {
+    const pct = b.totalBeds > 0 ? Math.round((b.occupiedBeds/b.totalBeds)*100) : 0;
+    const barColor = pct >= 90 ? '#dc2626' : pct >= 70 ? '#f59e0b' : '#10b981';
+    const wardColor = WARD_COLORS[b.wardType] || '#0891b2';
+    const availClass = b.availableBeds === 0 ? 'avail-none' : b.availableBeds <= 2 ? 'avail-low' : b.availableBeds <= 5 ? 'avail-mid' : 'avail-high';
+    const availText = b.availableBeds === 0 ? 'Full' : b.availableBeds <= 2 ? 'Almost Full' : b.availableBeds <= 5 ? 'Limited' : 'Available';
+    return `
+    <div class="bed-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+        <div>
+          <span style="display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:999px;background:${wardColor}22;color:${wardColor};margin-bottom:4px;">${b.wardType}</span>
+          <div style="font-weight:800;font-size:1rem;color:#0f172a;">${b.department}</div>
+          ${b.pricePerDay ? `<div style="font-size:0.75rem;color:#64748b;">₹${b.pricePerDay}/day</div>` : ''}
+        </div>
+        <span class="avail-badge ${availClass}">${availText}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px;">
+        <span style="color:#10b981;font-weight:700;"><i class="fas fa-check-circle"></i> ${b.availableBeds} free</span>
+        <span style="color:#f59e0b;font-weight:700;"><i class="fas fa-user-injured"></i> ${b.occupiedBeds} occupied</span>
+        <span style="color:#64748b;">/ ${b.totalBeds} total</span>
+      </div>
+      <div class="bed-bar"><div class="bed-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+      <div style="font-size:0.72rem;color:${barColor};font-weight:700;text-align:right;">${pct}% occupied</div>
+    </div>`;
+  }).join('');
+}
+
+function patientLogout() {
+  const s = getCurrentUser();
+  if (s&&s.token) fetch(API_BASE+'/api/patients/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:s.token})}).catch(()=>{});
+  clearCurrentUser();
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>
