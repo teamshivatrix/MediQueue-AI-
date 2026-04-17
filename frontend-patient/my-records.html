@@ -439,9 +439,11 @@
     const comment = document.getElementById('feedbackComment').value.trim();
     const session = getCurrentUser();
 
+    const base = (typeof API_BASE === 'string' && API_BASE) ? API_BASE : 'http://localhost:3000';
     try {
-      const data = await apiCall('/api/feedback', {
+      const res = await fetch(base + '/api/feedback', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointmentId: aptId,
           patientName: patientNameArg || session?.user?.name || 'Patient',
@@ -451,6 +453,11 @@
           comment
         })
       });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('HTTP ' + res.status + ': ' + txt.substring(0, 100));
+      }
+      const data = await res.json();
       if (data.success) {
         showToast('Thank you! 🌟', 'Your feedback has been submitted', 'success');
         modal.remove();
