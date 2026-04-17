@@ -439,9 +439,10 @@
     const comment = document.getElementById('feedbackComment').value.trim();
     const session = getCurrentUser();
 
-    const base = (typeof API_BASE === 'string' && API_BASE) ? API_BASE : 'http://localhost:3000';
+    // Use window.location.origin to ensure correct base on Vercel
+    const feedbackBase = (typeof API_BASE === 'string' && API_BASE) ? API_BASE : window.location.origin;
     try {
-      const res = await fetch(base + '/api/feedback', {
+      const res = await fetch(feedbackBase + '/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
