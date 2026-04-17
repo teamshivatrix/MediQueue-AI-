@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -32,14 +32,16 @@
   <ul class="sidebar-nav">
     <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
     <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
-    <li><a href="patients.html"><i class="fas fa-users"></i> Appointments</a></li>
-    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
-    <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
-    <li><a href="hospital-reports.html" class="active"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+    <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
     <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
     <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
-    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed</a></li>
+    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+    <li><a href="hospital-reports.html" class="active"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+    <li><a href="bed-management.html"><i class="fas fa-bed"></i> Bed Management</a></li>
     <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    <li><a href="tv-display.html"><i class="fas fa-desktop"></i> TV Display</a></li>
+    <li><a href="feedback.html"><i class="fas fa-star"></i> Feedback</a></li>
   </ul>
   <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </aside>
@@ -72,9 +74,12 @@
       </div>
 
       <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group" style="position:relative;">
           <label>Patient Name *</label>
-          <input type="text" class="form-control" id="rPatientName" placeholder="Full name" required>
+          <input type="text" class="form-control" id="rPatientName" placeholder="Full name" required
+            autocomplete="off"
+            oninput="onNameSuggest(this.value)">
+          <div id="nameSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:200;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
         </div>
         <div class="form-group">
           <label>Patient Phone *</label>
@@ -98,7 +103,7 @@
           <input type="date" class="form-control" id="rDate">
         </div>
         <div class="form-group">
-          <label>Price (â‚¹)</label>
+          <label>Price (?)</label>
           <input type="number" class="form-control" id="rPrice" placeholder="0" min="0">
         </div>
         <div class="form-group full-width">
@@ -106,7 +111,7 @@
           <textarea class="form-control" id="rNotes" rows="2" placeholder="Additional notes..."></textarea>
         </div>
         <div class="form-group full-width">
-          <label>Report File (PDF / Image) â€” optional</label>
+          <label>Report File (PDF / Image) — optional</label>
           <input type="file" class="form-control" id="rFile" accept=".pdf,.jpg,.jpeg,.png">
         </div>
       </div>
@@ -144,6 +149,63 @@ let allReports = [];
 let currentFilter = '';
 let phoneDebounce = null;
 let searchDebounce = null;
+let nameDebounce = null;
+
+// ---- Name Autocomplete for Upload Form ----
+async function onNameSuggest(val) {
+  const box = document.getElementById('nameSuggestions');
+  clearTimeout(nameDebounce);
+  if (val.length < 2) { box.style.display = 'none'; return; }
+
+  nameDebounce = setTimeout(async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/patients/search?q=' + encodeURIComponent(val));
+      const json = await res.json();
+      const patients = Array.isArray(json) ? json : (json.patients || []);
+
+      if (!patients.length) {
+        box.innerHTML = '<div style="padding:0.75rem 1rem;color:#94a3b8;font-size:0.85rem;">No patients found</div>';
+        box.style.display = 'block';
+        return;
+      }
+
+      box.innerHTML = patients.map(p => `
+        <div onclick="selectNamePatient('${(p.name||'').replace(/'/g,"\\'")}','${p.phone||''}')"
+          style="display:flex;align-items:center;gap:10px;padding:0.65rem 1rem;cursor:pointer;border-bottom:1px solid #f8fafc;transition:background 0.15s;"
+          onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='white'">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">${(p.name||'?').charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:700;color:#0f172a;font-size:0.88rem;">${p.name}</div>
+            <div style="font-size:0.75rem;color:#64748b;">${p.phone||''} ${p.email?'· '+p.email:''}</div>
+          </div>
+        </div>
+      `).join('');
+      box.style.display = 'block';
+    } catch(_) {}
+  }, 280);
+}
+
+function selectNamePatient(name, phone) {
+  document.getElementById('rPatientName').value = name;
+  document.getElementById('nameSuggestions').style.display = 'none';
+  // Autofill phone
+  if (phone) {
+    document.getElementById('rPatientPhone').value = phone;
+    // Flash green to indicate autofill
+    const phoneEl = document.getElementById('rPatientPhone');
+    phoneEl.style.background = '#f0fdf4';
+    phoneEl.style.borderColor = '#059669';
+    setTimeout(() => { phoneEl.style.background = ''; phoneEl.style.borderColor = ''; }, 1500);
+  }
+}
+
+// Close name suggestions on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('#rPatientName') && !e.target.closest('#nameSuggestions')) {
+    const box = document.getElementById('nameSuggestions');
+    if (box) box.style.display = 'none';
+  }
+});
 
 async function onSearchReports(val) {
   const sugg = document.getElementById('searchSuggestions');
@@ -168,7 +230,7 @@ async function onSearchReports(val) {
 }
 
 function selectSearchPatient(name, phone) {
-  document.getElementById('searchPhone').value = name + ' Â· ' + phone;
+  document.getElementById('searchPhone').value = name + ' · ' + phone;
   document.getElementById('searchSuggestions').style.display = 'none';
   loadReports(phone);
 }
@@ -247,7 +309,7 @@ function selectPatient(name, phone) {
   document.getElementById('searchPhone').value = phone;
   const info = document.getElementById('selectedPatientInfo');
   info.style.display = 'block';
-  info.innerHTML = `<i class="fas fa-user-check"></i> Selected: <strong>${name}</strong> Â· ${phone}`;
+  info.innerHTML = `<i class="fas fa-user-check"></i> Selected: <strong>${name}</strong> · ${phone}`;
   selectedPhone = phone;
   loadReports(phone);
 }
@@ -271,7 +333,7 @@ async function uploadReport() {
 
   const formData = new FormData();
 
-  // EDIT MODE â€” update existing report
+  // EDIT MODE — update existing report
   if (editingReportId) {
     formData.append('reportType', reportType);
     formData.append('status', status);
@@ -293,7 +355,7 @@ async function uploadReport() {
     return;
   }
 
-  // CREATE MODE â€” new report
+  // CREATE MODE — new report
   formData.append('patientName', name);
   formData.append('patientPhone', phone);
   formData.append('serviceType', currentServiceType);
@@ -335,7 +397,7 @@ function filterReports(type, btn) {
   renderReports();
 }
 
-const STATUS_LABELS = { pending:'Pending', sample_collected:'Sample Collected', processing:'Processing', ready:'Ready âœ“' };
+const STATUS_LABELS = { pending:'Pending', sample_collected:'Sample Collected', processing:'Processing', ready:'Ready ?' };
 const STATUS_CLASSES = { pending:'status-pending', sample_collected:'status-sample_collected', processing:'status-processing', ready:'status-ready' };
 const SERVICE_ICONS = { Diagnostic:'fa-x-ray', Laboratory:'fa-flask', Ward:'fa-bed' };
 const SERVICE_COLORS = { Diagnostic:'#0891b2', Laboratory:'#059669', Ward:'#6366f1' };
@@ -350,8 +412,8 @@ function renderReports() {
         <i class="fas ${SERVICE_ICONS[r.serviceType]||'fa-file-medical'}"></i>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${r.reportType} <span style="font-size:0.75rem;color:#64748b;font-weight:400;">Â· ${r.serviceType}</span></div>
-        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.patientName} Â· ${r.date} ${r.price?'Â· â‚¹'+r.price:''}</div>
+        <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${r.reportType} <span style="font-size:0.75rem;color:#64748b;font-weight:400;">· ${r.serviceType}</span></div>
+        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.patientName} · ${r.date} ${r.price?'· ?'+r.price:''}</div>
         ${r.notes?`<div style="font-size:0.78rem;color:#475569;margin-top:2px;">${r.notes}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">

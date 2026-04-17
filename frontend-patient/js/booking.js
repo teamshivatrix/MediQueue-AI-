@@ -296,6 +296,9 @@ async function submitBooking() {
       `Token #${apt.tokenNumber} - ${apt.doctorName} at ${formatTime(apt.timeSlot)}\nEstimated wait: ${waitTime} minutes`
     );
 
+    // Store apt data for print
+    window._lastBookedApt = apt;
+
   } catch (err) {
     showToast('Booking Failed', err.message || 'Please try again', 'error');
   } finally {
@@ -317,4 +320,48 @@ function newBooking() {
   document.getElementById('bookingSuccess').classList.remove('show');
   document.getElementById('bookingForm').style.display = 'block';
   resetForm();
+}
+
+function printAppointmentSlip() {
+  const apt = window._lastBookedApt;
+  if (!apt) return;
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Appointment Slip - MediQueue AI</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; max-width: 420px; margin: 0 auto; color: #0f172a; }
+    .header { text-align: center; border-bottom: 3px solid #0891b2; padding-bottom: 16px; margin-bottom: 20px; }
+    .logo { font-size: 1.4rem; font-weight: 900; color: #0891b2; }
+    .token-box { background: linear-gradient(135deg, #0891b2, #0e7490); color: white; border-radius: 16px; padding: 20px; text-align: center; margin: 20px 0; }
+    .token-num { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+    .token-label { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+    .detail-label { color: #64748b; font-weight: 600; }
+    .detail-value { font-weight: 700; color: #0f172a; }
+    .footer { margin-top: 24px; text-align: center; font-size: 0.75rem; color: #94a3b8; }
+    .wait-badge { background: #fef3c7; color: #92400e; border-radius: 8px; padding: 8px 16px; text-align: center; margin: 12px 0; font-weight: 700; font-size: 0.88rem; }
+    @media print { body { padding: 10px; } }
+  </style></head><body>
+  <div class="header">
+    <div class="logo">🏥 MediQueue AI</div>
+    <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Government Hospital · Appointment Slip</div>
+  </div>
+  <div class="token-box">
+    <div class="token-label">YOUR TOKEN NUMBER</div>
+    <div class="token-num">#${apt.tokenNumber}</div>
+    <div class="token-label">${apt.appointmentId}</div>
+  </div>
+  <div class="detail-row"><span class="detail-label">Patient</span><span class="detail-value">${apt.patientName}</span></div>
+  <div class="detail-row"><span class="detail-label">Doctor</span><span class="detail-value">${apt.doctorName}</span></div>
+  <div class="detail-row"><span class="detail-label">Department</span><span class="detail-value">${apt.department}</span></div>
+  <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${apt.date}</span></div>
+  <div class="detail-row"><span class="detail-label">Time</span><span class="detail-value">${formatTime(apt.timeSlot)}</span></div>
+  ${apt.estimatedWaitTime ? `<div class="wait-badge">⏱ Estimated Wait: ${apt.estimatedWaitTime} minutes</div>` : ''}
+  <div class="footer">
+    Please arrive 10 minutes before your appointment time.<br>
+    Carry this slip and a valid ID. Emergency: 108
+  </div>
+  <script>window.onload = () => { window.print(); }<\/script>
+  </body></html>`);
+  win.document.close();
 }

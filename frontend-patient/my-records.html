@@ -23,7 +23,6 @@
     <li><a href="patient-home.html"><i class="fas fa-home"></i> <span>Home</span></a></li>
     <li><a href="profile.html"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
     <li><a href="hospital-services.html"><i class="fas fa-hospital"></i> <span>Hospital Services</span></a></li>
-    
     <li><a href="medicine-store.html"><i class="fas fa-pills"></i> <span>Medicine Store</span></a></li>
     <li><a href="my-records.html" class="active"><i class="fas fa-file-medical"></i> <span>My Records</span></a></li>
     <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
@@ -125,8 +124,11 @@
       const statusColor = apt.status === 'completed' ? '#059669' : apt.status === 'in-progress' ? '#d97706' : apt.status === 'cancelled' ? '#dc2626' : '#0891b2';
       const statusBg = apt.status === 'completed' ? '#f0fdf4' : apt.status === 'in-progress' ? '#fffbeb' : apt.status === 'cancelled' ? '#fef2f2' : '#ecfeff';
       const canCancel = apt.status === 'waiting';
+      const canReschedule = apt.status === 'waiting';
+      const canFeedback = apt.status === 'completed';
+      const aptId = apt._id || apt.appointmentId;
       return `
-        <div data-apt-id="${apt._id||apt.appointmentId}" style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div data-apt-id="${aptId}" style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
             <div style="display:flex;align-items:center;gap:12px;">
               <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0891b2,#0e7490);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.9rem;flex-shrink:0;">#${apt.tokenNumber}</div>
@@ -137,7 +139,9 @@
             </div>
             <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
               <span class="apt-status" style="background:${statusBg};color:${statusColor};font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">${apt.status.charAt(0).toUpperCase()+apt.status.slice(1)}</span>
-              ${canCancel ? `<button onclick="cancelAppointment('${apt._id||apt.appointmentId}', this)" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-times"></i> Cancel</button>` : ''}
+              ${canCancel ? `<button onclick="cancelAppointment('${aptId}', this)" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-times"></i> Cancel</button>` : ''}
+              ${canReschedule ? `<button onclick="openReschedule('${aptId}')" style="background:#ecfeff;border:1px solid #a5f3fc;color:#0891b2;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-calendar-alt"></i> Reschedule</button>` : ''}
+              ${canFeedback ? `<button onclick="openFeedback('${aptId}','${(apt.doctorName||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${(apt.department||'').replace(/'/g,"\\'")}','${(apt.patientName||'').replace(/'/g,"\\'")}','${(apt.doctorId||'')}')" style="background:#fef3c7;border:1px solid #fde68a;color:#d97706;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-star"></i> Rate</button>` : ''}
             </div>
           </div>
           ${apt.symptoms ? `<div style="margin-top:0.75rem;font-size:0.82rem;color:#475569;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;"><i class="fas fa-notes-medical" style="color:#0891b2;"></i> ${apt.symptoms}</div>` : ''}
@@ -316,6 +320,147 @@
     clearCurrentUser();
     window.location.href = 'index.html';
   }
+
+  // ---- Reschedule ----
+  function openReschedule(aptId) {
+    const old = document.getElementById('rescheduleModal');
+    if (old) old.remove();
+    const today = new Date().toISOString().split('T')[0];
+    const modal = document.createElement('div');
+    modal.id = 'rescheduleModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(4px);z-index:6000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="width:100%;max-width:420px;background:white;border-radius:20px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+          <h2 style="font-size:1.1rem;font-weight:800;color:#0f172a;"><i class="fas fa-calendar-alt" style="color:#0891b2;"></i> Reschedule Appointment</h2>
+          <button onclick="document.getElementById('rescheduleModal').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;">✕</button>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">New Date *</label>
+          <input type="date" id="reschedDate" class="form-control" min="${today}" value="${today}">
+        </div>
+        <div class="form-group" style="margin-bottom:1.2rem;">
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">New Time Slot *</label>
+          <select id="reschedTime" class="form-control">
+            ${Array.from({length:16},(_,i)=>{const h=9+Math.floor(i/2),m=i%2===0?'00':'30',hh=String(h).padStart(2,'0');return `<option value="${hh}:${m}">${h>12?h-12:h}:${m} ${h>=12?'PM':'AM'}</option>`;}).join('')}
+          </select>
+        </div>
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+          <button class="btn-outline" onclick="document.getElementById('rescheduleModal').remove()">Cancel</button>
+          <button class="btn-primary" onclick="submitReschedule('${aptId}')"><i class="fas fa-check"></i> Confirm</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  async function submitReschedule(aptId) {
+    const date = document.getElementById('reschedDate').value;
+    const timeSlot = document.getElementById('reschedTime').value;
+    if (!date || !timeSlot) { showToast('Required', 'Please select date and time', 'warning'); return; }
+    try {
+      const res = await fetch(API_BASE + '/api/appointments/' + aptId + '/reschedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, timeSlot })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Rescheduled!', `Appointment moved to ${date} at ${timeSlot}`, 'success');
+        document.getElementById('rescheduleModal').remove();
+        loadAppointments();
+      } else {
+        showToast('Error', data.error || 'Failed to reschedule', 'error');
+      }
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  }
+
+  // ---- Feedback ----
+  let selectedRating = 0;
+
+  function openFeedback(aptId, doctorName, department, patientNameArg, doctorIdArg) {
+    const old = document.getElementById('feedbackModal');
+    if (old) old.remove();
+    selectedRating = 0;
+    const modal = document.createElement('div');
+    modal.id = 'feedbackModal';
+    // Store data as dataset to avoid escaping issues
+    modal.dataset.aptId = aptId;
+    modal.dataset.doctorName = doctorName || '';
+    modal.dataset.department = department || '';
+    modal.dataset.patientNameArg = patientNameArg || '';
+    modal.dataset.doctorId = doctorIdArg || '';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(4px);z-index:6000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="width:100%;max-width:420px;background:white;border-radius:20px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <h2 style="font-size:1.1rem;font-weight:800;color:#0f172a;"><i class="fas fa-star" style="color:#f59e0b;"></i> Rate Your Visit</h2>
+          <button onclick="document.getElementById('feedbackModal').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;">✕</button>
+        </div>
+        <p style="font-size:0.85rem;color:#64748b;margin-bottom:1.2rem;">How was your experience with <strong>${doctorName}</strong>?</p>
+        <div id="starRow" style="display:flex;gap:0.5rem;justify-content:center;margin-bottom:1.2rem;">
+          ${[1,2,3,4,5].map(i=>`<button onclick="setRating(${i})" id="star${i}" style="background:none;border:none;font-size:2.5rem;cursor:pointer;color:#e2e8f0;transition:color 0.15s;"><i class="fas fa-star"></i></button>`).join('')}
+        </div>
+        <div class="form-group" style="margin-bottom:1.2rem;">
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Comment (optional)</label>
+          <textarea id="feedbackComment" class="form-control" rows="3" placeholder="Share your experience..."></textarea>
+        </div>
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+          <button class="btn-outline" onclick="document.getElementById('feedbackModal').remove()">Skip</button>
+          <button class="btn-primary" onclick="submitFeedback()"><i class="fas fa-paper-plane"></i> Submit</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  function setRating(r) {
+    selectedRating = r;
+    for (let i = 1; i <= 5; i++) {
+      const btn = document.getElementById('star' + i);
+      if (btn) btn.style.color = i <= r ? '#f59e0b' : '#e2e8f0';
+    }
+  }
+
+  async function submitFeedback() {
+    if (!selectedRating) { showToast('Required', 'Please select a rating', 'warning'); return; }
+    const modal = document.getElementById('feedbackModal');
+    if (!modal) return;
+
+    // Read data from dataset — no escaping issues
+    const aptId = modal.dataset.aptId;
+    const doctorName = modal.dataset.doctorName;
+    const department = modal.dataset.department;
+    const patientNameArg = modal.dataset.patientNameArg;
+    const doctorId = modal.dataset.doctorId;
+
+    const comment = document.getElementById('feedbackComment').value.trim();
+    const session = getCurrentUser();
+
+    try {
+      const data = await apiCall('/api/feedback', {
+        method: 'POST',
+        body: JSON.stringify({
+          appointmentId: aptId,
+          patientName: patientNameArg || session?.user?.name || 'Patient',
+          phone: session?.user?.phone || patientPhone,
+          doctorId, doctorName, department,
+          rating: selectedRating,
+          comment
+        })
+      });
+      if (data.success) {
+        showToast('Thank you! 🌟', 'Your feedback has been submitted', 'success');
+        modal.remove();
+      } else {
+        showToast('Error', data.error || 'Failed to submit', 'error');
+      }
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  }
 </script>
 
 <style>
@@ -327,11 +472,13 @@
   .ps-user-avatar { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;flex-shrink:0; }
   .ps-user-name { font-size:0.82rem;font-weight:700;color:#0f172a; }
   .ps-user-role { font-size:0.7rem;color:#64748b; }
-  .ps-nav { list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column; }
-  .ps-nav a { text-decoration:none;color:#475569;font-weight:500;font-size:0.9rem;padding:0.65rem 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px; }
+  .ps-nav { list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column;gap:2px;overflow-y:auto; }
+  .ps-nav li { flex-shrink:0; }
+  .ps-nav a { text-decoration:none;color:#475569;font-weight:600;font-size:0.9rem;padding:0 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;height:42px;white-space:nowrap;overflow:hidden; }
   .ps-nav a:hover { color:var(--primary-dark);background:rgba(8,145,178,0.08); }
   .ps-nav a.active { color:var(--primary-dark);background:rgba(8,145,178,0.13);font-weight:600; }
-  .ps-nav a i { font-size:0.95rem;width:18px;text-align:center; }
+  .ps-nav a i { font-size:0.95rem;width:18px;text-align:center;flex-shrink:0; }
+  .ps-nav a span { overflow:hidden;text-overflow:ellipsis; }
   .ps-nav .ps-emergency a { color:#dc2626;background:rgba(220,38,38,0.06); }
   .ps-logout { background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none;padding:10px 16px;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0.75rem;width:calc(100% - 1.5rem);justify-content:center; }
   .ps-main { margin-left:220px;min-height:100vh; }

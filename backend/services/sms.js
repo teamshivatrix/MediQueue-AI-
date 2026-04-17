@@ -130,5 +130,42 @@ async function sendOtpToPhone(phone, otp) {
 
 module.exports = {
   sendOtpToPhone,
-  normalizeToE164
+  normalizeToE164,
+  sendAppointmentReminder,
+  sendAppointmentConfirmation
 };
+
+async function sendAppointmentConfirmation(phone, { patientName, tokenNumber, doctorName, department, timeSlot, date, waitTime }) {
+  const phoneE164 = normalizeToE164(phone);
+  const appName = process.env.OTP_BRAND_NAME || 'MediQueue AI';
+  const time = formatSlot(timeSlot);
+  const message = `${appName}: Appointment Confirmed!\nPatient: ${patientName}\nToken: #${tokenNumber}\nDoctor: ${doctorName} (${department})\nDate: ${date} at ${time}\nEst. Wait: ${waitTime} min\nEmergency: 108`;
+
+  return sendSMS(phoneE164, message);
+}
+
+async function sendAppointmentReminder(phone, { patientName, tokenNumber, doctorName, timeSlot, tokensAhead }) {
+  const phoneE164 = normalizeToE164(phone);
+  const appName = process.env.OTP_BRAND_NAME || 'MediQueue AI';
+  const time = formatSlot(timeSlot);
+  const message = `${appName}: Reminder! Your turn is coming up.\nPatient: ${patientName}\nToken: #${tokenNumber}\nDoctor: ${doctorName}\nTime: ${time}\n${tokensAhead <= 2 ? 'Please be ready NOW!' : `${tokensAhead} patients ahead of you.`}`;
+
+  return sendSMS(phoneE164, message);
+}
+
+function formatSlot(slot) {
+  if (!slot) return '--';
+  const [h, m] = slot.split(':');
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
+}
+
+async function sendSMS(phoneE164, message) {
+  const provider = String(process.env.SMS_PROVIDER || '').toLowerCase();
+  if (provider === 'twilio') return sendViaTwilio(phoneE164, message);
+  // Dev fallback — log only
+  console.log(`[SMS DEV] To: ${phoneE164}\n${message}`);
+  return { delivered: false, provider: 'dev', debugMessage: message };
+}

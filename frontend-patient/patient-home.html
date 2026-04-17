@@ -49,15 +49,18 @@
     .ps-user-name { font-size: 0.82rem; font-weight: 700; color: #0f172a; }
     .ps-user-role { font-size: 0.7rem; color: #64748b; }
 
-    .ps-nav { list-style: none; flex: 1; padding: 0 0.75rem; display: flex; flex-direction: column; gap: 0.15rem; }
+    .ps-nav { list-style: none; flex: 1; padding: 0 0.75rem; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+    .ps-nav li { flex-shrink: 0; }
     .ps-nav a {
       text-decoration: none; color: #475569; font-weight: 600; font-size: 0.9rem;
-      padding: 0.65rem 1rem; border-radius: 10px; min-height: 42px; box-sizing: border-box;
+      padding: 0 1rem; border-radius: 10px; height: 42px;
       transition: background 0.2s, color 0.2s; display: flex; align-items: center; gap: 10px;
+      white-space: nowrap; overflow: hidden;
     }
     .ps-nav a:hover { color: var(--primary-dark); background: rgba(8,145,178,0.08); }
     .ps-nav a.active { color: var(--primary-dark); background: rgba(8,145,178,0.13); font-weight: 600; }
-    .ps-nav a i { font-size: 0.95rem; width: 18px; text-align: center; }
+    .ps-nav a i { font-size: 0.95rem; width: 18px; text-align: center; flex-shrink: 0; }
+    .ps-nav a span { overflow: hidden; text-overflow: ellipsis; }
     .ps-nav .ps-emergency a {
       color: #dc2626; background: rgba(220,38,38,0.06);
     }
@@ -185,9 +188,8 @@
       <li><a href="patient-home.html" class="active"><i class="fas fa-home"></i> <span>Home</span></a></li>
       <li><a href="profile.html"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
       <li><a href="hospital-services.html"><i class="fas fa-hospital"></i> <span>Hospital Services</span></a></li>
-    
-    <li><a href="medicine-store.html"><i class="fas fa-pills"></i> <span>Medicine Store</span></a></li>
-    <li><a href="my-records.html" data-requires-auth="true"><i class="fas fa-file-medical"></i> <span>My Records</span></a></li>
+      <li><a href="medicine-store.html"><i class="fas fa-pills"></i> <span>Medicine Store</span></a></li>
+      <li><a href="my-records.html" data-requires-auth="true"><i class="fas fa-file-medical"></i> <span>My Records</span></a></li>
       <li><a href="booking.html" data-requires-auth="true"><i class="fas fa-calendar-plus"></i> <span>Book Appointment</span></a></li>
       <li><a href="symptom-analyzer.html" data-requires-auth="true"><i class="fas fa-brain"></i> <span>AI Analyzer</span></a></li>
       <li><a href="chatbot.html" data-requires-auth="true"><i class="fas fa-robot"></i> <span>AI Chatbot</span></a></li>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -32,15 +32,16 @@
   <ul class="sidebar-nav">
     <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
     <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
-    <li><a href="patients.html"><i class="fas fa-users"></i> Appointments</a></li>
-    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
-    <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
-    <li><a href="hospital-reports.html"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
-    <li><a href="bed-management.html" class="active"><i class="fas fa-bed"></i> Bed Management</a></li>
+    <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
     <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
     <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
-    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed</a></li>
+    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+    <li><a href="hospital-reports.html"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+    <li><a href="bed-management.html" class="active"><i class="fas fa-bed"></i> Bed Management</a></li>
     <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    <li><a href="tv-display.html"><i class="fas fa-desktop"></i> TV Display</a></li>
+    <li><a href="feedback.html"><i class="fas fa-star"></i> Feedback</a></li>
   </ul>
   <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </aside>
@@ -103,7 +104,7 @@
           <input type="number" class="form-control" id="bOccupied" placeholder="0" min="0">
         </div>
         <div class="form-group">
-          <label>Price per Day (₹)</label>
+          <label>Price per Day (?)</label>
           <input type="number" class="form-control" id="bPrice" placeholder="0" min="0">
         </div>
       </div>
@@ -149,7 +150,7 @@ async function loadBeds() {
 function renderCharts(beds) {
   if (!beds.length) return;
 
-  const labels = beds.map(b => b.department.length > 12 ? b.department.substring(0,12)+'…' : b.department);
+  const labels = beds.map(b => b.department.length > 12 ? b.department.substring(0,12)+'�' : b.department);
   const available = beds.map(b => b.availableBeds || 0);
   const occupied = beds.map(b => b.occupiedBeds || 0);
 
@@ -175,7 +176,7 @@ function renderCharts(beds) {
     }
   });
 
-  // Pie Chart — overall
+  // Pie Chart � overall
   const totalAvail = available.reduce((a,b) => a+b, 0);
   const totalOcc = occupied.reduce((a,b) => a+b, 0);
   if (bedPieChart) bedPieChart.destroy();
@@ -221,7 +222,7 @@ function renderBeds(beds) {
         <div>
           <span class="ward-badge" style="background:${wardColor}22;color:${wardColor};">${b.wardType}</span>
           <div style="font-weight:800;font-size:1rem;color:#0f172a;">${b.department}</div>
-          ${b.pricePerDay ? `<div style="font-size:0.75rem;color:#64748b;">₹${b.pricePerDay}/day</div>` : ''}
+          ${b.pricePerDay ? `<div style="font-size:0.75rem;color:#64748b;">?${b.pricePerDay}/day</div>` : ''}
         </div>
         <div style="display:flex;gap:0.4rem;">
           <button onclick="editBed('${b.department.replace(/'/g,"\\'")}','${b.wardType}',${b.totalBeds},${b.occupiedBeds},${b.pricePerDay||0})" style="background:none;border:1px solid #e2e8f0;color:#0891b2;cursor:pointer;font-size:0.75rem;padding:4px 8px;border-radius:6px;"><i class="fas fa-edit"></i></button>

@@ -53,6 +53,9 @@ function renderDoctorTable(doctors) {
         <td><span class="status-badge ${doc.isAvailable ? 'status-available' : 'status-unavailable'}">${doc.isAvailable ? 'Available' : 'Unavailable'}</span></td>
         <td>
           <div style="display:flex; gap:0.4rem;">
+            <button class="${doc.isAvailable ? 'btn-outline' : 'btn-primary'} btn-sm" onclick="toggleAvailability('${doc._id}', ${doc.isAvailable})" title="${doc.isAvailable ? 'Mark Unavailable' : 'Mark Available'}" style="${doc.isAvailable ? 'color:#dc2626;border-color:#dc2626;' : ''}">
+              <i class="fas fa-${doc.isAvailable ? 'toggle-on' : 'toggle-off'}"></i> ${doc.isAvailable ? 'Off' : 'On'}
+            </button>
             <button class="btn-primary btn-sm" onclick='editDoctor(${JSON.stringify(doc).replace(/'/g, "\\'")})'><i class="fas fa-edit"></i></button>
             <button class="btn-danger btn-sm" onclick="deleteDoctor('${doc._id}')"><i class="fas fa-trash"></i></button>
           </div>
@@ -172,6 +175,19 @@ async function deleteDoctor(id) {
     loadDoctors();
   } catch (err) {
     showToast('Error', 'Failed to delete doctor', 'error');
+  }
+}
+
+async function toggleAvailability(id, currentStatus) {
+  try {
+    await apiCall(`/api/doctors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ isAvailable: !currentStatus })
+    });
+    showToast('Updated', `Doctor marked as ${!currentStatus ? 'Available' : 'Unavailable'}`, 'success');
+    loadDoctors();
+  } catch (err) {
+    showToast('Error', 'Failed to update availability', 'error');
   }
 }
 

@@ -33,13 +33,14 @@
       <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
       <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
       <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
-      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> <span data-i18n="admin.navDoctors">Doctors</span></a></li>
-      <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> <span data-i18n="admin.navCompleted">Completed Records</span></a></li>
+      <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+      <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
       <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
-      <li><a href="lab-reports.html"><i class="fas fa-flask"></i> Lab Reports</a></li>
       <li><a href="hospital-reports.html"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
       <li><a href="bed-management.html"><i class="fas fa-bed"></i> Bed Management</a></li>
-      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> <span data-i18n="admin.navQueue">Queue Board</span></a></li>
+      <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    <li><a href="tv-display.html"><i class="fas fa-desktop"></i> TV Display</a></li>
+    <li><a href="feedback.html"><i class="fas fa-star"></i> Feedback</a></li>
     </ul>
     <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> <span data-i18n="admin.logout">Logout</span></button>
   </aside>
@@ -127,9 +128,15 @@
     </div>
 
     <!-- View Patients Button -->
-    <div style="margin-top:1.5rem; text-align:center;">
+    <div style="margin-top:1.5rem; text-align:center; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
       <a href="patients.html" class="btn-primary" style="text-decoration:none; font-size:1rem; padding:0.85rem 2rem;">
         <i class="fas fa-users"></i> View All Patient Appointments
+      </a>
+      <button onclick="exportReport('csv')" class="btn-outline" style="font-size:1rem; padding:0.85rem 2rem;">
+        <i class="fas fa-download"></i> Export CSV
+      </button>
+      <a href="tv-display.html" target="_blank" class="btn-outline" style="text-decoration:none; font-size:1rem; padding:0.85rem 2rem;">
+        <i class="fas fa-desktop"></i> TV Display
       </a>
     </div>
 

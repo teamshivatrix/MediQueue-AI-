@@ -228,7 +228,12 @@ body {
   padding: 0 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.sidebar-nav li {
+  flex-shrink: 0;
 }
 
 .sidebar-nav a {
@@ -236,12 +241,15 @@ body {
   color: #475569;
   font-weight: 500;
   font-size: 0.9rem;
-  padding: 0.65rem 1rem;
+  padding: 0 1rem;
   border-radius: 10px;
   transition: all 0.25s ease;
   display: flex;
   align-items: center;
   gap: 10px;
+  height: 42px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar-nav a:hover {
@@ -259,6 +267,7 @@ body {
   font-size: 0.95rem;
   width: 18px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 /* Admin Logout Button */

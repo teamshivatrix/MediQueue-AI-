@@ -133,8 +133,19 @@ function renderAppointmentCard(apt, { emergencyStyle, statusClass, statusLabel }
       </div>
       <span class="status-badge ${statusClass}">${statusLabel}</span>
       <div class="appointment-actions">
-        ${apt.status === 'waiting' ? `<button class="${emergencyStyle ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="updateStatus('${aptId}', 'in-progress')"><i class="fas fa-play"></i></button>` : ''}
-        ${apt.status === 'in-progress' ? `<button class="btn-secondary btn-sm" onclick="updateStatus('${aptId}', 'completed')"><i class="fas fa-check"></i></button>` : ''}
+        ${apt.status === 'waiting' ? `
+          <button class="${emergencyStyle ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="updateStatus('${aptId}', 'in-progress')" title="Call Next / Start">
+            <i class="fas fa-play"></i> Call
+          </button>
+          <button class="btn-outline btn-sm" onclick="cancelAppointment('${aptId}')" title="Cancel Appointment" style="color:#dc2626;border-color:#dc2626;">
+            <i class="fas fa-times"></i>
+          </button>
+        ` : ''}
+        ${apt.status === 'in-progress' ? `
+          <button class="btn-secondary btn-sm" onclick="updateStatus('${aptId}', 'completed')" title="Mark Completed">
+            <i class="fas fa-check"></i> Done
+          </button>
+        ` : ''}
         ${showPrescBtn ? `<button class="btn-outline btn-sm presc-btn"
           data-id="${aptId}"
           data-name="${(apt.patientName||'').replace(/"/g,'&quot;')}"
@@ -148,6 +159,20 @@ function renderAppointmentCard(apt, { emergencyStyle, statusClass, statusLabel }
       </div>
     </div>
   `;
+}
+
+async function cancelAppointment(id) {
+  if (!confirm('Cancel this appointment?')) return;
+  try {
+    await apiCall(`/api/appointments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'cancelled' })
+    });
+    showToast('Cancelled', 'Appointment has been cancelled', 'success');
+    loadPatients();
+  } catch (err) {
+    showToast('Error', 'Failed to cancel appointment', 'error');
+  }
 }
 
 async function updateStatus(id, status) {

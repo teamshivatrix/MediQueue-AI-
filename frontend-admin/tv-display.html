@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queue Display - MediQueue AI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #0a0f1e 0%, #0d1b2a 50%, #0a1628 100%);
+      color: white; font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh; overflow: hidden;
+    }
+
+    /* Header */
+    .tv-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(8,145,178,0.15);
+      border-bottom: 2px solid rgba(8,145,178,0.3);
+    }
+    .tv-logo { display: flex; align-items: center; gap: 12px; }
+    .tv-logo i { font-size: 2rem; color: #22d3ee; }
+    .tv-logo span { font-size: 1.5rem; font-weight: 900; background: linear-gradient(135deg,#22d3ee,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .tv-time { font-size: 1.8rem; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }
+    .tv-date { font-size: 0.9rem; color: #64748b; text-align: right; }
+
+    /* Main grid */
+    .tv-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      padding: 1.5rem 2rem;
+      height: calc(100vh - 80px);
+    }
+
+    /* Now Serving */
+    .now-serving {
+      background: rgba(8,145,178,0.1);
+      border: 2px solid rgba(8,145,178,0.3);
+      border-radius: 24px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      position: relative; overflow: hidden;
+    }
+    .now-serving::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 30%, rgba(8,145,178,0.15), transparent 70%);
+    }
+    .ns-label {
+      font-size: 0.9rem; font-weight: 800; letter-spacing: 4px;
+      color: #22d3ee; text-transform: uppercase; margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ns-label .dot {
+      width: 10px; height: 10px; border-radius: 50%; background: #22d3ee;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .ns-token {
+      font-size: 9rem; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, #22d3ee, #34d399);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: tokenPulse 2s ease-in-out infinite;
+      position: relative; z-index: 1;
+    }
+    @keyframes tokenPulse {
+      0%,100% { filter: drop-shadow(0 0 20px rgba(34,211,238,0.5)); }
+      50% { filter: drop-shadow(0 0 40px rgba(34,211,238,0.9)); }
+    }
+    .ns-name { font-size: 2rem; font-weight: 700; color: white; margin-top: 0.5rem; position: relative; z-index: 1; }
+    .ns-dept { font-size: 1rem; color: #94a3b8; margin-top: 0.25rem; position: relative; z-index: 1; }
+    .ns-doctor {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(8,145,178,0.2); border: 1px solid rgba(8,145,178,0.4);
+      border-radius: 12px; padding: 0.5rem 1.2rem;
+      color: #22d3ee; font-weight: 600; font-size: 1rem;
+      margin-top: 1rem; position: relative; z-index: 1;
+    }
+
+    /* Next + Queue */
+    .right-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+    .next-card {
+      background: rgba(245,158,11,0.1);
+      border: 2px solid rgba(245,158,11,0.3);
+      border-radius: 20px; padding: 1.2rem 1.5rem;
+      display: flex; align-items: center; gap: 1.5rem;
+    }
+    .next-label { font-size: 0.75rem; font-weight: 800; letter-spacing: 3px; color: #fbbf24; text-transform: uppercase; }
+    .next-token { font-size: 3.5rem; font-weight: 900; color: #fbbf24; line-height: 1; }
+    .next-info { flex: 1; }
+    .next-name { font-size: 1.2rem; font-weight: 700; color: white; }
+    .next-dept { font-size: 0.85rem; color: #94a3b8; margin-top: 2px; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; }
+    .stat-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 1rem; text-align: center;
+    }
+    .stat-val { font-size: 2.2rem; font-weight: 900; }
+    .stat-lbl { font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    /* Waiting list */
+    .waiting-panel {
+      flex: 1; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; padding: 1rem 1.2rem;
+      overflow: hidden;
+    }
+    .waiting-title {
+      font-size: 0.8rem; font-weight: 800; letter-spacing: 2px;
+      color: #64748b; text-transform: uppercase; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .waiting-item {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.5rem 0.75rem; border-radius: 10px;
+      margin-bottom: 0.4rem;
+      background: rgba(255,255,255,0.04);
+      transition: background 0.3s;
+    }
+    .waiting-item:first-child { background: rgba(8,145,178,0.12); border: 1px solid rgba(8,145,178,0.2); }
+    .wi-token { font-size: 1.1rem; font-weight: 800; color: #22d3ee; width: 50px; }
+    .wi-name { flex: 1; font-size: 0.9rem; font-weight: 600; color: white; }
+    .wi-dept { font-size: 0.75rem; color: #64748b; }
+    .wi-wait { font-size: 0.75rem; color: #f59e0b; font-weight: 600; }
+
+    /* Ticker */
+    .ticker {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(8,145,178,0.2);
+      border-top: 1px solid rgba(8,145,178,0.3);
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem; color: #94a3b8;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .ticker-badge {
+      background: #0891b2; color: white; font-size: 0.7rem;
+      font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0;
+    }
+    .ticker-text { animation: tickerScroll 30s linear infinite; white-space: nowrap; }
+    @keyframes tickerScroll {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .empty-state { text-align: center; padding: 3rem; color: #475569; }
+    .empty-state i { font-size: 3rem; opacity: 0.3; display: block; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="tv-header">
+    <div class="tv-logo">
+      <i class="fas fa-hospital-alt"></i>
+      <span>MediQueue AI — OPD Queue</span>
+    </div>
+    <div style="text-align:right;">
+      <div class="tv-time" id="tvTime">--:--:--</div>
+      <div class="tv-date" id="tvDate">--</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="tv-main">
+
+    <!-- Left: Now Serving -->
+    <div class="now-serving">
+      <div class="ns-label"><div class="dot"></div> Now Serving</div>
+      <div class="ns-token" id="tvToken">--</div>
+      <div class="ns-name" id="tvName">--</div>
+      <div class="ns-dept" id="tvDept">--</div>
+      <div class="ns-doctor"><i class="fas fa-user-md"></i> <span id="tvDoctor">--</span></div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+
+      <!-- Next -->
+      <div class="next-card">
+        <div style="text-align:center;">
+          <div class="next-label">Next</div>
+          <div class="next-token" id="tvNextToken">--</div>
+        </div>
+        <div class="next-info">
+          <div class="next-name" id="tvNextName">--</div>
+          <div class="next-dept" id="tvNextDept">--</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-val" id="tvWaiting" style="color:#f59e0b;">0</div>
+          <div class="stat-lbl">Waiting</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="tvCompleted" style="color:#10b981;">0</div>
+          <div class="stat-lbl">Done</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="tvTotal" style="color:#22d3ee;">0</div>
+          <div class="stat-lbl">Total</div>
+        </div>
+      </div>
+
+      <!-- Waiting List -->
+      <div class="waiting-panel">
+        <div class="waiting-title"><i class="fas fa-list-ol" style="color:#22d3ee;"></i> Waiting Queue</div>
+        <div id="tvWaitingList">
+          <div class="empty-state"><i class="fas fa-hourglass-half"></i>Loading queue...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker">
+    <span class="ticker-badge">INFO</span>
+    <span class="ticker-text" id="tvTicker">
+      Welcome to MediQueue AI Hospital &nbsp;|&nbsp; Please keep your token slip ready &nbsp;|&nbsp; Emergency: Call 108 &nbsp;|&nbsp; Please maintain silence in the OPD area &nbsp;|&nbsp; Wear your mask &nbsp;|&nbsp; Thank you for your patience
+    </span>
+  </div>
+
+  <script>
+    const API_BASE = window.location.port === '3000' ? '' : 'http://localhost:3000';
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('tvTime').textContent = now.toLocaleTimeString('en-IN', { hour12: true });
+      document.getElementById('tvDate').textContent = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Load queue
+    async function loadQueue() {
+      try {
+        const res = await fetch(API_BASE + '/api/appointments/queue');
+        const data = await res.json();
+
+        // Now serving
+        const cs = data.currentServing;
+        document.getElementById('tvToken').textContent = cs ? '#' + cs.tokenNumber : '--';
+        document.getElementById('tvName').textContent = cs ? cs.patientName : 'No one currently';
+        document.getElementById('tvDept').textContent = cs ? cs.department : '';
+        document.getElementById('tvDoctor').textContent = cs ? cs.doctorName : '--';
+
+        // Next
+        const nx = data.nextInQueue;
+        document.getElementById('tvNextToken').textContent = nx ? '#' + nx.tokenNumber : '--';
+        document.getElementById('tvNextName').textContent = nx ? nx.patientName : 'No one waiting';
+        document.getElementById('tvNextDept').textContent = nx ? nx.department : '';
+
+        // Stats
+        document.getElementById('tvWaiting').textContent = data.totalWaiting || 0;
+        document.getElementById('tvCompleted').textContent = data.totalCompleted || 0;
+        document.getElementById('tvTotal').textContent = data.totalToday || 0;
+
+        // Waiting list
+        const list = data.waitingQueue || [];
+        const el = document.getElementById('tvWaitingList');
+        if (!list.length) {
+          el.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle" style="color:#10b981;"></i><p style="color:#10b981;font-weight:600;">Queue is clear!</p></div>';
+        } else {
+          el.innerHTML = list.slice(0, 8).map((a, i) => `
+            <div class="waiting-item">
+              <div class="wi-token">#${a.tokenNumber}</div>
+              <div style="flex:1;">
+                <div class="wi-name">${a.patientName}</div>
+                <div class="wi-dept">${a.department} · ${a.doctorName}</div>
+              </div>
+              <div class="wi-wait">${a.estimatedWaitTime > 0 ? '~' + a.estimatedWaitTime + ' min' : 'Soon'}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Queue load error:', err);
+      }
+    }
+
+    loadQueue();
+    setInterval(loadQueue, 5000); // refresh every 5s
+  </script>
+</body>
+</html>

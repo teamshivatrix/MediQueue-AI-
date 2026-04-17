@@ -4,15 +4,47 @@ let deptChart, hourChart, doctorChart, statusChart, bedChart;
 let lastEmergencyAlertTimestamp = 0;
 let emergencyAlertTimer = null;
 let unreadAppointments = 0;
+let refreshCountdown = 30;
+let countdownTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
   pollEmergencyAlerts();
   connectAppointmentSSE();
   connectAmbulanceSSE();
-  setInterval(loadDashboard, 30000);
+  startAutoRefresh();
   setInterval(pollEmergencyAlerts, 3000);
 });
+
+function startAutoRefresh() {
+  // Inject countdown indicator
+  const header = document.querySelector('.page-header');
+  if (header && !document.getElementById('refreshIndicator')) {
+    const ind = document.createElement('div');
+    ind.id = 'refreshIndicator';
+    ind.style.cssText = 'display:inline-flex;align-items:center;gap:6px;font-size:0.78rem;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;margin-top:6px;';
+    ind.innerHTML = '<i class="fas fa-sync-alt" style="color:#0891b2;"></i> Auto-refresh in <span id="refreshCountdownNum" style="font-weight:700;color:#0891b2;">30</span>s <button onclick="loadDashboard();resetCountdown()" style="background:none;border:none;color:#0891b2;cursor:pointer;font-size:0.75rem;font-weight:600;padding:0 4px;"><i class="fas fa-refresh"></i> Now</button>';
+    header.appendChild(ind);
+  }
+
+  refreshCountdown = 30;
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    refreshCountdown--;
+    const el = document.getElementById('refreshCountdownNum');
+    if (el) el.textContent = refreshCountdown;
+    if (refreshCountdown <= 0) {
+      loadDashboard();
+      resetCountdown();
+    }
+  }, 1000);
+}
+
+function resetCountdown() {
+  refreshCountdown = 30;
+  const el = document.getElementById('refreshCountdownNum');
+  if (el) el.textContent = 30;
+}
 
 // ---- Ambulance SSE ----
 function connectAmbulanceSSE() {
@@ -144,6 +176,7 @@ function connectAppointmentSSE() {
     unreadAppointments++;
     updateUnreadBadge();
     loadDashboard(); // refresh stats
+    resetCountdown();
   });
 
   es.onerror = () => setTimeout(connectAppointmentSSE, 3000);
@@ -614,11 +647,36 @@ function renderAppointmentCard(apt, { emergencyStyle, statusClass, statusLabel }
       </div>
       <span class="status-badge ${statusClass}">${statusLabel}</span>
       <div class="appointment-actions">
-        ${apt.status === 'waiting' ? `<button class="${actionBtnClass}" onclick="updateStatus('${apt._id || apt.appointmentId}', 'in-progress')"><i class="fas fa-play"></i></button>` : ''}
-        ${apt.status === 'in-progress' ? `<button class="btn-secondary btn-sm" onclick="updateStatus('${apt._id || apt.appointmentId}', 'completed')"><i class="fas fa-check"></i></button>` : ''}
+        ${apt.status === 'waiting' ? `
+          <button class="${actionBtnClass}" onclick="updateStatus('${apt._id || apt.appointmentId}', 'in-progress')" title="Call Patient">
+            <i class="fas fa-play"></i> Call
+          </button>
+          <button class="btn-outline btn-sm" onclick="cancelAppointmentDash('${apt._id || apt.appointmentId}')" title="Cancel" style="color:#dc2626;border-color:#dc2626;">
+            <i class="fas fa-times"></i>
+          </button>
+        ` : ''}
+        ${apt.status === 'in-progress' ? `
+          <button class="btn-secondary btn-sm" onclick="updateStatus('${apt._id || apt.appointmentId}', 'completed')" title="Mark Done">
+            <i class="fas fa-check"></i> Done
+          </button>
+        ` : ''}
       </div>
     </div>
   `;
+}
+
+async function cancelAppointmentDash(id) {
+  if (!confirm('Cancel this appointment?')) return;
+  try {
+    await apiCall(`/api/appointments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'cancelled' })
+    });
+    showToast('Cancelled', 'Appointment cancelled', 'success');
+    loadDashboard();
+  } catch (err) {
+    showToast('Error', 'Failed to cancel', 'error');
+  }
 }
 
 async function updateStatus(id, status) {
@@ -632,4 +690,16 @@ async function updateStatus(id, status) {
   } catch (err) {
     showToast('Error', 'Failed to update appointment', 'error');
   }
+}
+
+function exportReport(format) {
+  const today = new Date().toISOString().split('T')[0];
+  const url = `${API_BASE}/api/export/appointments?date=${today}&format=${format}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `appointments_${today}.${format}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Exporting', `Downloading ${format.toUpperCase()} report...`, 'info');
 }

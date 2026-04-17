@@ -44,6 +44,9 @@ const labReportRoutes = require('./routes/labReports');
 const hospitalReportRoutes = require('./routes/hospitalReports');
 const bedManagementRoutes = require('./routes/bedManagement');
 
+const feedbackRoutes = require('./routes/feedback');
+const exportRoutes = require('./routes/export');
+
 // API routes
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -55,6 +58,8 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/lab-reports', labReportRoutes);
 app.use('/api/hospital-reports', hospitalReportRoutes);
 app.use('/api/bed-management', bedManagementRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/export', exportRoutes);
 
 // Admin authentication
 const crypto = require('crypto');
@@ -217,6 +222,7 @@ const initializeApp = async () => {
     require('./routes/doctors').setMemoryMode(true);
     require('./routes/patients').setMemoryMode(true);
     require('./routes/emergency').setMemoryMode(true);
+    require('./routes/feedback').setMemoryMode(true);
     seedDemoData();
   } else {
     // Seed MongoDB if empty

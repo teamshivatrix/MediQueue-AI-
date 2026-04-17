@@ -133,6 +133,20 @@ router.post('/', async (req, res) => {
     // Broadcast to all admin SSE clients
     broadcastNewAppointment(appointmentData);
 
+    // Send confirmation SMS (non-blocking)
+    try {
+      const { sendAppointmentConfirmation } = require('../services/sms');
+      sendAppointmentConfirmation(phone, {
+        patientName,
+        tokenNumber: appointmentData.tokenNumber,
+        doctorName: appointmentData.doctorName,
+        department,
+        timeSlot,
+        date,
+        waitTime: appointmentData.estimatedWaitTime
+      }).catch(() => {});
+    } catch (_) {}
+
     res.status(201).json({
       message: 'Appointment booked successfully!',
       appointment: appointmentData
@@ -174,6 +188,39 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching appointments:', error);
     res.status(500).json({ error: 'Failed to fetch appointments' });
+  }
+});
+
+// PATCH /api/appointments/:id/reschedule — Reschedule appointment
+router.patch('/:id/reschedule', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, timeSlot } = req.body;
+    if (!date || !timeSlot) return res.status(400).json({ error: 'date and timeSlot required' });
+
+    if (useMemory) {
+      const apt = memoryAppointments.find(a => a._id === id || a.appointmentId === id);
+      if (!apt) return res.status(404).json({ error: 'Appointment not found' });
+      if (apt.status === 'completed' || apt.status === 'cancelled') {
+        return res.status(400).json({ error: 'Cannot reschedule a completed or cancelled appointment' });
+      }
+      apt.date = date;
+      apt.timeSlot = timeSlot;
+      apt.status = 'waiting';
+      return res.json({ success: true, appointment: apt });
+    }
+
+    const Appointment = require('../models/Appointment');
+    const apt = await Appointment.findOneAndUpdate(
+      { $or: [{ _id: id }, { appointmentId: id }], status: { $nin: ['completed', 'cancelled'] } },
+      { date, timeSlot, status: 'waiting' },
+      { new: true }
+    );
+    if (!apt) return res.status(404).json({ error: 'Appointment not found or cannot be rescheduled' });
+    res.json({ success: true, appointment: apt });
+  } catch (err) {
+    console.error('Reschedule error:', err);
+    res.status(500).json({ error: 'Failed to reschedule appointment' });
   }
 });
 

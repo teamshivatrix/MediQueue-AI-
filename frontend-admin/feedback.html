@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Feedback - MediQueue AI</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    (function() {
+      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) { window.location.href = 'admin-login.html?redirect=feedback.html'; return; }
+      fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) })
+        .then(r=>r.json()).then(d=>{ if(!d.valid){ sessionStorage.removeItem('adminToken'); window.location.href='admin-login.html'; }}).catch(()=>{});
+    })();
+  </script>
+  <style>
+    .star-display { color: #f59e0b; font-size: 1rem; }
+    .star-empty { color: #e2e8f0; }
+    .rating-bar-wrap { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem; }
+    .rating-bar { flex:1; height:10px; background:#f1f5f9; border-radius:999px; overflow:hidden; }
+    .rating-bar-fill { height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:999px; transition:width 0.6s ease; }
+    .doctor-card { background:white; border:1px solid #e2e8f0; border-radius:16px; padding:1.2rem; margin-bottom:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+    .avg-stars { font-size:2rem; font-weight:900; color:#f59e0b; }
+  </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<aside class="sidebar">
+  <a href="admin-dashboard.html" class="sidebar-logo"><i class="fas fa-hospital"></i><span>MediQueue<br>Admin</span></a>
+  <ul class="sidebar-nav">
+    <li><a href="admin-dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+    <li><a href="admin-patients-search.html"><i class="fas fa-user-injured"></i> Patients</a></li>
+    <li><a href="patients.html"><i class="fas fa-users"></i> Patient Appointments</a></li>
+    <li><a href="ambulance.html"><i class="fas fa-truck-medical"></i> Ambulance</a></li>
+    <li><a href="doctor-management.html"><i class="fas fa-user-md"></i> Doctors</a></li>
+    <li><a href="completed-appointments.html"><i class="fas fa-check-double"></i> Completed Records</a></li>
+    <li><a href="prescriptions.html"><i class="fas fa-file-prescription"></i> Prescriptions</a></li>
+    <li><a href="hospital-reports.html"><i class="fas fa-x-ray"></i> Hospital Reports</a></li>
+    <li><a href="bed-management.html"><i class="fas fa-bed"></i> Bed Management</a></li>
+    <li><a href="/patient/queue-display.html"><i class="fas fa-tv"></i> Queue Board</a></li>
+    <li><a href="tv-display.html"><i class="fas fa-desktop"></i> TV Display</a></li>
+    <li><a href="feedback.html" class="active"><i class="fas fa-star"></i> Feedback</a></li>
+  </ul>
+  <button class="admin-logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</aside>
+<div class="lang-btn-wrapper" id="langBtnWrapper"></div>
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fas fa-star" style="color:#f59e0b;"></i> Patient Feedback</h1>
+    <p>Doctor ratings and patient reviews</p>
+  </div>
+  <div class="container">
+
+    <!-- Overall Stats -->
+    <div id="overallStats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem;"></div>
+
+    <!-- Doctor-wise breakdown -->
+    <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:1rem;"><i class="fas fa-user-md" style="color:var(--primary);"></i> Doctor Ratings</h3>
+    <div id="doctorRatings"></div>
+
+    <!-- Recent Reviews -->
+    <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:1.5rem 0 1rem;"><i class="fas fa-comments" style="color:var(--primary);"></i> Recent Reviews</h3>
+    <div id="recentReviews"></div>
+
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', loadFeedback);
+
+async function loadFeedback() {
+  try {
+    const res = await fetch(API_BASE + '/api/feedback');
+    const data = await res.json();
+    renderOverall(data);
+    renderDoctorRatings(data.doctorStats || {});
+    renderReviews(data.feedback || []);
+  } catch (err) {
+    showToast('Error', 'Failed to load feedback', 'error');
+  }
+}
+
+function stars(rating, size = '1rem') {
+  return Array.from({length:5}, (_,i) =>
+    `<i class="fas fa-star ${i < rating ? '' : 'star-empty'}" style="color:${i < rating ? '#f59e0b' : '#e2e8f0'};font-size:${size};"></i>`
+  ).join('');
+}
+
+function renderOverall(data) {
+  const list = data.feedback || [];
+  if (!list.length) {
+    document.getElementById('overallStats').innerHTML = '<p style="color:#64748b;grid-column:1/-1;">No feedback yet.</p>';
+    return;
+  }
+  const total = list.length;
+  const avg = (list.reduce((s,f) => s+f.rating, 0) / total).toFixed(1);
+  const dist = [5,4,3,2,1].map(r => ({ r, count: list.filter(f=>f.rating===r).length }));
+
+  document.getElementById('overallStats').innerHTML = `
+    <div class="dash-stat-card" style="grid-column:span 2;">
+      <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div class="avg-stars">${avg}</div>
+          <div style="margin:4px 0;">${stars(Math.round(avg), '1.2rem')}</div>
+          <div style="font-size:0.8rem;color:#64748b;">${total} reviews</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          ${dist.map(d => `
+            <div class="rating-bar-wrap">
+              <span style="font-size:0.78rem;color:#64748b;width:12px;">${d.r}</span>
+              <i class="fas fa-star" style="color:#f59e0b;font-size:0.75rem;"></i>
+              <div class="rating-bar"><div class="rating-bar-fill" style="width:${total ? (d.count/total*100).toFixed(0) : 0}%;"></div></div>
+              <span style="font-size:0.78rem;color:#64748b;width:24px;text-align:right;">${d.count}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDoctorRatings(stats) {
+  const el = document.getElementById('doctorRatings');
+  const entries = Object.entries(stats);
+  if (!entries.length) { el.innerHTML = '<p style="color:#64748b;">No doctor ratings yet.</p>'; return; }
+
+  el.innerHTML = entries.sort((a,b) => b[1].avg - a[1].avg).map(([name, s]) => `
+    <div class="doctor-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1rem;">${name.replace('Dr. ','').charAt(0)}</div>
+          <div>
+            <div style="font-weight:700;color:#0f172a;">${name}</div>
+            <div style="font-size:0.78rem;color:#64748b;">${s.department || ''} · ${s.count} reviews</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.5rem;font-weight:900;color:#f59e0b;">${s.avg}</span>
+          <div>${stars(Math.round(s.avg))}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderReviews(list) {
+  const el = document.getElementById('recentReviews');
+  const recent = list.slice(0, 20);
+  if (!recent.length) { el.innerHTML = '<p style="color:#64748b;">No reviews yet.</p>'; return; }
+
+  el.innerHTML = recent.map(f => `
+    <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:1rem 1.2rem;margin-bottom:0.75rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <div>
+          <div style="font-weight:700;color:#0f172a;">${f.patientName || 'Anonymous'}</div>
+          <div style="font-size:0.78rem;color:#64748b;">${f.doctorName || ''} · ${new Date(f.createdAt).toLocaleDateString('en-IN')}</div>
+        </div>
+        <div>${stars(f.rating)}</div>
+      </div>
+      ${f.comment ? `<div style="margin-top:0.5rem;font-size:0.85rem;color:#475569;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;">"${f.comment}"</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function adminLogout() {
+  const token = sessionStorage.getItem('adminToken');
+  fetch(API_BASE + '/api/admin/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) }).catch(()=>{});
+  sessionStorage.removeItem('adminToken');
+  window.location.href = 'admin-login.html';
+}
+</script>
+</body>
+</html>
