@@ -31,9 +31,10 @@ router.post('/', async (req, res) => {
         await fb.save();
         feedbackData._id = fb._id;
       } catch (dbErr) {
-        // Fallback to memory if DB fails
-        memoryFeedback.push(feedbackData);
+        // DB failed — save to memory
       }
+      // Always keep in memory as well (for same-session reads)
+      memoryFeedback.push(feedbackData);
     }
 
     res.status(201).json({ success: true, feedback: feedbackData });
@@ -54,15 +55,22 @@ router.get('/', async (req, res) => {
       if (doctorId) list = list.filter(f => f.doctorId === doctorId);
       if (department) list = list.filter(f => f.department === department);
     } else {
+      // Always include memory feedback (DB may have failed on write)
+      let dbList = [];
       try {
         const Feedback = require('../models/Feedback');
         const filter = {};
         if (doctorId) filter.doctorId = doctorId;
         if (department) filter.department = department;
-        list = await Feedback.find(filter).sort({ createdAt: -1 });
-      } catch (_) {
-        list = [...memoryFeedback];
-      }
+        dbList = await Feedback.find(filter).sort({ createdAt: -1 });
+      } catch (_) {}
+
+      // Merge: DB results + memory-only entries (not already in DB)
+      const dbIds = new Set(dbList.map(f => String(f.appointmentId)));
+      const memOnly = memoryFeedback.filter(f => !dbIds.has(String(f.appointmentId)));
+      list = [...dbList, ...memOnly];
+      if (doctorId) list = list.filter(f => f.doctorId === doctorId);
+      if (department) list = list.filter(f => f.department === department);
     }
 
     // Calculate averages per doctor
