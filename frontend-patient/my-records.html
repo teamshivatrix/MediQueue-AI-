@@ -38,14 +38,13 @@
 
   <div style="margin-bottom:1.5rem;">
     <h1 style="font-size:1.6rem;font-weight:900;color:#e2e8f0;margin-bottom:0.25rem;"><i class="fas fa-file-medical" style="color:var(--primary);"></i> My Medical Records</h1>
-    <p style="color:#64748b;font-size:0.9rem;">Your prescriptions and lab reports from all visits</p>
+    <p style="color:#64748b;font-size:0.9rem;">Your prescriptions and appointments from all visits</p>
   </div>
 
   <!-- Tabs -->
   <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;border-bottom:2px solid #f1f5f9;padding-bottom:0;flex-wrap:wrap;">
     <button id="tabAppointments" onclick="switchTab('appointments')" style="padding:0.6rem 1.2rem;border:none;background:none;font-weight:700;font-size:0.9rem;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer;margin-bottom:-2px;"><i class="fas fa-calendar-check"></i> Appointments</button>
     <button id="tabPrescriptions" onclick="switchTab('prescriptions')" style="padding:0.6rem 1.2rem;border:none;background:none;font-weight:600;font-size:0.9rem;color:#64748b;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-2px;"><i class="fas fa-file-prescription"></i> Prescriptions</button>
-    <button id="tabLabReports" onclick="switchTab('labreports')" style="padding:0.6rem 1.2rem;border:none;background:none;font-weight:600;font-size:0.9rem;color:#64748b;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-2px;"><i class="fas fa-flask"></i> Lab Reports</button>
   </div>
 
   <!-- Appointments Tab -->
@@ -56,11 +55,6 @@
   <!-- Prescriptions Tab -->
   <div id="prescriptionsTab" style="display:none;">
     <div id="prescList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading...</div></div>
-  </div>
-
-  <!-- Lab Reports Tab -->
-  <div id="labreportsTab" style="display:none;">
-    <div id="labList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading...</div></div>
   </div>
 
 </div>

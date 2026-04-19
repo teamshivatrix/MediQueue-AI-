@@ -270,6 +270,38 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Sidebar Notification Badge ── */
+.sidebar-nav a {
+  position: relative;
+}
+.sb-badge {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #dc2626;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  animation: badgePop 0.3s ease;
+  box-shadow: 0 2px 6px rgba(220,38,38,0.5);
+}
+.sb-badge.green { background: #059669; box-shadow: 0 2px 6px rgba(5,150,105,0.5); }
+.sb-badge.orange { background: #f97316; box-shadow: 0 2px 6px rgba(249,115,22,0.5); }
+@keyframes badgePop {
+  0% { transform: translateY(-50%) scale(0); }
+  70% { transform: translateY(-50%) scale(1.2); }
+  100% { transform: translateY(-50%) scale(1); }
+}
+
 /* Admin Logout Button */
 .admin-logout-btn {
   background: linear-gradient(135deg, #ef4444, #dc2626);

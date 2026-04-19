@@ -400,3 +400,70 @@ const deptIcons = {
 function getDeptIcon(dept) {
   return deptIcons[dept] || 'fas fa-hospital';
 }
+
+// ── Sidebar Notification Badges ──
+(function () {
+  // Map: sidebar link href keyword → badge id
+  const BADGE_CONFIG = [
+    { keyword: 'patients.html',              badgeId: 'sb-badge-appointments', color: 'red',    fetch: fetchPendingAppointments },
+    { keyword: 'ambulance.html',             badgeId: 'sb-badge-ambulance',    color: 'red',    fetch: fetchPendingAmbulance },
+    { keyword: 'admin-patients-search.html', badgeId: 'sb-badge-patients',     color: 'orange', fetch: null },
+  ];
+
+  async function fetchPendingAppointments() {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const data = await apiCall(`/api/appointments?date=${today}&status=waiting`);
+      return Array.isArray(data) ? data.length : 0;
+    } catch (_) { return 0; }
+  }
+
+  async function fetchPendingAmbulance() {
+    try {
+      const data = await apiCall('/api/ambulance/requests');
+      const list = Array.isArray(data) ? data : [];
+      return list.filter(r => r.status === 'pending').length;
+    } catch (_) { return 0; }
+  }
+
+  function setBadge(badgeId, count, color) {
+    // Find or create badge on the matching sidebar link
+    let badge = document.getElementById(badgeId);
+    if (!badge) {
+      // Find the sidebar link that matches
+      const cfg = BADGE_CONFIG.find(c => c.badgeId === badgeId);
+      if (!cfg) return;
+      const link = [...document.querySelectorAll('.sidebar-nav a')]
+        .find(a => a.href && a.href.includes(cfg.keyword));
+      if (!link) return;
+      badge = document.createElement('span');
+      badge.id = badgeId;
+      badge.className = 'sb-badge';
+      link.appendChild(badge);
+    }
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.style.display = 'inline-flex';
+      badge.className = `sb-badge${color === 'orange' ? ' orange' : color === 'green' ? ' green' : ''}`;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  async function refreshBadges() {
+    for (const cfg of BADGE_CONFIG) {
+      if (!cfg.fetch) continue;
+      const count = await cfg.fetch();
+      setBadge(cfg.badgeId, count, cfg.color);
+    }
+  }
+
+  // Run on load + every 15 seconds
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(refreshBadges, 800); // slight delay so sidebar renders
+    setInterval(refreshBadges, 15000);
+  });
+
+  // Expose so other pages can trigger refresh after action
+  window.refreshSidebarBadges = refreshBadges;
+})();

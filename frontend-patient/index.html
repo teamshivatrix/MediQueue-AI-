@@ -879,8 +879,9 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- ─── AMBULANCE MODAL ─── -->
-  <div id="ambulanceModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(4px);z-index:5000;align-items:center;justify-content:center;padding:16px;">
-    <div style="width:100%;max-width:520px;background:white;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.3);overflow:hidden;">
+  <div id="ambulanceModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);z-index:999999;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;">
+    <div style="width:100%;max-width:500px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6);">
+      <!-- Header -->
       <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:10px;color:white;">
           <i class="fas fa-truck-medical" style="font-size:1.4rem;"></i>
@@ -889,37 +890,38 @@
             <div style="font-size:0.78rem;opacity:0.85;">Fill details — help is on the way</div>
           </div>
         </div>
-        <button onclick="closeAmbulanceModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;"><i class="fas fa-times"></i></button>
+        <button onclick="closeAmbulanceModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
       </div>
+      <!-- Body -->
       <div style="padding:1.5rem;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
           <div>
-            <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-user"></i> Patient Name</label>
-            <input id="ambName" type="text" placeholder="Full name" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+            <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-user"></i> Patient Name *</label>
+            <input id="ambName" type="text" placeholder="Full name" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;box-sizing:border-box;">
           </div>
           <div>
-            <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-phone"></i> Phone Number</label>
-            <input id="ambPhone" type="tel" placeholder="10-digit number" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+            <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-phone"></i> Phone Number *</label>
+            <input id="ambPhone" type="tel" placeholder="10-digit number" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;box-sizing:border-box;">
           </div>
         </div>
         <div style="margin-bottom:1rem;">
-          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-notes-medical"></i> Emergency Condition</label>
-          <textarea id="ambCondition" placeholder="Describe the emergency condition..." rows="3" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;resize:vertical;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;"><i class="fas fa-notes-medical"></i> Emergency Condition *</label>
+          <textarea id="ambCondition" placeholder="Describe the emergency..." rows="2" style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;resize:none;box-sizing:border-box;"></textarea>
         </div>
         <div style="margin-bottom:1.2rem;">
-          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-map-marker-alt" style="color:#dc2626;"></i> Pickup Location</label>
-          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
-            <input id="ambLocation" type="text" placeholder="Enter address or use GPS..." style="flex:1;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
-            <button onclick="getAmbulanceLocation()" id="gpsBtn" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border:none;border-radius:10px;padding:0 0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px;">
-              <i class="fas fa-crosshairs"></i><span style="font-size:0.8rem;">GPS</span>
+          <label style="font-size:0.82rem;font-weight:600;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-map-marker-alt" style="color:#dc2626;"></i> Pickup Location *</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input id="ambLocation" type="text" placeholder="Enter address or use GPS..." style="flex:1;padding:0.6rem 0.9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;outline:none;font-family:inherit;">
+            <button onclick="getAmbGPS()" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border:none;border-radius:10px;padding:0 0.9rem;cursor:pointer;white-space:nowrap;font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:5px;">
+              <i class="fas fa-crosshairs"></i> GPS
             </button>
           </div>
-          <div id="ambLocationStatus" style="font-size:0.78rem;color:#64748b;min-height:18px;"></div>
-          <div id="ambMapPreview" style="display:none;margin-top:0.5rem;border-radius:10px;overflow:hidden;border:1.5px solid #e2e8f0;height:140px;">
-            <iframe id="ambMapFrame" style="width:100%;height:100%;border:none;" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <div id="ambGPSStatus" style="font-size:0.75rem;color:#64748b;margin-top:4px;min-height:16px;"></div>
+          <div id="ambMapPreview" style="display:none;margin-top:0.75rem;border-radius:12px;overflow:hidden;border:1.5px solid #e2e8f0;height:150px;">
+            <iframe id="ambMapFrame" style="width:100%;height:100%;border:none;" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src=""></iframe>
           </div>
         </div>
-        <button onclick="submitAmbulanceRequest()" style="width:100%;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;padding:0.85rem;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px rgba(220,38,38,0.4);">
+        <button onclick="submitAmbModal()" id="ambSubmitBtn" style="width:100%;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;padding:0.9rem;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px rgba(220,38,38,0.4);">
           <i class="fas fa-truck-medical"></i> Request Ambulance Now
         </button>
       </div>
@@ -928,6 +930,88 @@
 
   <script src="js/main.js"></script>
   <script src="js/ambulance.js"></script>
+  <script>
+    function openAmbulanceModal() {
+      const m = document.getElementById('ambulanceModal');
+      if (!m) return;
+      document.body.appendChild(m);
+      m.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeAmbulanceModal() {
+      const m = document.getElementById('ambulanceModal');
+      if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+    }
+    function getAmbGPS() {
+      const status = document.getElementById('ambGPSStatus');
+      if (!navigator.geolocation) { status.textContent = 'GPS not supported'; return; }
+      status.textContent = '📍 Getting location...';
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          document.getElementById('ambLocation').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          status.textContent = '✅ Location captured';
+          // Show map
+          const mapFrame = document.getElementById('ambMapFrame');
+          const mapPreview = document.getElementById('ambMapPreview');
+          if (mapFrame && mapPreview) {
+            mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01},${lat-0.01},${lng+0.01},${lat+0.01}&layer=mapnik&marker=${lat},${lng}`;
+            mapPreview.style.display = 'block';
+          }
+        },
+        () => { status.textContent = '❌ Could not get location. Enter manually.'; }
+      );
+    }
+    async function submitAmbModal() {
+      const name = document.getElementById('ambName').value.trim();
+      const phone = document.getElementById('ambPhone').value.trim();
+      const condition = document.getElementById('ambCondition').value.trim();
+      const location = document.getElementById('ambLocation').value.trim();
+      if (!name || !phone || !condition || !location) {
+        alert('Please fill all fields!'); return;
+      }
+      const btn = document.getElementById('ambSubmitBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+      btn.disabled = true;
+
+      // Extract lat/lon if GPS was used
+      let lat = null, lon = null;
+      const coordMatch = location.match(/([\d.]+),\s*([\d.]+)/);
+      if (coordMatch) { lat = coordMatch[1]; lon = coordMatch[2]; }
+
+      try {
+        const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+        const res = await fetch(base + '/api/ambulance/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientName: name, phone, condition, location,
+            lat, lon, requestedAt: new Date().toISOString()
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeAmbulanceModal();
+          alert(`✅ Ambulance Request Sent!\n\nRequest ID: ${data.requestId}\nEstimated arrival: 10-15 minutes\nEmergency: 108`);
+          // Clear fields
+          ['ambName','ambPhone','ambCondition','ambLocation'].forEach(id => document.getElementById(id).value = '');
+          document.getElementById('ambMapPreview').style.display = 'none';
+          document.getElementById('ambGPSStatus').textContent = '';
+        } else {
+          alert('Error: ' + (data.message || 'Request failed'));
+        }
+      } catch (err) {
+        alert('❌ Server error. Please call 108 directly for emergency!');
+      } finally {
+        btn.innerHTML = '<i class="fas fa-truck-medical"></i> Request Ambulance Now';
+        btn.disabled = false;
+      }
+    }
+    document.addEventListener('click', function(e) {
+      const m = document.getElementById('ambulanceModal');
+      if (m && e.target === m) closeAmbulanceModal();
+    });
+  </script>
   <script>
     /* ── GSAP + Advanced Interactions ── */
     // Load GSAP
