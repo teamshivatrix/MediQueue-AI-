@@ -112,7 +112,10 @@
         <div style="margin-top:1rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
             <label style="font-weight:600;font-size:0.88rem;color:#374151;"><i class="fas fa-pills" style="color:var(--secondary);"></i> Medicines</label>
-            <button type="button" class="btn-outline btn-sm" onclick="addMedicineRow()"><i class="fas fa-plus"></i> Add Medicine</button>
+            <div style="display:flex;gap:0.5rem;">
+              <button type="button" class="btn-outline btn-sm" onclick="checkMedicineInteractions()" title="AI checks for drug interactions"><i class="fas fa-robot"></i> Check Interactions</button>
+              <button type="button" class="btn-outline btn-sm" onclick="addMedicineRow()"><i class="fas fa-plus"></i> Add Medicine</button>
+            </div>
           </div>
           <div id="medicinesContainer">
             <div class="medicine-row" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:0.5rem;margin-bottom:0.5rem;align-items:center;">
@@ -123,6 +126,8 @@
               <button type="button" onclick="this.closest('.medicine-row').remove()" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:1rem;padding:0 4px;"><i class="fas fa-times"></i></button>
             </div>
           </div>
+          <!-- Interaction Result -->
+          <div id="interactionResult" style="display:none;margin-top:0.75rem;padding:1rem;border-radius:12px;border:1px solid #e2e8f0;font-size:0.85rem;"></div>
         </div>
 
         <!-- Attachment -->
@@ -161,6 +166,53 @@
       <button type="button" onclick="this.closest('.medicine-row').remove()" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:1rem;padding:0 4px;"><i class="fas fa-times"></i></button>
     `;
     document.getElementById('medicinesContainer').appendChild(row);
+  }
+
+  async function checkMedicineInteractions() {
+    const medicines = [...document.querySelectorAll('.med-name')]
+      .map(i => i.value.trim()).filter(Boolean);
+    if (medicines.length < 2) {
+      showToast('Need More Medicines', 'Add at least 2 medicines to check interactions', 'warning');
+      return;
+    }
+    const diagnosis = document.getElementById('pDiagnosis').value.trim();
+    const resultEl = document.getElementById('interactionResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI checking interactions...';
+
+    try {
+      const res = await fetch(API_BASE + '/api/ai/check-interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ medicines, diagnosis })
+      });
+      const data = await res.json();
+
+      if (data.safe && (!data.interactions || !data.interactions.length)) {
+        resultEl.style.background = '#f0fdf4';
+        resultEl.style.borderColor = '#86efac';
+        resultEl.innerHTML = `<div style="color:#166534;font-weight:700;"><i class="fas fa-check-circle"></i> No interactions found — medicines appear safe to use together.</div>
+          <div style="color:#166534;margin-top:4px;font-size:0.8rem;">${data.generalAdvice || ''}</div>`;
+      } else {
+        const severityColor = { mild: '#f59e0b', moderate: '#f97316', severe: '#dc2626' };
+        resultEl.style.background = '#fff7ed';
+        resultEl.style.borderColor = '#fed7aa';
+        resultEl.innerHTML = `
+          <div style="color:#9a3412;font-weight:700;margin-bottom:0.5rem;"><i class="fas fa-exclamation-triangle"></i> ${data.interactions?.length || 0} Interaction(s) Found</div>
+          ${(data.interactions||[]).map(i => `
+            <div style="padding:0.5rem;background:white;border-radius:8px;margin-bottom:0.4rem;border-left:3px solid ${severityColor[i.severity]||'#f97316'};">
+              <div style="font-weight:700;color:${severityColor[i.severity]||'#f97316'};font-size:0.82rem;">${i.drugs} — ${i.severity?.toUpperCase()}</div>
+              <div style="color:#475569;font-size:0.8rem;">${i.description}</div>
+              <div style="color:#0891b2;font-size:0.78rem;margin-top:2px;"><i class="fas fa-lightbulb"></i> ${i.recommendation}</div>
+            </div>`).join('')}
+          ${data.warnings?.length ? `<div style="color:#9a3412;font-size:0.8rem;margin-top:4px;">${data.warnings.join(' ')}</div>` : ''}
+          <div style="color:#64748b;font-size:0.78rem;margin-top:4px;">${data.generalAdvice||''}</div>`;
+      }
+    } catch (err) {
+      resultEl.style.background = '#fef2f2';
+      resultEl.style.borderColor = '#fecaca';
+      resultEl.innerHTML = `<div style="color:#dc2626;"><i class="fas fa-times-circle"></i> Could not check interactions. Please verify manually.</div>`;
+    }
   }
 
   async function savePrescription() {

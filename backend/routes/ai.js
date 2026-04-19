@@ -126,6 +126,15 @@ function fallbackChatResponse(message) {
 function getAIClient() {
   const provider = process.env.AI_PROVIDER || 'fallback';
 
+  if (provider === 'groq' && process.env.GROQ_API_KEY) {
+    try {
+      const Groq = require('groq-sdk');
+      return { provider: 'groq', client: new Groq({ apiKey: process.env.GROQ_API_KEY }) };
+    } catch (e) {
+      console.log('Groq SDK not available, using fallback');
+    }
+  }
+
   if (provider === 'gemini' && process.env.GEMINI_API_KEY) {
     try {
       const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -155,22 +164,48 @@ router.post('/analyze-symptoms', async (req, res) => {
 
     const { provider, client } = getAIClient();
 
+    if (provider === 'groq') {
+      try {
+        const completion = await client.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: `You are a medical triage assistant. Analyze symptoms and respond ONLY with valid JSON (no markdown, no backticks).
+Available departments: General Medicine, Cardiology, Orthopedics, Neurology, Pediatrics, Dermatology, ENT, Ophthalmology, Gastroenterology, Psychiatry, Gynecology, Dental, Pulmonology, Urology, Endocrinology
+Format: {"department":"name","priority":"low/medium/high/emergency","confidence":0.0-1.0,"reasoning":"warm empathetic explanation","recommendations":["tip1","tip2","tip3"]}` },
+            { role: 'user', content: `Patient symptoms: ${symptoms}` }
+          ],
+          temperature: 0.3, max_tokens: 400
+        });
+        const text = completion.choices[0].message.content;
+        const jsonMatch = text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim().match(/\{[\s\S]*\}/);
+        if (jsonMatch) return res.json({ ...JSON.parse(jsonMatch[0]), aiProvider: 'groq' });
+      } catch (groqErr) {
+        console.error('Groq analyze error:', groqErr.message?.substring(0, 100));
+      }
+    }
+
     if (provider === 'gemini') {
       try {
-        const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
-        const prompt = `You are a medical triage AI for a government hospital. Analyze these symptoms and suggest the most appropriate hospital department.
+        const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const prompt = `You are a warm and caring medical triage assistant at MediQueue AI Hospital. Analyze the patient's symptoms and suggest the right department.
 
-IMPORTANT: You must respond ONLY with valid JSON, no markdown, no backticks, no extra text.
+IMPORTANT: Respond ONLY with valid JSON, no markdown, no backticks, no extra text.
+
 Available departments: General Medicine, Cardiology, Orthopedics, Neurology, Pediatrics, Dermatology, ENT, Ophthalmology, Gastroenterology, Psychiatry, Gynecology, Dental, Pulmonology, Urology, Endocrinology
 
 JSON format:
-{"department": "department name from list above", "priority": "low/medium/high/emergency", "confidence": 0.0-1.0, "reasoning": "brief explanation", "recommendations": ["rec1", "rec2", "rec3"]}
+{
+  "department": "department name from list above",
+  "priority": "low/medium/high/emergency",
+  "confidence": 0.0-1.0,
+  "reasoning": "Write a warm, human-like explanation in 1-2 sentences. If patient wrote in Hindi/Hinglish, respond in Hinglish. Be empathetic and caring.",
+  "recommendations": ["Practical tip 1 in patient's language", "Practical tip 2", "Tip 3"]
+}
 
 Patient symptoms: ${symptoms}`;
 
         const result = await model.generateContent(prompt);
         const text = result.response.text();
-        // Extract JSON from response (handle markdown code blocks too)
         const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -179,7 +214,6 @@ Patient symptoms: ${symptoms}`;
         }
       } catch (geminiErr) {
         console.error('Gemini analyze error:', geminiErr.message?.substring(0, 100));
-        // Fall through to fallback
       }
     }
 
@@ -222,24 +256,112 @@ router.post('/chat', async (req, res) => {
 
     const { provider, client } = getAIClient();
 
+    const MEERA_SYSTEM = `You are "Meera" — a warm, caring, friendly hospital assistant at MediQueue AI Government Hospital. Talk like a real helpful person, not a robot.
+
+Personality:
+- Warm, empathetic, conversational — like a caring friend at a hospital
+- Understand Hindi, Hinglish, English — respond in same language patient uses
+- Show genuine concern for patient's health
+- Give practical helpful advice
+- Keep responses short and natural (2-4 sentences max)
+- Use emojis occasionally 😊
+- Address patient as "aap" in Hindi
+
+APPOINTMENT BOOKING: If patient wants to book, when you have department + symptoms info, add this EXACT JSON at END of message:
+BOOKING_DATA:{"action":"book_appointment","department":"Department Name","symptoms":"patient symptoms","suggestedDate":"${new Date().toISOString().split('T')[0]}"}
+
+Hospital: MediQueue AI Govt Hospital | Hours: Mon-Fri 9AM-5PM, Sat 9AM-1PM, Emergency 24/7
+Departments: General Medicine, Cardiology, Orthopedics, Neurology, Pediatrics, Dermatology, ENT, Ophthalmology, Gynecology, Dental, Psychiatry, Gastroenterology, Pulmonology, Urology, Endocrinology
+Emergency: 108`;
+
+    if (provider === 'groq') {
+      try {
+        const messages = [{ role: 'system', content: MEERA_SYSTEM }];
+        if (req.body.history) {
+          req.body.history.split('\n').forEach(line => {
+            if (line.startsWith('user:')) messages.push({ role: 'user', content: line.replace('user:', '').trim() });
+            else if (line.startsWith('meera:')) messages.push({ role: 'assistant', content: line.replace('meera:', '').trim() });
+          });
+        }
+        messages.push({ role: 'user', content: message });
+
+        const completion = await client.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages,
+          temperature: 0.7,
+          max_tokens: 300
+        });
+        const fullText = completion.choices[0].message.content;
+        const bookingMatch = fullText.match(/BOOKING_DATA:(\{[^}]+\})/);
+        if (bookingMatch) {
+          try {
+            const bookingData = JSON.parse(bookingMatch[1]);
+            const cleanResponse = fullText.replace(/BOOKING_DATA:\{[^}]+\}/, '').trim();
+            return res.json({ response: cleanResponse, aiProvider: 'groq', bookingAction: bookingData });
+          } catch (_) {}
+        }
+        return res.json({ response: fullText, aiProvider: 'groq' });
+      } catch (groqErr) {
+        console.error('Groq chat error:', groqErr.message?.substring(0, 100));
+      }
+    }
+
     if (provider === 'gemini') {
       try {
-        const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
-        const prompt = `You are a helpful hospital assistant chatbot for MediQueue AI, a government hospital scheduling system. Be friendly, concise (2-4 sentences), and helpful. Answer questions about hospital services, appointments, doctors, timings, and general health guidance. Do not provide medical diagnoses. Do not use markdown formatting.
+        const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const prompt = `You are "Meera" — a warm, caring, and friendly hospital assistant at MediQueue AI Government Hospital. You talk like a real helpful person, not a robot.
+
+Your personality:
+- Warm, empathetic, and conversational — like a caring friend who works at a hospital
+- You understand Hindi, Hinglish, and English — respond in the same language the patient uses
+- If patient writes in Hindi/Hinglish, reply in Hinglish naturally (mix of Hindi and English)
+- Show genuine concern for the patient's health
+- Give practical, helpful advice — not just "consult a doctor"
+- Use simple words, not medical jargon
+- Keep responses short and natural (2-4 sentences max)
+- Use emojis occasionally to feel warm 😊
+- Address the patient as "aap" if they write in Hindi
+
+IMPORTANT — APPOINTMENT BOOKING:
+If the patient wants to book an appointment, collect info step by step:
+1. First ask for their symptoms/reason for visit
+2. Then suggest department based on symptoms
+3. Ask for preferred date (suggest today's date or tomorrow)
+4. Confirm and tell them to use the booking page OR say you'll help them book
+
+When you have enough info to book (department + reason), respond with this EXACT JSON at the END of your message (after your normal reply):
+BOOKING_DATA:{"action":"book_appointment","department":"Department Name","symptoms":"patient symptoms","suggestedDate":"YYYY-MM-DD"}
 
 Hospital Info:
-- Hours: Mon-Fri 9AM-5PM, Sat 9AM-1PM
+- Name: MediQueue AI Government Hospital
+- Hours: Mon-Fri 9AM-5PM, Sat 9AM-1PM, Emergency 24/7
 - Departments: General Medicine, Cardiology, Orthopedics, Neurology, Pediatrics, Dermatology, ENT, Ophthalmology, Gynecology, Dental, Psychiatry, Gastroenterology, Pulmonology, Urology, Endocrinology
-- Emergency: 24/7
-- Booking: Available online through our platform
+- Emergency number: 108
 
-User message: ${message}`;
+Conversation history context: ${req.body.history || 'No previous messages'}
+
+Patient message: ${message}`;
 
         const result = await model.generateContent(prompt);
-        return res.json({ response: result.response.text(), aiProvider: 'gemini' });
+        const fullText = result.response.text();
+
+        // Check if AI wants to trigger booking
+        const bookingMatch = fullText.match(/BOOKING_DATA:(\{[^}]+\})/);
+        if (bookingMatch) {
+          try {
+            const bookingData = JSON.parse(bookingMatch[1]);
+            const cleanResponse = fullText.replace(/BOOKING_DATA:\{[^}]+\}/, '').trim();
+            return res.json({
+              response: cleanResponse,
+              aiProvider: 'gemini',
+              bookingAction: bookingData
+            });
+          } catch (_) {}
+        }
+
+        return res.json({ response: fullText, aiProvider: 'gemini' });
       } catch (geminiErr) {
         console.error('Gemini chat error:', geminiErr.message?.substring(0, 100));
-        // Fall through to fallback
       }
     }
 
@@ -264,6 +386,153 @@ User message: ${message}`;
   } catch (error) {
     console.error('Chat error:', error);
     res.json({ response: fallbackChatResponse(req.body.message || ''), aiProvider: 'built-in' });
+  }
+});
+
+// POST /api/ai/risk-score — Patient Risk Scoring
+router.post('/risk-score', async (req, res) => {
+  try {
+    const { symptoms, age, history } = req.body;
+    if (!symptoms) return res.status(400).json({ error: 'Symptoms required' });
+
+    const { provider, client } = getAIClient();
+
+    const prompt = `You are a medical triage AI. Assess patient risk level.
+Patient: Age ${age || 'unknown'}, Symptoms: ${symptoms}, History: ${history || 'none'}
+Respond ONLY with valid JSON (no markdown):
+{"riskLevel":"low/medium/high/emergency","score":1-10,"reason":"brief reason","action":"recommended action","color":"#hex"}
+Emergency examples: chest pain+sweating, difficulty breathing, unconscious, stroke symptoms.`;
+
+    if (provider === 'groq') {
+      try {
+        const completion = await client.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2, max_tokens: 200
+        });
+        const text = completion.choices[0].message.content;
+        const match = text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim().match(/\{[\s\S]*\}/);
+        if (match) return res.json({ ...JSON.parse(match[0]), aiProvider: 'groq' });
+      } catch (e) { console.error('Groq risk-score:', e.message?.substring(0,80)); }
+    }
+
+    // Fallback rule-based risk scoring
+    const lower = (symptoms + ' ' + (history||'')).toLowerCase();
+    let riskLevel = 'low', score = 2, color = '#059669';
+    const emergencyKw = ['chest pain','heart attack','stroke','unconscious','breathing','seizure','severe bleeding'];
+    const highKw = ['high fever','vomiting blood','severe pain','fracture','head injury'];
+    const medKw = ['fever','pain','dizziness','nausea','infection'];
+
+    if (emergencyKw.some(k => lower.includes(k)) || (age && age > 70 && lower.includes('chest'))) {
+      riskLevel = 'emergency'; score = 10; color = '#dc2626';
+    } else if (highKw.some(k => lower.includes(k)) || (age && age > 65)) {
+      riskLevel = 'high'; score = 7; color = '#f97316';
+    } else if (medKw.some(k => lower.includes(k))) {
+      riskLevel = 'medium'; score = 5; color = '#f59e0b';
+    }
+
+    res.json({
+      riskLevel, score, color,
+      reason: `Based on symptoms and age ${age||'unknown'}`,
+      action: riskLevel === 'emergency' ? 'Immediate attention required' : riskLevel === 'high' ? 'See doctor today' : 'Book appointment',
+      aiProvider: 'built-in'
+    });
+  } catch (error) {
+    console.error('Risk score error:', error);
+    res.status(500).json({ error: 'Risk scoring failed' });
+  }
+});
+
+// POST /api/ai/smart-schedule — Smart Appointment Scheduling
+router.post('/smart-schedule', async (req, res) => {
+  try {
+    const { symptoms, age, preferredDate } = req.body;
+    if (!symptoms) return res.status(400).json({ error: 'Symptoms required' });
+
+    const { provider, client } = getAIClient();
+
+    const prompt = `You are a smart hospital scheduling AI.
+Patient symptoms: ${symptoms}, Age: ${age || 'unknown'}, Preferred date: ${preferredDate || 'today'}
+Suggest the best department and time slot.
+Respond ONLY with valid JSON (no markdown):
+{"department":"name","suggestedTime":"HH:MM","urgency":"routine/urgent/emergency","reason":"brief reason","tips":["tip1","tip2"]}`;
+
+    if (provider === 'groq') {
+      try {
+        const completion = await client.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3, max_tokens: 250
+        });
+        const text = completion.choices[0].message.content;
+        const match = text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim().match(/\{[\s\S]*\}/);
+        if (match) return res.json({ ...JSON.parse(match[0]), aiProvider: 'groq' });
+      } catch (e) { console.error('Groq smart-schedule:', e.message?.substring(0,80)); }
+    }
+
+    // Fallback
+    const result = fallbackSymptomAnalysis(symptoms);
+    res.json({
+      department: result.department,
+      suggestedTime: '10:00',
+      urgency: result.priority === 'emergency' ? 'emergency' : result.priority === 'high' ? 'urgent' : 'routine',
+      reason: result.reasoning,
+      tips: result.recommendations,
+      aiProvider: 'built-in'
+    });
+  } catch (error) {
+    console.error('Smart schedule error:', error);
+    res.status(500).json({ error: 'Smart scheduling failed' });
+  }
+});
+
+// POST /api/ai/check-interactions — Medicine Interaction Check
+router.post('/check-interactions', async (req, res) => {
+  try {
+    const { medicines, diagnosis } = req.body;
+    if (!medicines || !medicines.length) return res.status(400).json({ error: 'Medicines list required' });
+
+    const { provider, client } = getAIClient();
+    const medList = Array.isArray(medicines) ? medicines.join(', ') : medicines;
+
+    const prompt = `You are a clinical pharmacist AI. Check for drug interactions.
+Medicines: ${medList}
+Diagnosis: ${diagnosis || 'not specified'}
+Respond ONLY with valid JSON (no markdown):
+{"safe":true/false,"interactions":[{"drugs":"drug1 + drug2","severity":"mild/moderate/severe","description":"what happens","recommendation":"what to do"}],"warnings":["warning1"],"generalAdvice":"advice"}`;
+
+    if (provider === 'groq') {
+      try {
+        const completion = await client.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2, max_tokens: 500
+        });
+        const text = completion.choices[0].message.content;
+        const match = text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim().match(/\{[\s\S]*\}/);
+        if (match) return res.json({ ...JSON.parse(match[0]), aiProvider: 'groq' });
+      } catch (e) { console.error('Groq interactions:', e.message?.substring(0,80)); }
+    }
+
+    // Fallback — basic known interactions
+    const knownInteractions = [
+      { drugs: ['warfarin','aspirin'], severity: 'severe', description: 'Increased bleeding risk', recommendation: 'Avoid combination or monitor closely' },
+      { drugs: ['metformin','alcohol'], severity: 'moderate', description: 'Risk of lactic acidosis', recommendation: 'Avoid alcohol while on metformin' },
+      { drugs: ['ssri','tramadol'], severity: 'severe', description: 'Serotonin syndrome risk', recommendation: 'Use with extreme caution' },
+    ];
+    const lower = medList.toLowerCase();
+    const found = knownInteractions.filter(i => i.drugs.every(d => lower.includes(d)));
+
+    res.json({
+      safe: found.length === 0,
+      interactions: found,
+      warnings: found.length > 0 ? ['Please review interactions with prescribing doctor'] : [],
+      generalAdvice: 'Always take medicines as prescribed. Inform doctor of all current medications.',
+      aiProvider: 'built-in'
+    });
+  } catch (error) {
+    console.error('Interaction check error:', error);
+    res.status(500).json({ error: 'Interaction check failed' });
   }
 });
 

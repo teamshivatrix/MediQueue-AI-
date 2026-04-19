@@ -243,6 +243,54 @@ const initializeApp = async () => {
 const startServer = async () => {
   await initializeApp();
 
+  // ── Automated Reminder System — check every 5 minutes ──
+  const startReminderJob = () => {
+    const { sendAppointmentReminder } = require('./services/sms');
+    const reminded = new Set(); // track already-reminded appointments
+
+    setInterval(async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        let waitingApts = [];
+
+        const useMemory = require('./routes/appointments').getMemoryAppointments;
+        if (useMemory) {
+          waitingApts = useMemory().filter(a => a.date === today && a.status === 'waiting');
+        } else {
+          const Appointment = require('./models/Appointment');
+          waitingApts = await Appointment.find({ date: today, status: 'waiting' }).sort({ tokenNumber: 1 });
+        }
+
+        // Find patients who are 3 or fewer tokens away from being served
+        const inProgress = waitingApts.filter(a => a.status === 'in-progress');
+        const currentToken = inProgress.length > 0 ? inProgress[0].tokenNumber : null;
+
+        for (const apt of waitingApts) {
+          if (reminded.has(apt._id?.toString() || apt.appointmentId)) continue;
+          if (!apt.phone) continue;
+
+          const tokensAhead = currentToken
+            ? Math.max(0, apt.tokenNumber - currentToken - 1)
+            : waitingApts.indexOf(apt);
+
+          if (tokensAhead <= 3) {
+            reminded.add(apt._id?.toString() || apt.appointmentId);
+            sendAppointmentReminder(apt.phone, {
+              patientName: apt.patientName,
+              tokenNumber: apt.tokenNumber,
+              doctorName: apt.doctorName,
+              timeSlot: apt.timeSlot,
+              tokensAhead
+            }).catch(() => {});
+            console.log(`[Reminder] Sent to ${apt.patientName} (Token #${apt.tokenNumber}) — ${tokensAhead} ahead`);
+          }
+        }
+      } catch (e) {
+        // Non-critical — don't crash server
+      }
+    }, 5 * 60 * 1000); // every 5 minutes
+  };
+
   app.listen(PORT, () => {
     console.log(`\n🏥 MediQueue AI Server running on http://localhost:${PORT}`);
     console.log(`👤 Patient Portal: http://localhost:${PORT}/patient/index.html`);
@@ -251,6 +299,8 @@ const startServer = async () => {
     console.log(`📅 Book Appointment: http://localhost:${PORT}/patient/booking.html`);
     console.log(`🤖 AI Chatbot: http://localhost:${PORT}/patient/chatbot.html`);
     console.log(`📺 Queue Display: http://localhost:${PORT}/patient/queue-display.html\n`);
+    startReminderJob();
+    console.log('⏰ Automated reminder system started (checks every 5 min)');
   });
 };
 

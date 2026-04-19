@@ -7,16 +7,671 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET & BASE ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d1526 !important;
+      background-image: none !important;
+      color: #e2e8f0 !important;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ─── ANIMATED GRADIENT MESH ─── */
+    .lp-mesh {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .lp-blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px);
+      animation: blobDrift ease-in-out infinite;
+    }
+    .lp-blob-1 {
+      width: 600px; height: 600px; top: -150px; left: -100px;
+      background: radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%);
+      animation-duration: 18s; animation-delay: 0s;
+    }
+    .lp-blob-2 {
+      width: 500px; height: 500px; top: 30%; right: -120px;
+      background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+      animation-duration: 22s; animation-delay: -6s;
+    }
+    .lp-blob-3 {
+      width: 400px; height: 400px; bottom: 10%; left: 30%;
+      background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+      animation-duration: 16s; animation-delay: -10s;
+    }
+    .lp-blob-4 {
+      width: 350px; height: 350px; top: 60%; left: 10%;
+      background: radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%);
+      animation-duration: 20s; animation-delay: -4s;
+    }
+    @keyframes blobDrift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25%       { transform: translate(30px, -20px) scale(1.05); }
+      50%       { transform: translate(-20px, 30px) scale(0.95); }
+      75%       { transform: translate(20px, 20px) scale(1.03); }
+    }
+
+    /* ─── PARTICLES ─── */
+    .lp-particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .lp-particle {
+      position: absolute; border-radius: 50%;
+      animation: particleFloat linear infinite;
+      opacity: 0;
+    }
+    @keyframes particleFloat {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      8%   { opacity: 0.7; }
+      92%  { opacity: 0.25; }
+      100% { transform: translateY(-8vh) scale(1.2); opacity: 0; }
+    }
+
+    /* ─── NAVBAR ─── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(255,255,255,0.82) !important;
+      backdrop-filter: blur(24px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+      border-bottom: 1px solid rgba(14,165,233,0.13) !important;
+      box-shadow: 0 1px 32px rgba(14,165,233,0.07) !important;
+    }
+    .nav-logo { color: #e2e8f0 !important; }
+    .nav-logo i { color: #0ea5e9 !important; }
+    .nav-logo span {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding-top: 88px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-content {
+      max-width: 1280px; margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    /* ─── HERO LEFT ─── */
+    .hero-kicker {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(14,165,233,0.1);
+      color: #0ea5e9;
+      font-size: 0.76rem; font-weight: 700;
+      padding: 0.38rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(14,165,233,0.28);
+      margin-bottom: 1.4rem;
+      animation: fadeUp 0.5s ease both;
+      letter-spacing: 0.04em;
+    }
+    .hero-kicker-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #0ea5e9;
+      animation: dotPulse 2s ease-in-out infinite;
+      box-shadow: 0 0 0 0 rgba(14,165,233,0.5);
+    }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(14,165,233,0.5); }
+      50%       { box-shadow: 0 0 0 6px rgba(14,165,233,0); }
+    }
+
+    .hero-h1 {
+      font-size: 3.6rem; font-weight: 900; line-height: 1.1;
+      color: #0f172a; margin-bottom: 1.3rem;
+      animation: fadeUp 0.5s 0.08s ease both;
+    }
+    .hero-h1-blue {
+      color: #0ea5e9;
+      -webkit-text-fill-color: #0ea5e9;
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-desc {
+      font-size: 1.05rem; color: #475569; line-height: 1.75;
+      margin-bottom: 2.2rem; max-width: 500px;
+      animation: fadeUp 0.5s 0.16s ease both;
+    }
+    .hero-buttons {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      animation: fadeUp 0.5s 0.24s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── 3D BUTTONS ─── */
+    .btn-3d-cyan {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: linear-gradient(160deg, #38bdf8 0%, #0ea5e9 40%, #0284c7 100%);
+      color: white; text-decoration: none;
+      padding: 0.88rem 2rem; border-radius: 14px;
+      font-weight: 700; font-size: 0.95rem;
+      box-shadow:
+        0 5px 0 #0369a1,
+        0 10px 28px rgba(14,165,233,0.38),
+        inset 0 1px 0 rgba(255,255,255,0.25);
+      transform: perspective(700px) rotateX(5deg);
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative; overflow: hidden;
+      border: none; cursor: pointer;
+    }
+    .btn-3d-cyan::before {
+      content: '';
+      position: absolute; top: 0; left: -70%; width: 45%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.22), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.45s ease;
+    }
+    .btn-3d-cyan:hover::before { left: 130%; }
+    .btn-3d-cyan:hover {
+      transform: perspective(700px) rotateX(3deg) translateY(-4px);
+      box-shadow: 0 8px 0 #0369a1, 0 18px 36px rgba(14,165,233,0.48), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+    .btn-3d-cyan:active {
+      transform: perspective(700px) rotateX(9deg) translateY(3px);
+      box-shadow: 0 2px 0 #0369a1, 0 4px 12px rgba(14,165,233,0.3);
+    }
+
+    .btn-3d-red {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: linear-gradient(160deg, #f87171 0%, #ef4444 40%, #dc2626 100%);
+      color: white; text-decoration: none;
+      padding: 0.88rem 2rem; border-radius: 14px;
+      font-weight: 700; font-size: 0.95rem;
+      box-shadow:
+        0 5px 0 #991b1b,
+        0 10px 28px rgba(220,38,38,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+      transform: perspective(700px) rotateX(5deg);
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative; overflow: hidden;
+      border: none; cursor: pointer;
+    }
+    .btn-3d-red::before {
+      content: '';
+      position: absolute; top: 0; left: -70%; width: 45%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.18), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.45s ease;
+    }
+    .btn-3d-red:hover::before { left: 130%; }
+    .btn-3d-red:hover {
+      transform: perspective(700px) rotateX(3deg) translateY(-4px);
+      box-shadow: 0 8px 0 #991b1b, 0 18px 36px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .btn-3d-red:active {
+      transform: perspective(700px) rotateX(9deg) translateY(3px);
+      box-shadow: 0 2px 0 #991b1b, 0 4px 12px rgba(220,38,38,0.3);
+    }
+
+    /* ─── STATS STRIP ─── */
+    .hero-stats-strip {
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(14,165,233,0.16);
+      border-radius: 18px; padding: 1.1rem 1.6rem;
+      margin-top: 2.4rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 6px 28px rgba(14,165,233,0.09), inset 0 1px 0 rgba(255,255,255,0.9);
+      animation: fadeUp 0.5s 0.32s ease both;
+    }
+    .hss-item { text-align: center; flex: 1; }
+    .hss-num {
+      display: block; font-size: 1.7rem; font-weight: 900;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hss-label { font-size: 0.7rem; color: #64748b; font-weight: 600; letter-spacing: 0.03em; }
+    .hss-div { width: 1px; height: 38px; background: rgba(14,165,233,0.15); }
+
+    /* ─── HERO RIGHT — 3D CARD ─── */
+    .hero-visual {
+      display: flex; align-items: center; justify-content: center;
+      perspective: 1200px;
+    }
+    .hero-card-3d {
+      position: relative; width: 100%; max-width: 400px;
+      animation: cardFloat 7s ease-in-out infinite, fadeUp 0.8s 0.2s ease both;
+      transform-style: preserve-3d;
+    }
+    @keyframes cardFloat {
+      0%, 100% { transform: translateY(0px) rotateX(2deg) rotateY(-3deg); }
+      33%       { transform: translateY(-14px) rotateX(-1deg) rotateY(3deg); }
+      66%       { transform: translateY(-6px) rotateX(1deg) rotateY(-1deg); }
+    }
+    .hc3d-glow {
+      position: absolute; inset: -28px; border-radius: 40px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(14,165,233,0.28) 0%, rgba(99,102,241,0.12) 50%, transparent 70%);
+      filter: blur(24px);
+      animation: glowPulse 4s ease-in-out infinite;
+      z-index: 0;
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.65; transform: scale(1); }
+      50%       { opacity: 1; transform: scale(1.06); }
+    }
+    .hc3d-inner {
+      position: relative; z-index: 1;
+      background: rgba(8,16,36,0.96);
+      border: 2px solid rgba(14,165,233,0.55);
+      border-radius: 26px; padding: 2.2rem;
+      box-shadow:
+        0 32px 64px rgba(14,165,233,0.22),
+        0 0 0 1px rgba(14,165,233,0.12),
+        0 0 60px rgba(14,165,233,0.08),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+      backdrop-filter: blur(20px);
+      animation: cardBorderGlow 3s ease-in-out infinite;
+    }
+    @keyframes cardBorderGlow {
+      0%,100% {
+        border-color: rgba(14,165,233,0.45);
+        box-shadow: 0 32px 64px rgba(14,165,233,0.2), 0 0 30px rgba(14,165,233,0.15), 0 0 60px rgba(14,165,233,0.08), inset 0 1px 0 white;
+      }
+      50% {
+        border-color: rgba(14,165,233,0.8);
+        box-shadow: 0 32px 64px rgba(14,165,233,0.28), 0 0 50px rgba(14,165,233,0.35), 0 0 80px rgba(99,102,241,0.15), inset 0 1px 0 white;
+      }
+    }
+    .hc3d-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(14,165,233,0.15); color: #38bdf8;
+      font-size: 0.74rem; font-weight: 700;
+      padding: 0.32rem 0.9rem; border-radius: 999px;
+      border: 1px solid rgba(14,165,233,0.35);
+      margin-bottom: 1.1rem;
+    }
+    .hc3d-inner h3 {
+      font-size: 1.55rem; font-weight: 900; color: #f1f5f9 !important;
+      margin-bottom: 0.35rem; line-height: 1.25;
+    }
+    .hc3d-inner h3 strong { background: linear-gradient(135deg,#38bdf8,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; filter:drop-shadow(0 0 10px rgba(14,165,233,0.5)); }
+    .hc3d-sub { font-size: 0.86rem; color: #94a3b8 !important; margin: 0.4rem 0 1.4rem; line-height: 1.6; }
+
+    .hc3d-login-btn {
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      background: linear-gradient(160deg, #38bdf8, #0ea5e9, #0284c7);
+      color: white; text-decoration: none;
+      padding: 0.82rem; border-radius: 13px;
+      font-weight: 700; font-size: 0.9rem;
+      margin-bottom: 0.65rem;
+      box-shadow: 0 4px 0 #0369a1, 0 8px 20px rgba(14,165,233,0.32);
+      transition: all 0.2s ease;
+      position: relative; overflow: hidden;
+    }
+    .hc3d-login-btn::before {
+      content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.2), transparent);
+      transform: skewX(-20deg); transition: left 0.4s ease;
+    }
+    .hc3d-login-btn:hover::before { left: 120%; }
+    .hc3d-login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #0369a1, 0 14px 28px rgba(14,165,233,0.42); }
+    .hc3d-login-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0369a1; }
+
+    .hc3d-signup-btn {
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      background: linear-gradient(160deg, #34d399, #10b981, #059669);
+      color: white; text-decoration: none;
+      padding: 0.82rem; border-radius: 13px;
+      font-weight: 700; font-size: 0.9rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 4px 0 #047857, 0 8px 20px rgba(16,185,129,0.3);
+      transition: all 0.2s ease;
+      position: relative; overflow: hidden;
+    }
+    .hc3d-signup-btn::before {
+      content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.18), transparent);
+      transform: skewX(-20deg); transition: left 0.4s ease;
+    }
+    .hc3d-signup-btn:hover::before { left: 120%; }
+    .hc3d-signup-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #047857, 0 14px 28px rgba(16,185,129,0.4); }
+    .hc3d-signup-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #047857; }
+
+    .hc3d-divider {
+      height: 1px; background: rgba(14,165,233,0.1); margin-bottom: 1.1rem;
+    }
+    .hc3d-features { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+    .hc3d-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.76rem; font-weight: 600; color: #475569;
+      background: rgba(241,245,249,0.9);
+      border: 1px solid rgba(14,165,233,0.12);
+      padding: 0.3rem 0.75rem; border-radius: 8px;
+    }
+
+    /* ─── SERVICES SECTION ─── */
+    .services-section {
+      padding: 5.5rem 1.5rem;
+      max-width: 1280px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+    .section-header { text-align: center; margin-bottom: 3.2rem; }
+    .section-tag {
+      display: inline-block;
+      background: rgba(14,165,233,0.15); color: #38bdf8;
+      font-size: 0.74rem; font-weight: 700;
+      padding: 0.32rem 1rem; border-radius: 999px;
+      border: 1px solid rgba(14,165,233,0.35);
+      margin-bottom: 0.8rem; letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-size: 2.1rem; font-weight: 900; color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+    .section-header p { color: #64748b; font-size: 0.95rem; }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.3rem;
+    }
+    .service-card {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(14,165,233,0.12);
+      border-radius: 22px; padding: 1.8rem;
+      box-shadow: 0 4px 24px rgba(14,165,233,0.06);
+      transition: all 0.32s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative; overflow: hidden;
+      cursor: default;
+    }
+    .service-card::after {
+      content: '';
+      position: absolute; top: 0; left: -70%; width: 45%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.38), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.55s ease;
+    }
+    .service-card:hover::after { left: 130%; }
+    .service-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 48px rgba(14,165,233,0.16);
+      border-color: rgba(14,165,233,0.28);
+    }
+    .sc-icon {
+      width: 54px; height: 54px; border-radius: 15px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; color: white; margin-bottom: 1.1rem;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+    .service-card h3 { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.45rem; }
+    .service-card p { font-size: 0.83rem; color: #64748b; line-height: 1.65; }
+    .sc-tag {
+      display: inline-block; font-size: 0.68rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 7px;
+      background: rgba(14,165,233,0.15); color: #38bdf8;
+      margin-top: 0.85rem;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .how-section {
+      padding: 4.5rem 1.5rem;
+      max-width: 1280px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+    .steps-row {
+      display: flex; align-items: center; gap: 1.2rem;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .step-card {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(14,165,233,0.12);
+      border-radius: 22px; padding: 2rem 1.6rem;
+      text-align: center; flex: 1;
+      min-width: 210px; max-width: 270px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(14,165,233,0.06);
+    }
+    .step-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px rgba(14,165,233,0.13);
+      border-color: rgba(14,165,233,0.22);
+    }
+    .step-num {
+      font-size: 2.8rem; font-weight: 900;
+      color: rgba(14,165,233,0.12);
+      margin-bottom: 0.4rem; line-height: 1;
+    }
+    .step-icon {
+      width: 58px; height: 58px; border-radius: 17px;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem; color: white;
+      margin: 0 auto 1rem;
+      box-shadow: 0 8px 20px rgba(14,165,233,0.32);
+    }
+    .step-card h4 { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.45rem; }
+    .step-card p { font-size: 0.83rem; color: #64748b; line-height: 1.6; }
+    .step-arrow { font-size: 1.6rem; color: rgba(14,165,233,0.35); }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 3.5rem 1.5rem 1.5rem;
+      position: relative; z-index: 1;
+      border-top: 1px solid rgba(14,165,233,0.1);
+    }
+    .footer-content {
+      max-width: 1280px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr;
+      gap: 2.5rem; margin-bottom: 2.5rem;
+    }
+    .footer-brand h3 {
+      color: white; font-size: 1.15rem; font-weight: 800;
+      margin-bottom: 0.6rem; display: flex; align-items: center; gap: 8px;
+    }
+    .footer-brand h3 i { color: #0ea5e9; }
+    .footer-brand p { font-size: 0.83rem; line-height: 1.7; }
+    .footer-links h4 {
+      color: white; font-size: 0.85rem; font-weight: 700;
+      margin-bottom: 0.9rem; letter-spacing: 0.04em;
+    }
+    .footer-links a {
+      display: block; color: #94a3b8; text-decoration: none;
+      font-size: 0.83rem; margin-bottom: 0.5rem;
+      transition: color 0.2s; display: flex; align-items: center; gap: 7px;
+    }
+    .footer-links a:hover { color: #0ea5e9; }
+    .footer-bottom {
+      max-width: 1280px; margin: 0 auto;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 1.2rem;
+      font-size: 0.78rem; text-align: center;
+      color: #475569;
+    }
+
+    /* ─── EXTRA GLOW & EFFECTS ─── */
+
+    /* Page-wide ambient glow */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 15% 50%, rgba(14,165,233,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 85% 30%, rgba(99,102,241,0.09) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 90%, rgba(16,185,129,0.07) 0%, transparent 60%);
+      animation: ambientShift 10s ease-in-out infinite;
+    }
+    @keyframes ambientShift {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.6; }
+    }
+
+    /* Hero H1 glow on blue text */
+    .hero-h1-blue {
+      text-shadow: 0 0 40px rgba(14,165,233,0.35), 0 0 80px rgba(14,165,233,0.15);
+      animation: textGlow 3s ease-in-out infinite;
+    }
+    @keyframes textGlow {
+      0%,100% { text-shadow: 0 0 30px rgba(14,165,233,0.3), 0 0 60px rgba(14,165,233,0.12); }
+      50%      { text-shadow: 0 0 50px rgba(14,165,233,0.55), 0 0 100px rgba(99,102,241,0.2); }
+    }
+
+    /* Kicker badge glow */
+    .hero-kicker {
+      box-shadow: 0 0 20px rgba(14,165,233,0.25), 0 0 40px rgba(14,165,233,0.1);
+      animation: badgeGlow 2.5s ease-in-out infinite;
+    }
+    @keyframes badgeGlow {
+      0%,100% { box-shadow: 0 0 16px rgba(14,165,233,0.2); }
+      50%      { box-shadow: 0 0 28px rgba(14,165,233,0.45), 0 0 50px rgba(14,165,233,0.15); }
+    }
+
+    /* 3D card extra glow — handled by cardBorderGlow animation above */
+    .hc3d-glow {
+      background: radial-gradient(ellipse at 50% 50%,
+        rgba(14,165,233,0.4) 0%,
+        rgba(99,102,241,0.2) 40%,
+        transparent 70%) !important;
+      animation: glowPulse 3s ease-in-out infinite !important;
+    }
+
+    /* Stats strip glow */
+    .hero-stats-strip {
+      box-shadow:
+        0 6px 28px rgba(14,165,233,0.12),
+        0 0 0 1px rgba(14,165,233,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    }
+    .hss-num {
+      animation: numGlow 3s ease-in-out infinite;
+    }
+    @keyframes numGlow {
+      0%,100% { filter: drop-shadow(0 0 4px rgba(14,165,233,0.3)); }
+      50%      { filter: drop-shadow(0 0 10px rgba(14,165,233,0.6)); }
+    }
+
+    /* Service cards glow on hover */
+    .service-card:hover {
+      box-shadow:
+        0 20px 48px rgba(14,165,233,0.18),
+        0 0 0 1px rgba(14,165,233,0.2),
+        0 0 30px rgba(14,165,233,0.08) !important;
+    }
+
+    /* Step icon glow */
+    .step-icon {
+      box-shadow: 0 8px 20px rgba(14,165,233,0.35), 0 0 20px rgba(14,165,233,0.2) !important;
+      animation: iconGlow 3s ease-in-out infinite;
+    }
+    @keyframes iconGlow {
+      0%,100% { box-shadow: 0 8px 20px rgba(14,165,233,0.3), 0 0 16px rgba(14,165,233,0.15); }
+      50%      { box-shadow: 0 8px 28px rgba(14,165,233,0.5), 0 0 32px rgba(99,102,241,0.2); }
+    }
+
+    /* Navbar glow line */
+    .navbar::after {
+      content: '';
+      position: absolute; bottom: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(14,165,233,0.5), rgba(99,102,241,0.4), transparent);
+      animation: navGlow 4s ease-in-out infinite;
+    }
+    @keyframes navGlow {
+      0%,100% { opacity: 0.5; }
+      50%      { opacity: 1; }
+    }
+
+    /* Buttons extra glow */
+    .btn-3d-cyan {
+      box-shadow:
+        0 5px 0 #0369a1,
+        0 10px 28px rgba(14,165,233,0.45),
+        0 0 20px rgba(14,165,233,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    }
+    .btn-3d-cyan:hover {
+      box-shadow:
+        0 8px 0 #0369a1,
+        0 18px 36px rgba(14,165,233,0.55),
+        0 0 40px rgba(14,165,233,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    }
+    .btn-3d-red {
+      box-shadow:
+        0 5px 0 #991b1b,
+        0 10px 28px rgba(220,38,38,0.4),
+        0 0 20px rgba(220,38,38,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    }
+    .btn-3d-red:hover {
+      box-shadow:
+        0 8px 0 #991b1b,
+        0 18px 36px rgba(220,38,38,0.5),
+        0 0 40px rgba(220,38,38,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    }
+
+    /* Section tag glow */
+    .section-tag {
+      box-shadow: 0 0 16px rgba(14,165,233,0.2);
+    }
+
+    /* sc-icon glow */
+    .sc-icon {
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15), 0 0 16px rgba(14,165,233,0.15) !important;
+    }
+
+    /* Footer brand glow */
+    .footer-brand h3 i {
+      filter: drop-shadow(0 0 6px rgba(14,165,233,0.6));
+    }
+    .animate-on-scroll { opacity: 0; transform: translateY(24px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .hero-content { grid-template-columns: 1fr; gap: 3rem; }
+      .hero-h1 { font-size: 2.6rem; }
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .hero-h1 { font-size: 2rem; }
+      .services-grid { grid-template-columns: 1fr; }
+      .footer-content { grid-template-columns: 1fr; }
+      .hero-stats-strip { flex-wrap: wrap; gap: 0.8rem; }
+      .hss-div { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <div class="bg-pattern"></div>
+  <!-- Mesh blobs -->
+  <div class="lp-mesh">
+    <div class="lp-blob lp-blob-1"></div>
+    <div class="lp-blob lp-blob-2"></div>
+    <div class="lp-blob lp-blob-3"></div>
+    <div class="lp-blob lp-blob-4"></div>
+  </div>
+  <!-- Particles -->
+  <div class="lp-particles" id="lpParticles"></div>
 
-  <!-- Navbar -->
+  <!-- ─── NAVBAR ─── -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <a href="index.html" class="nav-logo">
         <i class="fas fa-hospital-alt"></i>
-        <span>MediQueue <span style="-webkit-text-fill-color:var(--primary-light);background:none;">AI</span></span>
+        <span>MediQueue <span style="-webkit-text-fill-color:var(--primary-light,#38bdf8);background:none;">AI</span></span>
       </a>
       <ul class="nav-links" id="navLinks"></ul>
       <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -31,131 +686,171 @@
     </div>
   </nav>
 
-  <!-- Hero -->
+  <!-- ─── HERO ─── -->
   <section class="hero">
     <div class="hero-content">
+
+      <!-- LEFT -->
       <div class="hero-text">
-        <div class="hero-kicker"><i class="fas fa-circle-dot"></i> <span data-i18n="home.heroKicker">Next-Gen OPD Experience</span></div>
-        <h1>
-          <span data-i18n="home.heroTitle1">Smart OPD Flow,</span><br>
-          <span class="gradient-text" data-i18n="home.heroTitle2">Zero Queue Chaos</span><br>
-          <span data-i18n="home.heroTitle3">Powered by AI Precision</span>
-        </h1>
-        <p class="hero-desc">Book faster, route smarter, and reduce crowding in minutes. MediQueue AI helps hospitals streamline appointments with real-time, predictive queue intelligence.</p>
-        <div class="hero-buttons">
-          <a href="auth.html" class="hero-cta-primary"><i class="fas fa-sign-in-alt"></i> <span data-i18n="home.login">Get Started</span></a>
-          <a href="emergency-booking.html" class="nav-emergency-btn"><i class="fas fa-triangle-exclamation"></i> <span data-i18n="home.emergency">Emergency</span></a>
+        <div class="hero-kicker">
+          <span class="hero-kicker-dot"></span>
+          AI-Powered Hospital System
         </div>
-        <!-- Live stats strip -->
+        <h1 class="hero-h1">
+          Autonomous Hospital<br>
+          <span class="hero-h1-blue">Healthcare &amp; Resources</span><br>
+          Allocation System
+        </h1>
+        <p class="hero-desc">
+          Intelligent AI-driven hospital management — automate OPD scheduling, resource allocation, and patient routing with real-time precision.
+        </p>
+        <div class="hero-buttons">
+          <a href="auth.html" class="btn-3d-cyan">
+            <i class="fas fa-sign-in-alt"></i>
+            <span data-i18n="home.login">Get Started</span>
+          </a>
+          <a href="emergency-booking.html" class="btn-3d-red">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span data-i18n="home.emergency">Emergency</span>
+          </a>
+        </div>
+
+        <!-- Stats strip -->
         <div class="hero-stats-strip">
-          <div class="hss-item"><span class="hss-num" id="statPatients">0</span><span class="hss-label">Patients Today</span></div>
+          <div class="hss-item">
+            <span class="hss-num" id="statPatients">0</span>
+            <span class="hss-label">Patients Today</span>
+          </div>
           <div class="hss-div"></div>
-          <div class="hss-item"><span class="hss-num" id="statDoctors">0</span><span class="hss-label">Doctors Active</span></div>
+          <div class="hss-item">
+            <span class="hss-num" id="statDoctors">0</span>
+            <span class="hss-label">Doctors Active</span>
+          </div>
           <div class="hss-div"></div>
-          <div class="hss-item"><span class="hss-num" id="statWait">0</span><span class="hss-label">Avg Wait (min)</span></div>
+          <div class="hss-item">
+            <span class="hss-num" id="statWait">0</span>
+            <span class="hss-label">Avg Wait (min)</span>
+          </div>
           <div class="hss-div"></div>
-          <div class="hss-item"><span class="hss-num" id="statCompleted">0</span><span class="hss-label">Completed</span></div>
+          <div class="hss-item">
+            <span class="hss-num" id="statCompleted">0</span>
+            <span class="hss-label">Completed</span>
+          </div>
         </div>
       </div>
 
+      <!-- RIGHT — 3D Card -->
       <div class="hero-visual">
         <div class="hero-card-3d">
           <div class="hc3d-glow"></div>
           <div class="hc3d-inner">
-            <div class="hc3d-badge"><i class="fas fa-shield-halved"></i> Secure Patient Access</div>
-            <h3>Welcome to<br><strong>MediQueue AI</strong></h3>
-            <p style="font-size:0.88rem;color:#64748b;margin:0.5rem 0 1.2rem;">Book appointments, use AI analyzer, and track queue — all in one place.</p>
-            <a href="auth.html" class="hc3d-login-btn"><i class="fas fa-sign-in-alt"></i> Login to Continue</a>
-            <a href="auth.html?mode=signup" class="hc3d-signup-btn"><i class="fas fa-user-plus"></i> Create Account</a>
+            <div class="hc3d-badge">
+              <i class="fas fa-shield-halved"></i> Secure Patient Access
+            </div>
+            <h3 style="color:#f1f5f9!important;font-size:1.55rem;font-weight:900;margin-bottom:0.35rem;text-shadow:0 0 20px rgba(255,255,255,0.1);">Welcome to<br><strong style="background:linear-gradient(135deg,#38bdf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">MediQueue AI</strong></h3>
+            <p class="hc3d-sub" style="color:#94a3b8!important;font-size:0.86rem;margin:0.4rem 0 1.4rem;line-height:1.6;">Book appointments, use AI analyzer, and track your queue — all in one place.</p>
+            <a href="auth.html" class="hc3d-login-btn" style="animation:loginBtnPulse 3s ease-in-out infinite,btnShimmerAnim 2.5s ease-in-out infinite;">
+              <i class="fas fa-sign-in-alt"></i> Login to Continue
+            </a>
+            <a href="auth.html?mode=signup" class="hc3d-signup-btn" style="animation:signupBtnPulse 3s 1.5s ease-in-out infinite,btnShimmerAnim 2.5s 1.2s ease-in-out infinite;">
+              <i class="fas fa-user-plus"></i> Create Account
+            </a>
+            <div class="hc3d-divider"></div>
             <div class="hc3d-features">
-              <div><i class="fas fa-bolt" style="color:#f59e0b;"></i> Instant Token</div>
-              <div><i class="fas fa-brain" style="color:#6366f1;"></i> AI Analyzer</div>
-              <div><i class="fas fa-tv" style="color:#0891b2;"></i> Live Queue</div>
+              <div class="hc3d-chip" style="background:rgba(255,255,255,0.07)!important;border:1px solid rgba(14,165,233,0.2)!important;color:#94a3b8!important;"><i class="fas fa-bolt" style="color:#f59e0b;"></i> Instant Token</div>
+              <div class="hc3d-chip" style="background:rgba(255,255,255,0.07)!important;border:1px solid rgba(14,165,233,0.2)!important;color:#94a3b8!important;"><i class="fas fa-brain" style="color:#6366f1;"></i> AI Analyzer</div>
+              <div class="hc3d-chip" style="background:rgba(255,255,255,0.07)!important;border:1px solid rgba(14,165,233,0.2)!important;color:#94a3b8!important;"><i class="fas fa-tv" style="color:#0891b2;"></i> Live Queue</div>
             </div>
           </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── SERVICES ─── -->
+  <section style="position:relative;z-index:1;background:rgba(255,255,255,0.02);">
+    <div class="services-section">
+      <div class="section-header animate-on-scroll">
+        <div class="section-tag">OUR SERVICES</div>
+        <h2 style="color:#f1f5f9">Everything You Need, In One Place</h2>
+        <p style="color:#94a3b8">Login once and access all smart hospital services instantly</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card animate-on-scroll">
+          <div class="sc-icon" style="background:linear-gradient(135deg,#0891b2,#0e7490);"><i class="fas fa-calendar-check"></i></div>
+          <h3 style="color:#f1f5f9">Smart Booking</h3>
+          <p style="color:#94a3b8">Book OPD appointments with AI-predicted wait times and instant token generation.</p>
+          <div class="sc-tag">Most Used</div>
+        </div>
+        <div class="service-card animate-on-scroll">
+          <div class="sc-icon" style="background:linear-gradient(135deg,#059669,#047857);"><i class="fas fa-brain"></i></div>
+          <h3 style="color:#f1f5f9">AI Symptom Analyzer</h3>
+          <p style="color:#94a3b8">Describe your symptoms and get instant department recommendations powered by AI.</p>
+          <div class="sc-tag" style="background:#d1fae5;color:#065f46;">AI Powered</div>
+        </div>
+        <div class="service-card animate-on-scroll">
+          <div class="sc-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);"><i class="fas fa-robot"></i></div>
+          <h3 style="color:#f1f5f9">AI Chatbot</h3>
+          <p style="color:#94a3b8">Ask anything about doctors, departments, or hospital processes — 24/7 assistance.</p>
+          <div class="sc-tag" style="background:#ede9fe;color:#4c1d95;">24/7</div>
+        </div>
+        <div class="service-card animate-on-scroll">
+          <div class="sc-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-tv"></i></div>
+          <h3 style="color:#f1f5f9">Live Queue Board</h3>
+          <p style="color:#94a3b8">Track your token in real-time. Know exactly when it's your turn without waiting.</p>
+          <div class="sc-tag" style="background:#f3e8ff;color:#6b21a8;">Real-time</div>
+        </div>
+        <div class="service-card animate-on-scroll">
+          <div class="sc-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c);"><i class="fas fa-truck-medical"></i></div>
+          <h3 style="color:#f1f5f9">Emergency Ambulance</h3>
+          <p style="color:#94a3b8">One-tap ambulance request with live GPS tracking. Help reaches you in minutes.</p>
+          <div class="sc-tag" style="background:#fee2e2;color:#991b1b;">Emergency</div>
+        </div>
+        <div class="service-card animate-on-scroll">
+          <div class="sc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-triangle-exclamation"></i></div>
+          <h3 style="color:#f1f5f9">Emergency Booking</h3>
+          <p style="color:#94a3b8">Skip the queue for critical cases. Emergency appointments get highest priority.</p>
+          <div class="sc-tag" style="background:#fef3c7;color:#92400e;">Priority</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Services Section -->
-  <section class="services-section">
-    <div class="section-header animate-on-scroll">
-      <div class="section-tag">Our Services</div>
-      <h2>Everything You Need, In One Place</h2>
-      <p>Login once and access all smart hospital services instantly</p>
-    </div>
-    <div class="services-grid">
-      <div class="service-card animate-on-scroll">
-        <div class="sc-icon" style="background:linear-gradient(135deg,#0891b2,#0e7490);"><i class="fas fa-calendar-check"></i></div>
-        <h3>Smart Booking</h3>
-        <p>Book OPD appointments with AI-predicted wait times and instant token generation.</p>
-        <div class="sc-tag">Most Used</div>
+  <!-- ─── HOW IT WORKS ─── -->
+  <section style="position:relative;z-index:1;">
+    <div class="how-section">
+      <div class="section-header animate-on-scroll">
+        <div class="section-tag">HOW IT WORKS</div>
+        <h2 style="color:#f1f5f9">3 Simple Steps</h2>
+        <p style="color:#94a3b8">Get started in under a minute</p>
       </div>
-      <div class="service-card animate-on-scroll">
-        <div class="sc-icon" style="background:linear-gradient(135deg,#059669,#047857);"><i class="fas fa-brain"></i></div>
-        <h3>AI Symptom Analyzer</h3>
-        <p>Describe your symptoms and get instant department recommendations powered by AI.</p>
-        <div class="sc-tag" style="background:#d1fae5;color:#065f46;">AI Powered</div>
-      </div>
-      <div class="service-card animate-on-scroll">
-        <div class="sc-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5);"><i class="fas fa-robot"></i></div>
-        <h3>AI Chatbot</h3>
-        <p>Ask anything about doctors, departments, or hospital processes — 24/7 assistance.</p>
-        <div class="sc-tag" style="background:#ede9fe;color:#4c1d95;">24/7</div>
-      </div>
-      <div class="service-card animate-on-scroll">
-        <div class="sc-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-tv"></i></div>
-        <h3>Live Queue Board</h3>
-        <p>Track your token in real-time. Know exactly when it's your turn without waiting.</p>
-        <div class="sc-tag" style="background:#f3e8ff;color:#6b21a8;">Real-time</div>
-      </div>
-      <div class="service-card animate-on-scroll">
-        <div class="sc-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c);"><i class="fas fa-truck-medical"></i></div>
-        <h3>Emergency Ambulance</h3>
-        <p>One-tap ambulance request with live GPS tracking. Help reaches you in minutes.</p>
-        <div class="sc-tag" style="background:#fee2e2;color:#991b1b;">Emergency</div>
-      </div>
-      <div class="service-card animate-on-scroll">
-        <div class="sc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-triangle-exclamation"></i></div>
-        <h3>Emergency Booking</h3>
-        <p>Skip the queue for critical cases. Emergency appointments get highest priority.</p>
-        <div class="sc-tag" style="background:#fef3c7;color:#92400e;">Priority</div>
+      <div class="steps-row">
+        <div class="step-card animate-on-scroll">
+          <div class="step-num">01</div>
+          <div class="step-icon"><i class="fas fa-user-plus"></i></div>
+          <h4 style="color:#f1f5f9">Create Account</h4>
+          <p style="color:#94a3b8">Sign up with your name, email and phone in under 30 seconds.</p>
+        </div>
+        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="step-card animate-on-scroll">
+          <div class="step-num">02</div>
+          <div class="step-icon"><i class="fas fa-calendar-plus"></i></div>
+          <h4 style="color:#f1f5f9">Book Appointment</h4>
+          <p style="color:#94a3b8">Choose department, doctor and time slot. Get your token instantly.</p>
+        </div>
+        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="step-card animate-on-scroll">
+          <div class="step-num">03</div>
+          <div class="step-icon"><i class="fas fa-tv"></i></div>
+          <h4 style="color:#f1f5f9">Track Live Queue</h4>
+          <p style="color:#94a3b8">Monitor your position in real-time and arrive just in time.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- How it works -->
-  <section class="how-section">
-    <div class="section-header animate-on-scroll">
-      <div class="section-tag">How It Works</div>
-      <h2>3 Simple Steps</h2>
-    </div>
-    <div class="steps-row">
-      <div class="step-card animate-on-scroll">
-        <div class="step-num">01</div>
-        <div class="step-icon"><i class="fas fa-user-plus"></i></div>
-        <h4>Create Account</h4>
-        <p>Sign up with your name, email and phone in under 30 seconds.</p>
-      </div>
-      <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
-      <div class="step-card animate-on-scroll">
-        <div class="step-num">02</div>
-        <div class="step-icon"><i class="fas fa-calendar-plus"></i></div>
-        <h4>Book Appointment</h4>
-        <p>Choose department, doctor and time slot. Get your token instantly.</p>
-      </div>
-      <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
-      <div class="step-card animate-on-scroll">
-        <div class="step-num">03</div>
-        <div class="step-icon"><i class="fas fa-tv"></i></div>
-        <h4>Track Live Queue</h4>
-        <p>Monitor your position in real-time and arrive just in time.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
+  <!-- ─── FOOTER ─── -->
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-brand">
@@ -164,9 +859,9 @@
       </div>
       <div class="footer-links">
         <h4>Get Started</h4>
-        <a href="auth.html">Login</a>
-        <a href="auth.html?mode=signup">Create Account</a>
-        <a href="emergency-booking.html">Emergency Booking</a>
+        <a href="auth.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a href="auth.html?mode=signup"><i class="fas fa-user-plus"></i> Create Account</a>
+        <a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i> Emergency Booking</a>
       </div>
       <div class="footer-links">
         <h4>Contact</h4>
@@ -180,15 +875,19 @@
     </div>
   </footer>
 
+  <!-- Toast -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Ambulance Modal -->
+  <!-- ─── AMBULANCE MODAL ─── -->
   <div id="ambulanceModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.72);backdrop-filter:blur(4px);z-index:5000;align-items:center;justify-content:center;padding:16px;">
     <div style="width:100%;max-width:520px;background:white;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.3);overflow:hidden;">
       <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:10px;color:white;">
           <i class="fas fa-truck-medical" style="font-size:1.4rem;"></i>
-          <div><div style="font-size:1.1rem;font-weight:800;">Emergency Ambulance</div><div style="font-size:0.78rem;opacity:0.85;">Fill details — help is on the way</div></div>
+          <div>
+            <div style="font-size:1.1rem;font-weight:800;">Emergency Ambulance</div>
+            <div style="font-size:0.78rem;opacity:0.85;">Fill details — help is on the way</div>
+          </div>
         </div>
         <button onclick="closeAmbulanceModal()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;"><i class="fas fa-times"></i></button>
       </div>
@@ -230,7 +929,118 @@
   <script src="js/main.js"></script>
   <script src="js/ambulance.js"></script>
   <script>
+    /* ── GSAP + Advanced Interactions ── */
+    // Load GSAP
+    const gsapScript = document.createElement('script');
+    gsapScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
+    gsapScript.onload = () => {
+      // Hero text stagger entrance
+      gsap.from('.hero-kicker',  { opacity:0, y:30, duration:0.6, delay:0.1 });
+      gsap.from('.hero-h1',      { opacity:0, y:40, duration:0.7, delay:0.25 });
+      gsap.from('.hero-desc',    { opacity:0, y:30, duration:0.6, delay:0.4 });
+      gsap.from('.hero-buttons', { opacity:0, y:25, duration:0.6, delay:0.55 });
+      gsap.from('.hero-stats-strip', { opacity:0, y:20, duration:0.6, delay:0.7 });
+      gsap.from('.hero-card-3d', { opacity:0, x:60, duration:0.8, delay:0.3, ease:'power3.out' });
+    };
+    document.head.appendChild(gsapScript);
+
+    /* ── Mouse parallax on hero ── */
+    document.addEventListener('mousemove', (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+
+      // Parallax blobs
+      document.querySelectorAll('.lp-blob').forEach((b, i) => {
+        const depth = (i + 1) * 8;
+        b.style.transform = `translate(${dx * depth}px, ${dy * depth}px)`;
+      });
+
+      // Hero text subtle shift
+      const heroText = document.querySelector('.hero-text');
+      if (heroText) heroText.style.transform = `translate(${dx * 6}px, ${dy * 4}px)`;
+    });
+
+    /* ── 3D Card tilt on mouse move ── */
+    const card = document.querySelector('.hero-card-3d');
+    if (card) {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const rx = ((e.clientY - cy) / (rect.height / 2)) * -12;
+        const ry = ((e.clientX - cx) / (rect.width / 2)) * 12;
+        card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-8px)`;
+        card.style.transition = 'transform 0.1s ease';
+        // Move glow with cursor
+        const glow = card.querySelector('.hc3d-glow');
+        if (glow) {
+          const px = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+          const py = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+          glow.style.background = `radial-gradient(ellipse at ${px}% ${py}%, rgba(14,165,233,0.5) 0%, rgba(99,102,241,0.2) 40%, transparent 70%)`;
+        }
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.style.transition = 'transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
+      });
+    }
+
+    /* ── Button ripple ── */
+    document.querySelectorAll('.btn-3d-cyan, .btn-3d-red, .hc3d-login-btn, .hc3d-signup-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height) * 1.5;
+        ripple.style.cssText = `
+          position:absolute;border-radius:50%;
+          width:${size}px;height:${size}px;
+          left:${e.clientX - rect.left - size/2}px;
+          top:${e.clientY - rect.top - size/2}px;
+          background:rgba(255,255,255,0.3);
+          transform:scale(0);pointer-events:none;
+          animation:rippleAnim 0.55s ease forwards;
+        `;
+        this.style.position = 'relative';
+        this.style.overflow = 'hidden';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+
+    /* ── Emergency button pulse ── */
+    const emergencyBtn = document.querySelector('.btn-3d-red');
+    if (emergencyBtn) {
+      setInterval(() => {
+        emergencyBtn.style.boxShadow = '0 5px 0 #991b1b, 0 10px 28px rgba(220,38,38,0.6), 0 0 50px rgba(220,38,38,0.4)';
+        setTimeout(() => {
+          emergencyBtn.style.boxShadow = '';
+        }, 400);
+      }, 2500);
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
+      // Particles
+      const container = document.getElementById('lpParticles');
+      if (container) {
+        const colors = ['#0ea5e9','#6366f1','#10b981','#f59e0b','#8b5cf6'];
+        for (let i = 0; i < 20; i++) {
+          const p = document.createElement('div');
+          p.className = 'lp-particle';
+          const size = Math.random() * 5 + 2;
+          p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${Math.random()*14+9}s;animation-delay:${Math.random()*10}s;`;
+          container.appendChild(p);
+        }
+      }
+
+      // Scroll animations
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+      // Stats
       try {
         const [statsRes, doctorsRes] = await Promise.all([
           fetch(API_BASE + '/api/appointments/stats'),
@@ -244,12 +1054,70 @@
         animateCounter('statCompleted', stats.completed || 0);
       } catch (e) {}
     });
+
     function animateCounter(id, target) {
       const el = document.getElementById(id);
       if (!el) return;
-      let c = 0; const step = Math.ceil(target / 40);
+      let c = 0;
+      const step = Math.max(1, Math.ceil(target / 40));
       const t = setInterval(() => { c += step; if (c >= target) { c = target; clearInterval(t); } el.textContent = c; }, 30);
     }
   </script>
+  <style>
+    /* Hide theme toggle on landing page */
+    #themeToggleBtn { display: none !important; }
+    @keyframes rippleAnim { to { transform: scale(1); opacity: 0; } }
+    @keyframes loginBtnPulse {
+      0%,100% { box-shadow: 0 4px 0 #0369a1, 0 8px 24px rgba(14,165,233,0.35), 0 0 16px rgba(14,165,233,0.15); }
+      50%      { box-shadow: 0 4px 0 #0369a1, 0 14px 36px rgba(14,165,233,0.65), 0 0 40px rgba(14,165,233,0.4); }
+    }
+    @keyframes signupBtnPulse {
+      0%,100% { box-shadow: 0 4px 0 #047857, 0 8px 24px rgba(16,185,129,0.3), 0 0 12px rgba(16,185,129,0.12); }
+      50%      { box-shadow: 0 4px 0 #047857, 0 14px 36px rgba(16,185,129,0.6), 0 0 32px rgba(16,185,129,0.3); }
+    }
+    .hc3d-login-btn {
+      animation: loginBtnPulse 3s ease-in-out infinite !important;
+      transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1) !important;
+    }
+    .hc3d-signup-btn {
+      animation: signupBtnPulse 3s 1.5s ease-in-out infinite !important;
+      transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1) !important;
+    }
+    .hc3d-login-btn:hover, .hc3d-signup-btn:hover {
+      transform: translateY(-4px) scale(1.03) !important;
+      animation-play-state: paused !important;
+    }
+    .hc3d-login-btn:active, .hc3d-signup-btn:active {
+      transform: translateY(2px) scale(0.97) !important;
+    }
+    .hc3d-inner { background: rgba(8,16,36,0.96) !important; }
+    .hc3d-inner h3 { color: #f1f5f9 !important; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .hc3d-inner h3 strong {
+      background: linear-gradient(135deg, #38bdf8, #a78bfa) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+      filter: drop-shadow(0 0 12px rgba(14,165,233,0.6));
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+    .hc3d-sub { color: #94a3b8 !important; }
+    .hc3d-chip { color: #94a3b8 !important; background: rgba(255,255,255,0.07) !important; border-color: rgba(14,165,233,0.2) !important; }
+    .hc3d-badge { color: #38bdf8 !important; background: rgba(14,165,233,0.15) !important; border-color: rgba(14,165,233,0.35) !important; }
+
+    /* ── CARD OUTER GLOW ── */
+    .hero-card-3d {
+      filter: drop-shadow(0 0 30px rgba(14,165,233,0.35)) drop-shadow(0 0 60px rgba(99,102,241,0.2));
+      animation: cardFloat 7s ease-in-out infinite, cardOuterGlow 3s ease-in-out infinite, fadeUp 0.8s 0.2s ease both !important;
+    }
+    @keyframes cardOuterGlow {
+      0%,100% { filter: drop-shadow(0 0 25px rgba(14,165,233,0.3)) drop-shadow(0 0 50px rgba(99,102,241,0.15)); }
+      50%      { filter: drop-shadow(0 0 45px rgba(14,165,233,0.6)) drop-shadow(0 0 80px rgba(99,102,241,0.35)) drop-shadow(0 0 100px rgba(14,165,233,0.15)); }
+    }
+    .hc3d-glow {
+      background: radial-gradient(ellipse at 50% 50%, rgba(14,165,233,0.55) 0%, rgba(99,102,241,0.3) 40%, transparent 70%) !important;
+      inset: -40px !important;
+      animation: glowPulse 3s ease-in-out infinite !important;
+    }
+  </style>
 </body>
 </html>

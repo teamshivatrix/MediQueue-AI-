@@ -968,6 +968,8 @@ document.addEventListener('DOMContentLoaded', () => {
   validateCurrentUserSession();
   document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
   applyTranslations(document);
+  initThemeToggle();
+  initSidebarRipple();
 });
 
 // ---- Navbar Scroll Effect ----
@@ -1083,4 +1085,95 @@ const deptIcons = {
 
 function getDeptIcon(dept) {
   return deptIcons[dept] || 'fas fa-hospital';
+}
+
+// ---- Theme Toggle (Dark / Light) ----
+const THEME_KEY = 'mq_theme';
+
+function getTheme() {
+  return localStorage.getItem(THEME_KEY) || 'dark';
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark'
+      ? '<i class="fas fa-sun"></i>'
+      : '<i class="fas fa-moon"></i>';
+    btn.title = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    // Adjust button style per theme
+    if (theme === 'dark') {
+      btn.style.background = 'rgba(255,255,255,0.12)';
+      btn.style.border = '1px solid rgba(255,255,255,0.2)';
+      btn.style.color = 'white';
+    } else {
+      btn.style.background = 'rgba(8,145,178,0.1)';
+      btn.style.border = '1px solid rgba(8,145,178,0.25)';
+      btn.style.color = '#0891b2';
+    }
+  }
+}
+
+function toggleTheme() {
+  const current = getTheme();
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// ---- Sidebar Ripple Effect ----
+function initSidebarRipple() {
+  document.querySelectorAll('.ps-nav a').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const rect = this.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+      const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+      this.style.setProperty('--rx', x + '%');
+      this.style.setProperty('--ry', y + '%');
+      this.classList.remove('ripple-active');
+      void this.offsetWidth; // reflow
+      this.classList.add('ripple-active');
+      setTimeout(() => this.classList.remove('ripple-active'), 500);
+    });
+  });
+}
+
+function initThemeToggle() {
+  // Apply saved theme first
+  applyTheme(getTheme());
+
+  // Remove old button if exists
+  const old = document.getElementById('themeToggleBtn');
+  if (old) old.remove();
+
+  // Create fixed top-right button
+  const btn = document.createElement('button');
+  btn.id = 'themeToggleBtn';
+  btn.onclick = toggleTheme;
+  btn.style.cssText = `
+    position: fixed;
+    top: 14px;
+    right: 130px;
+    z-index: 9999;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s;
+    backdrop-filter: blur(8px);
+    font-family: 'Inter', sans-serif;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+  `;
+  btn.onmouseover = () => { btn.style.transform = 'scale(1.1)'; };
+  btn.onmouseout  = () => { btn.style.transform = 'scale(1)'; };
+  document.body.appendChild(btn);
+
+  // Re-apply to set correct icon
+  applyTheme(getTheme());
 }

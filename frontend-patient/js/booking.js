@@ -192,14 +192,25 @@ async function analyzeSymptoms() {
   suggestionText.textContent = 'Analyzing symptoms...';
 
   try {
-    const result = await apiCall('/api/ai/analyze-symptoms', {
-      method: 'POST',
-      body: JSON.stringify({ symptoms })
-    });
+    const age = document.getElementById('patientAge').value || 30;
+
+    // Run symptom analysis + risk scoring in parallel
+    const [result, riskResult] = await Promise.all([
+      apiCall('/api/ai/analyze-symptoms', { method: 'POST', body: JSON.stringify({ symptoms }) }),
+      apiCall('/api/ai/risk-score', { method: 'POST', body: JSON.stringify({ symptoms, age }) }).catch(() => null)
+    ]);
+
+    let riskBadge = '';
+    if (riskResult) {
+      const riskColors = { low: '#059669', medium: '#f59e0b', high: '#f97316', emergency: '#dc2626' };
+      const rc = riskColors[riskResult.riskLevel] || '#64748b';
+      riskBadge = `<span style="display:inline-block;background:${rc};color:white;font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;text-transform:uppercase;">${riskResult.riskLevel} risk</span>`;
+    }
 
     suggestionText.innerHTML = `
-      <strong>${result.department}</strong> (${result.priority} priority)
+      <strong>${result.department}</strong>${riskBadge}
       <br><small style="color:#64748b;">Confidence: ${Math.round((result.confidence || 0.8) * 100)}% | AI: ${result.aiProvider || 'built-in'}</small>
+      ${riskResult ? `<br><small style="color:#64748b;">${riskResult.action}</small>` : ''}
     `;
 
     // Auto-select department
@@ -213,7 +224,12 @@ async function analyzeSymptoms() {
       }
     }
 
-    showToast('AI Analysis Complete', `Suggested: ${result.department}`, 'success');
+    // Emergency alert
+    if (riskResult && riskResult.riskLevel === 'emergency') {
+      showToast('⚠️ Emergency Risk Detected', 'Please go to Emergency immediately!', 'error');
+    } else {
+      showToast('AI Analysis Complete', `Suggested: ${result.department}`, 'success');
+    }
   } catch (err) {
     suggestionText.textContent = 'Could not analyze symptoms. Please select department manually.';
     showToast('Analysis Failed', 'Please select department manually', 'error');

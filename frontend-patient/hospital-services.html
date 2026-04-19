@@ -7,19 +7,19 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    .patient-sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(255,255,255,0.93);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem;}
-    .ps-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:var(--primary-dark);padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem;}
+    .patient-sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(6,11,24,0.88);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem;}
+    .ps-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:#22d3ee;padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem;}
     .ps-logo i{font-size:1.6rem;color:var(--primary);flex-shrink:0;}
     .ps-logo span{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
     .ps-user{margin:0 0.75rem 0.75rem;background:linear-gradient(135deg,rgba(8,145,178,0.08),rgba(5,150,105,0.06));border:1px solid rgba(8,145,178,0.12);border-radius:12px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:8px;}
     .ps-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;flex-shrink:0;}
-    .ps-user-name{font-size:0.82rem;font-weight:700;color:#0f172a;}
+    .ps-user-name{font-size:0.82rem;font-weight:700;color:#e2e8f0;}
     .ps-user-role{font-size:0.7rem;color:#64748b;}
     .ps-nav{list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
     .ps-nav li{flex-shrink:0;}
-    .ps-nav a{text-decoration:none;color:#475569;font-weight:600;font-size:0.9rem;padding:0 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;height:42px;white-space:nowrap;overflow:hidden;}
-    .ps-nav a:hover{color:var(--primary-dark);background:rgba(8,145,178,0.08);}
-    .ps-nav a.active{color:var(--primary-dark);background:rgba(8,145,178,0.13);}
+    .ps-nav a{text-decoration:none;color:#94a3b8;font-weight:600;font-size:0.9rem;padding:0 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;height:42px;white-space:nowrap;overflow:hidden;}
+    .ps-nav a:hover{color:#22d3ee;background:rgba(34,211,238,0.08);}
+    .ps-nav a.active{color:#22d3ee;background:rgba(34,211,238,0.10);}
     .ps-nav a i{font-size:0.95rem;width:18px;text-align:center;flex-shrink:0;}
     .ps-nav a span{overflow:hidden;text-overflow:ellipsis;}
     .ps-nav .ps-emergency a{color:#dc2626;background:rgba(220,38,38,0.06);}
@@ -35,7 +35,7 @@
     .service-hero-text p{font-size:0.85rem;opacity:0.85;margin:0;}
 
     .service-tabs{display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;}
-    .stab{padding:0.5rem 1.2rem;border:2px solid #e2e8f0;border-radius:12px;background:white;font-size:0.85rem;font-weight:600;color:#475569;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+    .stab{padding:0.5rem 1.2rem;border:2px solid #e2e8f0;border-radius:12px;background:white;font-size:0.85rem;font-weight:600;color:#94a3b8;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
     .stab.active{background:var(--primary);color:white;border-color:var(--primary);}
 
     .report-card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1.2rem;margin-bottom:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
@@ -81,7 +81,7 @@
 
 <div class="ps-main">
   <div style="margin-bottom:1.5rem;">
-    <h1 style="font-size:1.6rem;font-weight:900;color:#0f172a;margin-bottom:0.25rem;"><i class="fas fa-hospital" style="color:var(--primary);"></i> Hospital Services</h1>
+    <h1 style="font-size:1.6rem;font-weight:900;color:#e2e8f0;margin-bottom:0.25rem;"><i class="fas fa-hospital" style="color:var(--primary);"></i> Hospital Services</h1>
     <p style="color:#64748b;font-size:0.9rem;">Your diagnostic reports, lab results and ward records</p>
   </div>
 
@@ -126,12 +126,12 @@
   <!-- Book a Test Section -->
   <div id="bookSection" style="display:none;">
     <div style="background:white;border-radius:16px;padding:1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#0f172a;"><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Book a Diagnostic / Lab Test</h3>
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#e2e8f0;"><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Book a Diagnostic / Lab Test</h3>
       <p style="font-size:0.88rem;color:#64748b;margin-bottom:1.2rem;">Select a test and book an appointment. Our team will contact you to confirm the slot.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;">
         ${['MRI','CT Scan','X-Ray','Ultrasound','Blood Test (CBC)','Blood Sugar','Thyroid Test','Urine Test','Lipid Profile','HbA1c','Vitamin D','COVID Test'].map(t => `
           <div class="booking-card" onclick="bookTest('${t}')">
-            <div style="font-weight:700;color:#0f172a;font-size:0.9rem;margin-bottom:4px;">${t}</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:0.9rem;margin-bottom:4px;">${t}</div>
             <div style="font-size:0.75rem;color:#64748b;">Click to book appointment</div>
           </div>`).join('')}
       </div>
@@ -202,13 +202,13 @@ function renderReports(filter) {
             <i class="fas ${SERVICE_ICONS[r.serviceType]||'fa-file-medical'}"></i>
           </div>
           <div>
-            <div style="font-weight:800;color:#0f172a;font-size:0.95rem;">${r.reportType}</div>
+            <div style="font-weight:800;color:#e2e8f0;font-size:0.95rem;">${r.reportType}</div>
             <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${r.serviceType} � ${r.date} ${r.price?'� ?'+r.price:''}</div>
           </div>
         </div>
         <span class="status-pill ${STATUS_CLASSES[r.status]||'status-pending'}">${STATUS_LABELS[r.status]||r.status}</span>
       </div>
-      ${r.notes?`<div style="font-size:0.82rem;color:#475569;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;"><i class="fas fa-info-circle" style="color:#0891b2;"></i> ${r.notes}</div>`:''}
+      ${r.notes?`<div style="font-size:0.82rem;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;"><i class="fas fa-info-circle" style="color:#0891b2;"></i> ${r.notes}</div>`:''}
       <!-- Status Progress -->
       <div style="display:flex;gap:0;margin-bottom:${r.fileUrl?'0.75rem':'0'};">
         ${['pending','sample_collected','processing','ready'].map((s,i) => {
@@ -238,12 +238,12 @@ function renderTimeline() {
       <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:0.9rem 1.1rem;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.4rem;">
           <div>
-            <div style="font-weight:700;color:#0f172a;font-size:0.9rem;">${r.reportType}</div>
+            <div style="font-weight:700;color:#e2e8f0;font-size:0.9rem;">${r.reportType}</div>
             <div style="font-size:0.75rem;color:#64748b;">${r.serviceType} � ${r.date}</div>
           </div>
           <span class="status-pill ${STATUS_CLASSES[r.status]||'status-pending'}">${STATUS_LABELS[r.status]||r.status}</span>
         </div>
-        ${r.notes?`<div style="font-size:0.78rem;color:#475569;margin-top:6px;">${r.notes}</div>`:''}
+        ${r.notes?`<div style="font-size:0.78rem;color:#94a3b8;margin-top:6px;">${r.notes}</div>`:''}
         ${r.fileUrl?`<a href="${r.fileUrl}" target="_blank" style="font-size:0.75rem;color:var(--primary);font-weight:600;margin-top:6px;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-file"></i> View Report</a>`:''}
       </div>
     </div>`).join('')}</div>`;

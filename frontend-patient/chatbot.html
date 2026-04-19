@@ -7,19 +7,19 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    .patient-sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(255,255,255,0.93);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem;}
-    .ps-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:var(--primary-dark);padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem;}
+    .patient-sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;z-index:1000;background:rgba(6,11,24,0.88);backdrop-filter:blur(20px);border-right:1px solid rgba(8,145,178,0.12);box-shadow:4px 0 24px rgba(8,145,178,0.07);display:flex;flex-direction:column;padding:1.5rem 0 1rem;}
+    .ps-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;color:#22d3ee;padding:0 1.2rem 1.4rem;border-bottom:1px solid rgba(8,145,178,0.1);margin-bottom:1rem;}
     .ps-logo i{font-size:1.6rem;color:var(--primary);flex-shrink:0;}
     .ps-logo span{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
     .ps-user{margin:0 0.75rem 0.75rem;background:linear-gradient(135deg,rgba(8,145,178,0.08),rgba(5,150,105,0.06));border:1px solid rgba(8,145,178,0.12);border-radius:12px;padding:0.65rem 0.9rem;display:flex;align-items:center;gap:8px;}
     .ps-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;flex-shrink:0;}
-    .ps-user-name{font-size:0.82rem;font-weight:700;color:#0f172a;}
+    .ps-user-name{font-size:0.82rem;font-weight:700;color:#e2e8f0;}
     .ps-user-role{font-size:0.7rem;color:#64748b;}
     .ps-nav{list-style:none;flex:1;padding:0 0.75rem;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
     .ps-nav li{flex-shrink:0;}
-    .ps-nav a{text-decoration:none;color:#475569;font-weight:600;font-size:0.9rem;padding:0 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;height:42px;white-space:nowrap;overflow:hidden;}
-    .ps-nav a:hover{color:var(--primary-dark);background:rgba(8,145,178,0.08);}
-    .ps-nav a.active{color:var(--primary-dark);background:rgba(8,145,178,0.13);}
+    .ps-nav a{text-decoration:none;color:#94a3b8;font-weight:600;font-size:0.9rem;padding:0 1rem;border-radius:10px;transition:background 0.2s,color 0.2s;display:flex;align-items:center;gap:10px;height:42px;white-space:nowrap;overflow:hidden;}
+    .ps-nav a:hover{color:#22d3ee;background:rgba(34,211,238,0.08);}
+    .ps-nav a.active{color:#22d3ee;background:rgba(34,211,238,0.10);}
     .ps-nav a i{font-size:0.95rem;width:18px;text-align:center;flex-shrink:0;}
     .ps-nav a span{overflow:hidden;text-overflow:ellipsis;}
     .ps-nav .ps-emergency a{color:#dc2626;background:rgba(220,38,38,0.06);}
@@ -108,8 +108,8 @@
       </div>
 
       <!-- Input -->
-      <div class="chat-input-area">
-        <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter')sendMessage()">
+      <div class="chat-input-area" style="position:relative;">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Type or speak your message..." onkeypress="if(event.key==='Enter')sendMessage()" style="padding-right:90px;">
         <button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
@@ -121,6 +121,7 @@
 
   <script src="js/main.js"></script>
   <script src="js/chatbot.js"></script>
+  <script src="js/voice-input.js"></script>
   <script>
     (function(){
       const s=getCurrentUser();
