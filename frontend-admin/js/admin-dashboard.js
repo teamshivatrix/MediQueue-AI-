@@ -46,14 +46,42 @@ function resetCountdown() {
   if (el) el.textContent = 30;
 }
 
-// ---- Ambulance SSE ----
+// ---- Ambulance SSE (with polling fallback for Vercel) ----
+let _lastAmbIds = new Set(), _ambPollingStarted = false;
+
 function connectAmbulanceSSE() {
-  const es = new EventSource(API_BASE + '/api/ambulance/events');
-  es.addEventListener('new_request', (e) => {
-    const req = JSON.parse(e.data);
-    showAmbulanceAlert(req);
-  });
-  es.onerror = () => setTimeout(connectAmbulanceSSE, 3000);
+  const isServerless = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('netlify');
+  if (isServerless) { startAmbulancePolling(); return; }
+
+  try {
+    const es = new EventSource(API_BASE + '/api/ambulance/events');
+    es.addEventListener('new_request', (e) => {
+      const req = JSON.parse(e.data);
+      showAmbulanceAlert(req);
+    });
+    es.onerror = () => { es.close(); setTimeout(startAmbulancePolling, 2000); };
+  } catch(_) { startAmbulancePolling(); }
+}
+
+function startAmbulancePolling() {
+  if (_ambPollingStarted) return;
+  _ambPollingStarted = true;
+  pollAmbulanceRequests();
+  setInterval(pollAmbulanceRequests, 6000);
+}
+
+async function pollAmbulanceRequests() {
+  try {
+    const data = await apiCall('/api/ambulance/requests');
+    if (!Array.isArray(data)) return;
+    data.forEach(req => {
+      const id = req._id || req.requestId;
+      if (!_lastAmbIds.has(id) && req.status === 'pending') {
+        if (_lastAmbIds.size > 0) showAmbulanceAlert(req);
+        _lastAmbIds.add(id);
+      }
+    });
+  } catch(_) {}
 }
 
 function showAmbulanceAlert(req) {
@@ -166,20 +194,118 @@ function showAmbulanceAlert(req) {
   }, 5000);
 }
 
-// ---- Real-time Appointment SSE ----
+// ---- Real-time Appointment SSE (with polling fallback for Vercel) ----
 function connectAppointmentSSE() {
-  const es = new EventSource(API_BASE + '/api/appointments/events');
+  const isServerless = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('netlify');
+  if (isServerless) { startPollingFallback(); return; }
 
-  es.addEventListener('new_appointment', (e) => {
-    const apt = JSON.parse(e.data);
-    showNewAppointmentAlert(apt);
-    unreadAppointments++;
-    updateUnreadBadge();
-    loadDashboard(); // refresh stats
-    resetCountdown();
-  });
+  try {
+    const es = new EventSource(API_BASE + '/api/appointments/events');
+    es.addEventListener('new_appointment', (e) => {
+      const apt = JSON.parse(e.data);
+      showNewAppointmentAlert(apt);
+      unreadAppointments++;
+      updateUnreadBadge();
+      loadDashboard();
+      resetCountdown();
+    });
+    es.addEventListener('appointment_cancelled', (e) => {
+      const apt = JSON.parse(e.data);
+      if (apt.cancelledBy === 'patient') showCancellationAlert(apt);
+      loadDashboard();
+      resetCountdown();
+      if (typeof refreshSidebarBadges === 'function') refreshSidebarBadges();
+    });
+    es.onerror = () => { es.close(); setTimeout(startPollingFallback, 2000); };
+  } catch (_) { startPollingFallback(); }
+}
 
-  es.onerror = () => setTimeout(connectAppointmentSSE, 3000);
+let _lastKnownApts = {}, _pollingStarted = false;
+
+function startPollingFallback() {
+  if (_pollingStarted) return;
+  _pollingStarted = true;
+  pollAppointmentChanges();
+  setInterval(pollAppointmentChanges, 5000);
+}
+
+async function pollAppointmentChanges() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const data = await apiCall('/api/appointments?date=' + today);
+    if (!Array.isArray(data)) return;
+    const newApts = [], cancelledApts = [];
+    data.forEach(apt => {
+      const id = apt._id || apt.appointmentId;
+      const prev = _lastKnownApts[id];
+      if (!prev && Object.keys(_lastKnownApts).length > 0) newApts.push(apt);
+      else if (prev && prev !== 'cancelled' && apt.status === 'cancelled') cancelledApts.push(apt);
+      _lastKnownApts[id] = apt.status;
+    });
+    if (newApts.length) {
+      showNewAppointmentAlert(newApts[newApts.length - 1]);
+      unreadAppointments += newApts.length;
+      updateUnreadBadge();
+      loadDashboard(); resetCountdown();
+    }
+    cancelledApts.forEach(apt => showCancellationAlert(apt));
+    if (cancelledApts.length) { loadDashboard(); if (typeof refreshSidebarBadges === 'function') refreshSidebarBadges(); }
+  } catch (_) {}
+}
+
+function showCancellationAlert(apt) {
+  const old = document.getElementById('cancelAlertOverlay');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'cancelAlertOverlay';
+  overlay.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;animation:cancelSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1);';
+
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:1.2rem 1.4rem;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.2);border-left:4px solid #dc2626;display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#dc2626,#b91c1c);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;flex-shrink:0;">
+        <i class="fas fa-calendar-xmark"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.72rem;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Appointment Cancelled</div>
+        <div style="font-weight:700;color:#0f172a;font-size:0.95rem;">${apt.patientName}</div>
+        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${apt.department} · ${apt.doctorName} · Token #${apt.tokenNumber}</div>
+      </div>
+      <button onclick="document.getElementById('cancelAlertOverlay').remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1rem;padding:0;flex-shrink:0;">✕</button>
+    </div>
+  `;
+
+  if (!document.getElementById('cancelAlertStyle')) {
+    const s = document.createElement('style');
+    s.id = 'cancelAlertStyle';
+    s.textContent = '@keyframes cancelSlideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}';
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(overlay);
+
+  // Play soft alert sound
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 440;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(); osc.stop(ctx.currentTime + 0.4);
+  } catch (_) {}
+
+  // Auto dismiss after 6 seconds
+  setTimeout(() => {
+    if (document.getElementById('cancelAlertOverlay')) {
+      overlay.style.transition = 'opacity 0.3s,transform 0.3s';
+      overlay.style.opacity = '0';
+      overlay.style.transform = 'translateX(120%)';
+      setTimeout(() => overlay.remove(), 300);
+    }
+  }, 6000);
 }
 
 function updateUnreadBadge() {
@@ -702,4 +828,96 @@ function exportReport(format) {
   a.click();
   document.body.removeChild(a);
   showToast('Exporting', `Downloading ${format.toUpperCase()} report...`, 'info');
+}
+
+async function exportPDF() {
+  showToast('Generating PDF', 'Please wait...', 'info');
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const data = await apiCall(`/api/export/appointments?date=${today}`);
+    const apts = data.appointments || [];
+    const summary = data.summary || {};
+
+    // Load jsPDF dynamically
+    if (!window.jspdf) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFillColor(8, 145, 178);
+    doc.rect(0, 0, 210, 28, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+    doc.text('MediQueue AI — Daily Report', 14, 12);
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text(`Date: ${today}  |  Generated: ${new Date().toLocaleTimeString()}`, 14, 22);
+
+    // Summary boxes
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text('Summary', 14, 38);
+    const summaryItems = [
+      ['Total Appointments', summary.total || 0],
+      ['Completed', summary.completed || 0],
+      ['Waiting', summary.waiting || 0],
+      ['In Progress', summary.inProgress || 0],
+      ['Cancelled', summary.cancelled || 0],
+      ['Emergency', summary.emergency || 0],
+    ];
+    summaryItems.forEach(([label, val], i) => {
+      const x = 14 + (i % 3) * 62;
+      const y = 44 + Math.floor(i / 3) * 18;
+      doc.setFillColor(240, 249, 255);
+      doc.roundedRect(x, y, 58, 14, 2, 2, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+      doc.text(label, x + 4, y + 5);
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(8, 145, 178);
+      doc.text(String(val), x + 4, y + 12);
+    });
+
+    // Table header
+    let y = 86;
+    doc.setFillColor(8, 145, 178);
+    doc.rect(14, y, 182, 8, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+    ['Token', 'Patient', 'Dept', 'Doctor', 'Time', 'Status'].forEach((h, i) => {
+      doc.text(h, [14, 30, 68, 110, 148, 168][i] + 2, y + 5.5);
+    });
+
+    // Table rows
+    y += 10;
+    apts.forEach((apt, idx) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFillColor(idx % 2 === 0 ? 248 : 255, idx % 2 === 0 ? 250 : 255, idx % 2 === 0 ? 252 : 255);
+      doc.rect(14, y - 4, 182, 8, 'F');
+      doc.setTextColor(15, 23, 42); doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+      doc.text(String(apt.tokenNumber || ''), 16, y + 1);
+      doc.text((apt.patientName || '').substring(0, 16), 32, y + 1);
+      doc.text((apt.department || '').substring(0, 14), 70, y + 1);
+      doc.text((apt.doctorName || '').replace('Dr. ', '').substring(0, 14), 112, y + 1);
+      doc.text(apt.timeSlot || '', 150, y + 1);
+      const sc = { completed: [5, 150, 105], waiting: [245, 158, 11], 'in-progress': [59, 130, 246], cancelled: [220, 38, 38] };
+      const [r, g, b] = sc[apt.status] || [100, 116, 139];
+      doc.setTextColor(r, g, b); doc.setFont('helvetica', 'bold');
+      doc.text((apt.status || '').toUpperCase(), 170, y + 1);
+      doc.setTextColor(15, 23, 42); doc.setFont('helvetica', 'normal');
+      y += 8;
+    });
+
+    // Footer
+    doc.setFontSize(8); doc.setTextColor(148, 163, 184);
+    doc.text('MediQueue AI Government Hospital — Confidential Report', 14, 290);
+
+    doc.save(`MediQueue_Report_${today}.pdf`);
+    showToast('PDF Ready!', 'Report downloaded successfully', 'success');
+  } catch(err) {
+    showToast('PDF Error', err.message || 'Failed to generate PDF', 'error');
+  }
 }

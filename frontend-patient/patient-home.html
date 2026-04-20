@@ -413,13 +413,16 @@
       <li class="ps-emergency"><a href="emergency-booking.html"><i class="fas fa-triangle-exclamation"></i><span>Emergency</span></a></li>
     </ul>
 
-    <button class="ps-logout" onclick="patientLogout()">
+    <button class="ps-logout" onclick="patientLogout(); return false;">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
     </button>
   </aside>
 
   <!-- Main Content -->
   <div class="ps-main">
+
+    <!-- Today's Appointment Card — fixed top right below language button -->
+    <div id="todayAppointmentCard" style="display:none;position:fixed;top:68px;right:16px;z-index:900;"></div>
 
     <!-- Hero -->
     <div class="ph-hero">
@@ -522,15 +525,96 @@
 
   <script src="js/main.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const session = getCurrentUser();
       if (!session) { window.location.href = 'auth.html'; return; }
-      const name = session.user && session.user.name ? session.user.name : 'Patient';
-      const firstName = name.split(' ')[0];
+
+      let name = session.user && session.user.name ? session.user.name : '';
+
+      // If name missing, fetch from profile
+      if (!name && session.token) {
+        try {
+          const r = await fetch(API_BASE + '/api/patients/profile?token=' + encodeURIComponent(session.token));
+          const d = await r.json();
+          if (d.patient && d.patient.name) {
+            name = d.patient.name;
+            session.user.name = name;
+            localStorage.setItem('mq_patient_session', JSON.stringify(session));
+          }
+        } catch(_) {}
+      }
+
+      const firstName = (name || 'Patient').split(' ')[0];
       document.getElementById('patientHomeName').textContent = firstName;
-      document.getElementById('sidebarUserName').textContent = firstName;
-      document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+      const sidebarName = document.getElementById('sidebarUserName');
+      const avatar = document.getElementById('userAvatar');
+      if (sidebarName) sidebarName.textContent = firstName;
+      if (avatar) avatar.textContent = firstName.charAt(0).toUpperCase();
+      loadTodayAppointment(session);
     });
+
+    async function loadTodayAppointment(session) {
+      if (!session || !session.user || !session.user.phone) return;
+      const card = document.getElementById('todayAppointmentCard');
+      card.style.display = 'block';
+
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await fetch(API_BASE + '/api/appointments?phone=' + encodeURIComponent(session.user.phone) + '&date=' + today);
+        const list = await res.json();
+        const active = Array.isArray(list) ? list.filter(a => a.status === 'waiting' || a.status === 'in-progress').sort((a,b) => a.tokenNumber - b.tokenNumber) : [];
+
+        if (active.length) {
+          const apt = active[0];
+          const isServing = apt.status === 'in-progress';
+          const statusColor = isServing ? '#34d399' : '#f59e0b';
+          renderAptCard(card, apt.tokenNumber, apt.department, apt.doctorName, isServing ? 'Now' : apt.estimatedWaitTime + ' min', statusColor, 'queue-display.html');
+        } else {
+          // No appointment today — show book prompt
+          card.innerHTML = `
+            <style>#aptMiniCard{display:inline-flex;align-items:center;gap:10px;background:rgba(8,145,178,0.10);border:1.5px solid rgba(8,145,178,0.2);border-radius:14px;padding:0.55rem 1rem;cursor:pointer;transition:all 0.3s;max-width:240px;overflow:hidden;text-decoration:none;}
+            #aptMiniCard:hover{max-width:500px;background:rgba(8,145,178,0.16);border-color:rgba(8,145,178,0.35);box-shadow:0 6px 20px rgba(8,145,178,0.15);}
+            #aptMiniCard .apt-exp{opacity:0;max-width:0;overflow:hidden;transition:all 0.3s;white-space:nowrap;display:flex;align-items:center;gap:10px;}
+            #aptMiniCard:hover .apt-exp{opacity:1;max-width:300px;}</style>
+            <a href="booking.html" id="aptMiniCard">
+              <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.8rem;flex-shrink:0;"><i class="fas fa-calendar-plus"></i></div>
+              <div style="flex-shrink:0;">
+                <div style="font-size:0.6rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Today</div>
+                <div style="font-size:0.82rem;font-weight:800;color:#0891b2;">No Appointment</div>
+              </div>
+              <div class="apt-exp">
+                <div style="width:1px;height:24px;background:rgba(8,145,178,0.3);"></div>
+                <div style="font-size:0.78rem;color:#64748b;">Book your appointment for today</div>
+                <div style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;padding:0.3rem 0.7rem;border-radius:7px;font-size:0.72rem;font-weight:700;">Book Now</div>
+              </div>
+            </a>`;
+        }
+      } catch(_) {
+        card.style.display = 'none';
+      }
+    }
+
+    function renderAptCard(card, token, dept, doctor, wait, statusColor, link) {
+      card.innerHTML = `
+        <style>#aptMiniCard{display:inline-flex;align-items:center;gap:10px;background:rgba(8,145,178,0.10);border:1.5px solid rgba(8,145,178,0.2);border-radius:14px;padding:0.55rem 1rem;cursor:pointer;transition:all 0.3s;max-width:240px;overflow:hidden;text-decoration:none;}
+        #aptMiniCard:hover{max-width:560px;background:rgba(8,145,178,0.16);border-color:rgba(8,145,178,0.35);box-shadow:0 6px 20px rgba(8,145,178,0.15);}
+        #aptMiniCard .apt-exp{opacity:0;max-width:0;overflow:hidden;transition:all 0.3s;white-space:nowrap;display:flex;align-items:center;gap:10px;}
+        #aptMiniCard:hover .apt-exp{opacity:1;max-width:400px;}</style>
+        <a href="${link}" id="aptMiniCard">
+          <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#0891b2,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:0.8rem;flex-shrink:0;"><i class="fas fa-calendar-check"></i></div>
+          <div style="flex-shrink:0;">
+            <div style="font-size:0.6rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Today</div>
+            <div style="font-size:0.82rem;font-weight:800;color:#0891b2;">Token #${token}</div>
+          </div>
+          <div class="apt-exp">
+            <div style="width:1px;height:24px;background:rgba(8,145,178,0.3);"></div>
+            <div><div style="font-size:0.78rem;font-weight:700;color:#e2e8f0;">${dept}</div><div style="font-size:0.7rem;color:#64748b;">${doctor}</div></div>
+            <div style="width:1px;height:24px;background:rgba(8,145,178,0.3);"></div>
+            <div style="text-align:center;"><div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Wait</div><div style="font-size:0.82rem;font-weight:800;color:${statusColor};">${wait}</div></div>
+            <div style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;padding:0.3rem 0.7rem;border-radius:7px;font-size:0.72rem;font-weight:700;"><i class="fas fa-tv"></i> Track</div>
+          </div>
+        </a>`;
+    }
     function patientLogout() {
       const session = getCurrentUser();
       if (session && session.token) {
@@ -540,7 +624,7 @@
         }).catch(() => {});
       }
       clearCurrentUser();
-      window.location.href = 'index.html';
+      window.location.replace('index.html');
     }
   </script>
 </body>

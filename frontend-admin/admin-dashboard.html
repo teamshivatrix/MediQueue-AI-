@@ -55,6 +55,10 @@
   <div class="page-header">
     <h1><i class="fas fa-tachometer-alt" style="color: var(--primary);"></i> <span data-i18n="admin.dashboardTitle">Admin Dashboard</span></h1>
     <p data-i18n="admin.dashboardSub">Real-time hospital analytics and patient tracking</p>
+    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">
+      <button onclick="exportReport('csv')" class="btn-outline btn-sm"><i class="fas fa-file-csv" style="color:#059669;"></i> Export CSV</button>
+      <button onclick="exportPDF()" class="btn-outline btn-sm"><i class="fas fa-file-pdf" style="color:#dc2626;"></i> Export PDF</button>
+    </div>
   </div>
 
   <div class="container">

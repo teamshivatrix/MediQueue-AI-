@@ -81,7 +81,7 @@
 
 <div class="ps-main">
   <div style="margin-bottom:1.5rem;">
-    <h1 style="font-size:1.6rem;font-weight:900;color:#e2e8f0;margin-bottom:0.25rem;"><i class="fas fa-hospital" style="color:var(--primary);"></i> Hospital Services</h1>
+    <h1 style="font-size:1.6rem;font-weight:900;color:#0f172a;margin-bottom:0.25rem;"><i class="fas fa-hospital" style="color:var(--primary);"></i> Hospital Services</h1>
     <p style="color:#64748b;font-size:0.9rem;">Your diagnostic reports, lab results and ward records</p>
   </div>
 
@@ -116,26 +116,6 @@
   <!-- Reports Section -->
   <div id="reportsSection">
     <div id="reportsList"><div style="text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><br><br>Loading your reports...</div></div>
-  </div>
-
-  <!-- Timeline Section -->
-  <div id="timelineSection" style="display:none;">
-    <div id="timelineContent"></div>
-  </div>
-
-  <!-- Book a Test Section -->
-  <div id="bookSection" style="display:none;">
-    <div style="background:white;border-radius:16px;padding:1.5rem;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#e2e8f0;"><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Book a Diagnostic / Lab Test</h3>
-      <p style="font-size:0.88rem;color:#64748b;margin-bottom:1.2rem;">Select a test and book an appointment. Our team will contact you to confirm the slot.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;">
-        ${['MRI','CT Scan','X-Ray','Ultrasound','Blood Test (CBC)','Blood Sugar','Thyroid Test','Urine Test','Lipid Profile','HbA1c','Vitamin D','COVID Test'].map(t => `
-          <div class="booking-card" onclick="bookTest('${t}')">
-            <div style="font-weight:700;color:#e2e8f0;font-size:0.9rem;margin-bottom:4px;">${t}</div>
-            <div style="font-size:0.75rem;color:#64748b;">Click to book appointment</div>
-          </div>`).join('')}
-      </div>
-    </div>
   </div>
 </div>
 

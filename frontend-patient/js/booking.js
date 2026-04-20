@@ -165,10 +165,17 @@ function loadTimeSlots() {
   selectedDoctor = allDoctors.find(d => d._id === doctorId);
   if (!selectedDoctor) return;
 
-  // Use doctor's slots or full 24/7 default
-  const slots = (Array.isArray(selectedDoctor.availableSlots) && selectedDoctor.availableSlots.length > 0)
+  const rawSlots = (Array.isArray(selectedDoctor.availableSlots) && selectedDoctor.availableSlots.length > 0)
     ? selectedDoctor.availableSlots
     : defaultSlots();
+
+  // Filter out past slots if today is selected
+  const slots = getFilteredFutureSlots(rawSlots);
+
+  if (!slots.length) {
+    timeSlotSelect.innerHTML = '<option value="">No slots available for today</option>';
+    return;
+  }
 
   slots.forEach(slot => {
     const option = document.createElement('option');

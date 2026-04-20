@@ -59,6 +59,11 @@
       gap: 2rem;
       padding: 2rem;
     }
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      padding: 2rem;
+    }
     .now-serving-panel {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
@@ -200,21 +205,29 @@
   <div class="queue-header-bar">
     <div class="logo"><i class="fas fa-hospital"></i> <span>MediQueue AI</span></div>
     <div style="display:flex;align-items:center;gap:0.75rem;">
-      <select id="deptFilter" onchange="applyDeptFilter()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.82rem;cursor:pointer;outline:none;">
-        <option value="">All Departments</option>
-        <option>General Medicine</option><option>Cardiology</option>
-        <option>Orthopedics</option><option>Neurology</option>
-        <option>Pediatrics</option><option>Dermatology</option>
-        <option>ENT</option><option>Ophthalmology</option>
-        <option>Gastroenterology</option><option>Psychiatry</option>
+      <select id="deptFilter" onchange="applyDeptFilter()" style="background:#1e293b;border:1px solid rgba(255,255,255,0.2);color:white;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.82rem;cursor:pointer;outline:none;">
+        <option value="" style="background:#1e293b;color:white;">All Departments</option>
+        <option style="background:#1e293b;color:white;">General Medicine</option>
+        <option style="background:#1e293b;color:white;">Cardiology</option>
+        <option style="background:#1e293b;color:white;">Orthopedics</option>
+        <option style="background:#1e293b;color:white;">Neurology</option>
+        <option style="background:#1e293b;color:white;">Pediatrics</option>
+        <option style="background:#1e293b;color:white;">Dermatology</option>
+        <option style="background:#1e293b;color:white;">ENT</option>
+        <option style="background:#1e293b;color:white;">Ophthalmology</option>
+        <option style="background:#1e293b;color:white;">Gastroenterology</option>
+        <option style="background:#1e293b;color:white;">Psychiatry</option>
       </select>
       <div class="datetime" id="currentDateTime">--</div>
     </div>
     <a href="/patient/patient-home.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
   </div>
 
+  <!-- My Appointment Card (shown only if logged in) -->
+  <div id="myAppointmentCard" style="display:none;padding:80px 2rem 0;"></div>
+
   <!-- Queue Display -->
-  <div class="queue-main">
+  <div class="queue-main" style="padding-top:0;">
     <!-- Left: Now Serving -->
     <div class="now-serving-panel">
       <div class="serving-label"><i class="fas fa-broadcast-tower" style="animation:pulse 1.5s infinite;"></i> Now Serving</div>

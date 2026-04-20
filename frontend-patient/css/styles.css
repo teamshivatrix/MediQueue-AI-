@@ -4109,3 +4109,39 @@ html[data-theme="dark"] {
 [data-theme="light"] .ps-logout:hover {
   box-shadow: 0 8px 20px rgba(220,38,38,0.18) !important;
 }
+
+/* ── Light mode: appointment mini card & inline white text fix ── */
+[data-theme="light"] #aptMiniCard {
+  background: rgba(8,145,178,0.08) !important;
+  border-color: rgba(8,145,178,0.2) !important;
+}
+[data-theme="light"] #aptMiniCard:hover {
+  background: rgba(8,145,178,0.14) !important;
+}
+[data-theme="light"] [style*="color:#e2e8f0"],
+[data-theme="light"] [style*="color: #e2e8f0"] { color: #0f172a !important; }
+[data-theme="light"] [style*="color:rgba(255,255,255,0.5)"],
+[data-theme="light"] [style*="color:rgba(255,255,255,0.4)"],
+[data-theme="light"] [style*="color:rgba(255,255,255,0.45)"] { color: #64748b !important; }
+[data-theme="light"] [style*="color:#94a3b8"] { color: #475569 !important; }
+[data-theme="light"] .ph-hero { background: linear-gradient(135deg, rgba(8,145,178,0.08), rgba(99,102,241,0.06)) !important; border-color: rgba(8,145,178,0.15) !important; }
+[data-theme="light"] .ph-hero h1 { color: #0f172a !important; }
+[data-theme="light"] .ph-hero p { color: #475569 !important; }
+[data-theme="light"] .ph-card h3 { color: #0f172a !important; }
+[data-theme="light"] .ph-card p { color: #475569 !important; }
+[data-theme="light"] .name-gradient { background: linear-gradient(135deg,#0891b2,#6366f1) !important; -webkit-background-clip:text !important; -webkit-text-fill-color:transparent !important; background-clip:text !important; }
+
+/* ── patient-home cards: force white text always (colored bg) ── */
+.ph-card-body h3,
+.ph-card-body p,
+.ph-card-footer,
+.ph-card-badge,
+.ph-card-arrow {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+}
+.ph-card-body p { color: rgba(255,255,255,0.82) !important; }
+[data-theme="light"] .ph-card-body h3 { color: white !important; -webkit-text-fill-color: white !important; }
+[data-theme="light"] .ph-card-body p { color: rgba(255,255,255,0.85) !important; }
+[data-theme="light"] .ph-hero h1 { color: #0f172a !important; -webkit-text-fill-color: #0f172a !important; }
+[data-theme="light"] .ph-hero p { color: #475569 !important; }

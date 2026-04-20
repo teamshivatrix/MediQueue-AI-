@@ -1,193 +1,140 @@
-# MediQueue AI
+# 🏥 MediQueue AI — Autonomous Hospital Healthcare & Resources Allocation System
 
-MediQueue AI is an AI-assisted hospital queue management system for OPD workflows. It helps patients book appointments online, estimates waiting times, recommends departments from symptoms, and gives admins a live operational dashboard.
+> **AI-powered smart OPD management system** for government hospitals — automates appointment scheduling, queue management, and resource allocation with real-time precision.
 
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+🔗 **Live Demo:** [https://mediqueue-ai.vercel.app](https://mediqueue-ai.vercel.app)
 
-## Why This Project
+---
 
-Government hospitals often face long registration queues, uncertain waiting times, and limited visibility into doctor load. MediQueue AI digitizes this flow with:
+## 📸 Screenshots
 
-- online appointment booking and tokening
-- real-time queue insights
-- AI triage assistance for symptom routing
-- admin controls for doctor and queue operations
+| Landing Page | Admin Dashboard | Patient Queue |
+|---|---|---|
+| Light UI with hospital background | Real-time charts & analytics | Live token tracking |
 
-## Core Features
+---
 
-- Smart booking flow with department, doctor, date, and time slot selection
-- Auto-generated token number and estimated waiting time
-- AI symptom analyzer with provider support: Gemini, OpenAI, and built-in fallback
-- AI chatbot for hospital guidance and booking help
-- Admin login with token session verification
-- Live dashboard stats: total, waiting, in-progress, completed, avg wait
-- Doctor management (create, read, update, delete)
-- Public queue display board for current and upcoming patients
-- MongoDB persistence with automatic in-memory fallback
+## ✨ Key Features
 
-## Tech Stack
+### 👤 Patient Panel
+- 🔐 Secure login / signup with OTP password reset
+- 📅 Smart appointment booking with AI department suggestion
+- 🤖 AI Chatbot (Meera) — Hinglish conversational assistant
+- 🧠 AI Symptom Analyzer — suggests department from symptoms
+- 🎫 Live Queue Board — real-time token tracking
+- 📋 My Records — appointments, prescriptions, billing
+- 🚑 Emergency booking — no login required
+- 🚨 Ambulance request with GPS location
+- 🔔 Real-time notifications when appointment is cancelled
+- 🎙️ Voice input for symptoms (Web Speech API)
 
-- Frontend: HTML, CSS, Vanilla JavaScript, Chart.js
-- Backend: Node.js, Express
-- Database: MongoDB + Mongoose (optional; in-memory fallback available)
-- AI: Google Gemini, OpenAI, and rule-based fallback
-- Auth: lightweight admin token session in server memory
+### 🛡️ Admin Panel
+- 📊 Real-time dashboard with charts (Chart.js)
+- 👨‍⚕️ Doctor management — schedule, slots, availability
+- 🏥 Patient appointment management with priority queue
+- 💊 Prescription management with AI drug interaction checker
+- 🧪 Hospital reports (Diagnostic / Lab / Ward)
+- 🛏️ Bed management with occupancy tracking
+- 📺 TV Display mode for hospital queue boards
+- 🚑 Ambulance request management with SSE alerts
+- ⭐ Patient feedback & doctor ratings
+- 📤 CSV export of daily appointments
+- 🔔 Real-time new appointment & cancellation alerts
 
-## Project Structure
+### 🤖 AI Features
+- Groq LLaMA 3.3 70B — chatbot + symptom analysis
+- Patient risk scoring (low/medium/high/emergency)
+- Smart appointment scheduling
+- Medicine interaction checker
+- Automated SMS reminders (queue position)
 
-```text
-.
-|-- backend/
-|   |-- server.js
-|   |-- database/
-|   |   `-- database-config.js
-|   |-- models/
-|   |   |-- Appointment.js
-|   |   `-- Doctor.js
-|   `-- routes/
-|       |-- ai.js
-|       |-- appointments.js
-|       `-- doctors.js
-|-- frontend/
-|   |-- index.html
-|   |-- booking.html
-|   |-- symptom-analyzer.html
-|   |-- chatbot.html
-|   |-- admin-login.html
-|   |-- admin-dashboard.html
-|   |-- doctor-management.html
-|   |-- queue-display.html
-|   |-- css/
-|   |   `-- styles.css
-|   `-- js/
-|       |-- main.js
-|       |-- booking.js
-|       |-- symptom-analyzer.js
-|       |-- chatbot.js
-|       |-- admin-dashboard.js
-|       |-- doctor-management.js
-|       `-- queue-display.js
-|-- package.json
-`-- README.md
-```
+---
 
-## Getting Started
+## 🛠️ Tech Stack
 
-### 1) Clone and install
+| Layer | Technology |
+|---|---|
+| **Frontend** | HTML5, CSS3, Vanilla JS, Chart.js, GSAP |
+| **Backend** | Node.js, Express.js |
+| **Database** | MongoDB Atlas (with in-memory fallback) |
+| **AI** | Groq API (LLaMA 3.3 70B) |
+| **File Storage** | Cloudinary |
+| **SMS** | Twilio / Fast2SMS |
+| **Deployment** | Vercel (Serverless) |
+| **Real-time** | SSE (Server-Sent Events) + Polling fallback |
+
+---
+
+## 🚀 Run Locally
+
+### Prerequisites
+- Node.js 18+
+- MongoDB Atlas account (or local MongoDB)
+
+### Setup
 
 ```bash
-git clone https://github.com/<your-username>/mediqueue-ai.git
+# Clone the repo
+git clone https://github.com/your-username/mediqueue-ai.git
 cd mediqueue-ai
+
+# Install dependencies
 npm install
-```
 
-### 2) Configure environment
+# Create .env file
+cp .env.example .env
+# Fill in your MongoDB URI, Groq API key, Cloudinary credentials
 
-Create a `.env` file in the project root:
-
-```env
-PORT=3000
-
-# Optional: MongoDB Atlas URI. If missing/invalid, app runs in-memory mode.
-MONGODB_URI=
-
-# AI provider: gemini | openai | fallback
-AI_PROVIDER=fallback
-
-# Optional AI keys
-GEMINI_API_KEY=
-OPENAI_API_KEY=
-
-# OTP SMS provider (optional)
-SMS_PROVIDER=
-SMS_DEFAULT_COUNTRY_CODE=+91
-OTP_BRAND_NAME=MediQueue AI
-
-# Twilio (required when SMS_PROVIDER=twilio)
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_PHONE_NUMBER=
-
-# Admin credentials
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-```
-
-### OTP Notes
-
-- Forgot-password uses 4-digit OTP.
-- If `SMS_PROVIDER=twilio` and Twilio keys are valid, OTP is sent by SMS.
-- If SMS provider is not configured, app falls back to dev mode and returns `debugOtp` in non-production.
-
-### 3) Run
-
-```bash
+# Start server
 npm start
 ```
 
-Open:
+Open: `http://localhost:3000`
 
-- `http://localhost:3000`
-- `http://localhost:3000/admin-dashboard.html`
+- **Patient Portal:** `http://localhost:3000/patient/index.html`
+- **Admin Panel:** `http://localhost:3000/admin/admin-login.html`
+- **Admin Login:** `admin` / `admin123`
 
-## API Overview
+---
 
-### Appointments
+## 📁 Project Structure
 
-- `POST /api/appointments` - create appointment
-- `GET /api/appointments` - l
-- `PATCH /api/appointments/:id/status` - update appointment status
-- `POST /api/appointments/predict-waiting-time` - estimate waiting time
-- `GET /api/appointments/stats` - dashboard analytics
-- `GET /api/appointments/queue` - queue display payloist appointments with optional filtersad
+```
+mediqueue-ai/
+├── backend/
+│   ├── models/          # MongoDB schemas
+│   ├── routes/          # API endpoints
+│   ├── services/        # SMS, AI services
+│   └── server.js        # Express app
+├── frontend-patient/    # Patient portal
+├── frontend-admin/      # Admin panel
+├── api/
+│   └── index.js         # Vercel serverless entry
+└── vercel.json          # Deployment config
+```
 
-### Doctors
+---
 
-- `POST /api/doctors` - add doctor
-- `GET /api/doctors` - list doctors (by department/availability)
-- `GET /api/doctors/:id` - fetch doctor by id
-- `PUT /api/doctors/:id` - update doctor
-- `DELETE /api/doctors/:id` - remove doctor
+## 🌐 API Endpoints
 
-### AI
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/appointments` | Book appointment |
+| GET | `/api/appointments/queue` | Live queue data |
+| POST | `/api/ai/analyze-symptoms` | AI symptom analysis |
+| POST | `/api/ai/chat` | AI chatbot |
+| POST | `/api/ai/risk-score` | Patient risk scoring |
+| POST | `/api/ambulance/request` | Request ambulance |
+| GET | `/api/appointments/stats` | Dashboard statistics |
 
-- `POST /api/ai/analyze-symptoms` - symptom triage and priority suggestion
-- `POST /api/ai/chat` - assistant chat for hospital-related help
+---
 
-### Admin
+## 👥 Team
 
-- `POST /api/admin/login` - login and get session token
-- `POST /api/admin/verify` - verify token
-- `POST /api/admin/logout` - logout and invalidate token
+Built for **Smart India Hackathon / College Project Competition**
 
-## Data and Runtime Notes
+---
 
-- If MongoDB is unavailable, the app automatically switches to in-memory storage.
-- In-memory mode is demo-friendly but resets data on server restart.
-- On startup, demo doctors and appointments are seeded for quick testing.
-- Admin sessions are stored in memory and expire automatically.
+## 📄 License
 
-## Demo User Flow
-
-1. Patient uses symptom analyzer for department suggestion.
-2. Patient books appointment, receives token and estimated wait.
-3. Admin monitors queue and updates statuses.
-4. Public queue display reflects current serving and upcoming tokens.
-
-## Security Notes
-
-- Do not commit real API keys or database credentials.
-- Use environment variables and rotate keys if they are exposed.
-- Replace default admin credentials before production use.
-
-## Built For
-
-5 Hour Sprint Hackathon style OPD digitization use case: reducing queue friction, improving triage quality, and increasing admin visibility.
-
-## License
-
-MIT
-
+MIT License — Free to use for educational purposes.

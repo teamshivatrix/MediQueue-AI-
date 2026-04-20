@@ -1022,6 +1022,12 @@ async function apiCall(endpoint, options = {}) {
   }
 
   console.error(`API Error (${endpoint}):`, lastError);
+  // Redirect to offline page only for critical connection errors on non-auth pages
+  const page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+  const skipOffline = ['index.html','auth.html','offline.html','emergency-booking.html',''].includes(page);
+  if (!skipOffline && lastError && lastError.name === 'TypeError' && endpoint.includes('/api/appointments')) {
+    // Don't redirect — just throw, let page handle it
+  }
   throw lastError || new Error('API request failed');
 }
 

@@ -10,9 +10,11 @@ let useMemory = false;
 const appointmentSSEClients = new Set();
 
 function broadcastNewAppointment(appointment) {
+  const isCancelled = appointment._cancelled;
+  const eventName = isCancelled ? 'appointment_cancelled' : 'new_appointment';
   const data = JSON.stringify(appointment);
   appointmentSSEClients.forEach(client => {
-    try { client.write(`event: new_appointment\ndata: ${data}\n\n`); } catch (_) {}
+    try { client.write(`event: ${eventName}\ndata: ${data}\n\n`); } catch (_) {}
   });
 }
 
@@ -229,21 +231,27 @@ router.patch('/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
     const { id } = req.params;
+    let apt;
 
     if (useMemory) {
-      const apt = memoryAppointments.find(a => a._id === id || a.appointmentId === id);
+      apt = memoryAppointments.find(a => a._id === id || a.appointmentId === id);
       if (!apt) return res.status(404).json({ error: 'Appointment not found' });
       apt.status = status;
       res.json(apt);
     } else {
       const Appointment = require('../models/Appointment');
-      const apt = await Appointment.findOneAndUpdate(
+      apt = await Appointment.findOneAndUpdate(
         { $or: [{ _id: id }, { appointmentId: id }] },
         { status },
         { new: true }
       );
       if (!apt) return res.status(404).json({ error: 'Appointment not found' });
       res.json(apt);
+    }
+
+    // Broadcast cancellation to admin SSE clients
+    if (status === 'cancelled' && apt) {
+      broadcastNewAppointment({ ...apt._doc || apt, _cancelled: true });
     }
   } catch (error) {
     console.error('Error updating appointment:', error);

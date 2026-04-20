@@ -78,6 +78,12 @@
     loadAppointments();
     loadPrescriptions();
     loadLabReports();
+
+    // Poll every 15s for admin-cancelled appointments
+    setTimeout(() => {
+      pollAdminCancellations();
+      setInterval(pollAdminCancellations, 15000);
+    }, 3000);
   });
 
   const TABS = ['appointments', 'prescriptions', 'labreports'];
@@ -136,6 +142,7 @@
               ${canCancel ? `<button onclick="cancelAppointment('${aptId}', this)" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-times"></i> Cancel</button>` : ''}
               ${canReschedule ? `<button onclick="openReschedule('${aptId}')" style="background:#ecfeff;border:1px solid #a5f3fc;color:#0891b2;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-calendar-alt"></i> Reschedule</button>` : ''}
               ${canFeedback ? `<button onclick="openFeedback('${aptId}','${(apt.doctorName||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${(apt.department||'').replace(/'/g,"\\'")}','${(apt.patientName||'').replace(/'/g,"\\'")}','${(apt.doctorId||'')}')" style="background:#fef3c7;border:1px solid #fde68a;color:#d97706;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-star"></i> Rate</button>` : ''}
+              ${canFeedback ? `<button onclick="generateBill(${JSON.stringify(apt).replace(/"/g,'&quot;')})" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#059669;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;"><i class="fas fa-file-invoice"></i> Bill</button>` : ''}
             </div>
           </div>
           ${apt.symptoms ? `<div style="margin-top:0.75rem;font-size:0.82rem;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:0.5rem 0.75rem;"><i class="fas fa-notes-medical" style="color:#0891b2;"></i> ${apt.symptoms}</div>` : ''}
@@ -166,8 +173,61 @@
       showToast('Cancelled', 'Appointment cancelled', 'success');
     } catch (err) {
       showToast('Error', 'Failed to cancel', 'error');
-      loadAppointments(); // reload on error to restore correct state
+      loadAppointments();
     }
+  }
+
+  // ── Poll for admin-cancelled appointments ──
+  let _knownStatuses = {};
+  async function pollAdminCancellations() {
+    if (!patientPhone) return;
+    try {
+      const res = await fetch(API_BASE + '/api/appointments?phone=' + encodeURIComponent(patientPhone));
+      const list = await res.json();
+      if (!Array.isArray(list)) return;
+      list.forEach(apt => {
+        const id = apt._id || apt.appointmentId;
+        const prev = _knownStatuses[id];
+        if (prev && prev !== 'cancelled' && apt.status === 'cancelled') {
+          // Admin cancelled this appointment
+          showToast('Appointment Cancelled', `Your appointment #${apt.tokenNumber} (${apt.department}) has been cancelled by hospital.`, 'error');
+          showAdminCancelBanner(apt);
+          loadAppointments(); // refresh UI
+        }
+        _knownStatuses[id] = apt.status;
+      });
+    } catch (_) {}
+  }
+
+  function showAdminCancelBanner(apt) {
+    const old = document.getElementById('adminCancelBanner');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'adminCancelBanner';
+    el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;animation:bannerDrop 0.4s cubic-bezier(0.34,1.56,0.64,1);';
+    el.innerHTML = `
+      <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);color:white;border-radius:16px;padding:1rem 1.5rem;max-width:420px;box-shadow:0 20px 60px rgba(220,38,38,0.4);display:flex;gap:12px;align-items:center;">
+        <i class="fas fa-calendar-xmark" style="font-size:1.5rem;flex-shrink:0;"></i>
+        <div>
+          <div style="font-weight:800;font-size:0.95rem;">Appointment Cancelled by Hospital</div>
+          <div style="font-size:0.8rem;opacity:0.85;margin-top:2px;">Token #${apt.tokenNumber} · ${apt.department} · ${apt.doctorName}</div>
+          <div style="font-size:0.78rem;opacity:0.75;margin-top:2px;">Please contact hospital or rebook a new appointment.</div>
+        </div>
+        <button onclick="document.getElementById('adminCancelBanner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;flex-shrink:0;">✕</button>
+      </div>`;
+    if (!document.getElementById('bannerDropStyle')) {
+      const s = document.createElement('style');
+      s.id = 'bannerDropStyle';
+      s.textContent = '@keyframes bannerDrop{from{transform:translateX(-50%) translateY(-60px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}';
+      document.head.appendChild(s);
+    }
+    document.body.appendChild(el);
+    setTimeout(() => {
+      if (document.getElementById('adminCancelBanner')) {
+        el.style.transition = 'opacity 0.4s'; el.style.opacity = '0';
+        setTimeout(() => el.remove(), 400);
+      }
+    }, 8000);
   }
 
   async function loadPrescriptions() {
@@ -300,6 +360,102 @@
       ${medsHtml ? `<div class="section"><div class="label">Medicines</div><table><thead><tr><th>Medicine</th><th>Dosage</th><th>Duration</th><th>Instructions</th></tr></thead><tbody>${medsHtml}</tbody></table></div>` : ''}
       ${p.instructions ? `<div class="section"><div class="label">Instructions</div><div class="value">${p.instructions}</div></div>` : ''}
       <div class="footer">This is a digitally generated prescription from MediQueue AI · For medical use only</div>
+    </div>
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>`);
+    win.document.close();
+  }
+
+  function generateBill(apt) {
+    const session = getCurrentUser();
+    const patientName = (apt.patientName) || (session && session.user ? session.user.name : 'Patient');
+    const billNo = 'BILL-' + (apt.tokenNumber || '') + '-' + new Date().getFullYear();
+    const date = apt.date || new Date().toISOString().split('T')[0];
+
+    // Consultation fee by department
+    const fees = {
+      'Cardiology': 800, 'Neurology': 700, 'Orthopedics': 600,
+      'Gastroenterology': 600, 'Psychiatry': 700, 'Gynecology': 600,
+      'Ophthalmology': 500, 'Dermatology': 500, 'ENT': 500,
+      'Pediatrics': 400, 'Dental': 450, 'Pulmonology': 600,
+      'Urology': 600, 'Endocrinology': 600, 'General Medicine': 300
+    };
+    const consultFee = fees[apt.department] || 300;
+    const regFee = 50;
+    const total = consultFee + regFee;
+
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>Bill - ${billNo}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:Arial,sans-serif;padding:30px;color:#1e293b;max-width:600px;margin:0 auto;background:white;}
+      .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0891b2;padding-bottom:16px;margin-bottom:20px;}
+      .logo{font-size:1.5rem;font-weight:900;color:#0891b2;}
+      .logo-sub{font-size:0.75rem;color:#64748b;margin-top:2px;}
+      .bill-title{text-align:right;}
+      .bill-title h2{font-size:1.2rem;font-weight:800;color:#0f172a;}
+      .bill-title p{font-size:0.78rem;color:#64748b;}
+      .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+      .info-box{background:#f8fafc;border-radius:10px;padding:12px;}
+      .info-label{font-size:0.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+      .info-value{font-size:0.9rem;font-weight:600;color:#0f172a;}
+      table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+      th{background:#f1f5f9;padding:10px 12px;text-align:left;font-size:0.78rem;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;}
+      td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:0.88rem;}
+      .total-row td{font-weight:800;font-size:1rem;color:#0891b2;border-top:2px solid #0891b2;border-bottom:none;}
+      .paid-badge{display:inline-block;background:#d1fae5;color:#065f46;font-weight:800;font-size:0.78rem;padding:4px 12px;border-radius:999px;margin-top:8px;}
+      .footer{margin-top:24px;text-align:center;font-size:0.72rem;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;}
+      @media print{body{padding:15px;}}
+    </style></head><body>
+    <div class="header">
+      <div>
+        <div class="logo">🏥 MediQueue AI</div>
+        <div class="logo-sub">Government Hospital · Digital Billing</div>
+      </div>
+      <div class="bill-title">
+        <h2>INVOICE</h2>
+        <p>${billNo}</p>
+        <p>Date: ${date}</p>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-label">Patient</div>
+        <div class="info-value">${patientName}</div>
+        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">Token #${apt.tokenNumber}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Doctor</div>
+        <div class="info-value">${apt.doctorName}</div>
+        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${apt.department}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Appointment Date</div>
+        <div class="info-value">${date}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Time Slot</div>
+        <div class="info-value">${formatTime(apt.timeSlot)}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>#</th><th>Description</th><th style="text-align:right;">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Registration Fee</td><td style="text-align:right;">₹${regFee}</td></tr>
+        <tr><td>2</td><td>Consultation Fee — ${apt.department}</td><td style="text-align:right;">₹${consultFee}</td></tr>
+        <tr class="total-row"><td colspan="2">Total Amount</td><td style="text-align:right;">₹${total}</td></tr>
+      </tbody>
+    </table>
+
+    <div style="text-align:center;">
+      <span class="paid-badge">✓ PAID — Government Hospital (Free OPD)</span>
+    </div>
+
+    <div class="footer">
+      This is a computer-generated invoice. No signature required.<br>
+      MediQueue AI Government Hospital · Emergency: 108
     </div>
     <script>window.onload=()=>{window.print();}<\/script>
     </body></html>`);

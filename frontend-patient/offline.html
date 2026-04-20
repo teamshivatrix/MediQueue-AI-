@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connection Error — MediQueue AI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      color: #e2e8f0; padding: 2rem;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px; padding: 3rem 2.5rem;
+      max-width: 480px; width: 100%; text-align: center;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    }
+    .icon-wrap {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.1));
+      border: 2px solid rgba(239,68,68,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem; font-size: 2rem; color: #f87171;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+      50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+    }
+    h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+    p { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #0891b2, #0e7490);
+      color: white; text-decoration: none; padding: 0.75rem 1.5rem;
+      border-radius: 12px; font-weight: 700; font-size: 0.9rem;
+      border: none; cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(8,145,178,0.3);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(8,145,178,0.4); }
+    .btn-outline {
+      background: transparent; border: 1.5px solid rgba(255,255,255,0.15);
+      color: #94a3b8; margin-left: 0.75rem;
+    }
+    .status-row {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.04); border-radius: 10px;
+      padding: 0.75rem 1rem; margin-bottom: 0.5rem; text-align: left;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-red { background: #ef4444; }
+    .dot-green { background: #10b981; }
+    .status-label { font-size: 0.82rem; color: #94a3b8; }
+    .emergency-box {
+      margin-top: 1.5rem; padding: 1rem;
+      background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2);
+      border-radius: 12px; font-size: 0.85rem; color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-wrap"><i class="fas fa-wifi"></i></div>
+    <h1>Connection Error</h1>
+    <p>Unable to connect to MediQueue AI server. Please check your internet connection and try again.</p>
+
+    <div style="margin-bottom:1.5rem;">
+      <div class="status-row">
+        <div class="dot dot-red" id="serverDot"></div>
+        <span class="status-label" id="serverStatus">Checking server...</span>
+      </div>
+      <div class="status-row">
+        <div class="dot" id="netDot" style="background:#f59e0b;"></div>
+        <span class="status-label" id="netStatus">Checking internet...</span>
+      </div>
+    </div>
+
+    <div>
+      <button class="btn" onclick="retryConnection()"><i class="fas fa-rotate-right"></i> Retry</button>
+      <a href="index.html" class="btn btn-outline"><i class="fas fa-home"></i> Home</a>
+    </div>
+
+    <div class="emergency-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <strong>Medical Emergency?</strong> Call <strong>108</strong> immediately.
+    </div>
+  </div>
+
+  <script>
+    async function checkStatus() {
+      // Check internet
+      const netDot = document.getElementById('netDot');
+      const netStatus = document.getElementById('netStatus');
+      if (navigator.onLine) {
+        netDot.style.background = '#10b981';
+        netStatus.textContent = 'Internet connected ✓';
+      } else {
+        netDot.style.background = '#ef4444';
+        netStatus.textContent = 'No internet connection';
+      }
+
+      // Check server
+      const serverDot = document.getElementById('serverDot');
+      const serverStatus = document.getElementById('serverStatus');
+      try {
+        const base = window.location.hostname.includes('vercel') ? '' : 'http://localhost:3000';
+        const res = await fetch(base + '/api/appointments/stats', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          serverDot.style.background = '#10b981';
+          serverStatus.textContent = 'Server online ✓';
+          setTimeout(() => window.location.href = 'index.html', 1500);
+        } else {
+          serverDot.style.background = '#f59e0b';
+          serverStatus.textContent = 'Server responding with errors';
+        }
+      } catch {
+        serverDot.style.background = '#ef4444';
+        serverStatus.textContent = 'Server unreachable';
+      }
+    }
+
+    function retryConnection() {
+      document.getElementById('serverStatus').textContent = 'Checking server...';
+      document.getElementById('serverDot').style.background = '#f59e0b';
+      checkStatus();
+    }
+
+    checkStatus();
+    setInterval(checkStatus, 10000);
+  </script>
+</body>
+</html>
