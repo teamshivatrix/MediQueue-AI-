@@ -1,6 +1,24 @@
 // MediQueue AI - Main JavaScript (shared utilities)
-// If opened via Live Server (port 5500/5501) or file://, point API calls to the actual backend server
-const API_BASE = window.location.port === '3000' ? '' : 'http://localhost:3000';
+// Smart API base resolution — works on localhost AND Vercel/production
+function resolveAdminApiBase() {
+  const host = window.location.hostname;
+  const port = window.location.port;
+  const protocol = window.location.protocol;
+
+  // file:// protocol
+  if (protocol === 'file:') return 'http://localhost:3000';
+
+  // localhost:3000 — same origin
+  if ((host === 'localhost' || host === '127.0.0.1') && port === '3000') return '';
+
+  // localhost on any other port (Live Server etc.) — point to local backend
+  if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000';
+
+  // Vercel / Netlify / any production host — same origin (API is on same domain)
+  return '';
+}
+
+const API_BASE = resolveAdminApiBase();
 
 function sanitizeBase(raw) {
   return String(raw || '').trim().replace(/\/+$/, '');
