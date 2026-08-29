@@ -7,21 +7,22 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    body { background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%) !important; color: #0f172a; }
     .queue-header-bar {
-      background: rgba(255,255,255,0.05);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid rgba(8,145,178,0.12);
       padding: 1rem 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      color: white;
+      color: #0f172a;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       z-index: 100;
       backdrop-filter: blur(20px);
+      box-shadow: 0 2px 20px rgba(8,145,178,0.08);
     }
     .queue-header-bar .logo {
       display: flex;
@@ -30,19 +31,19 @@
       font-weight: 800;
       font-size: 1.3rem;
     }
-    .queue-header-bar .logo i { color: var(--primary-light); }
+    .queue-header-bar .logo i { color: #0891b2; }
     .queue-header-bar .logo span {
-      background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+      background: linear-gradient(135deg, #0891b2, #059669);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .queue-header-bar .datetime {
       font-size: 0.95rem;
-      color: rgba(255,255,255,0.6);
+      color: #64748b;
     }
     .queue-header-bar .back-link {
-      color: rgba(255,255,255,0.6);
+      color: #64748b;
       text-decoration: none;
       font-size: 0.85rem;
       display: flex;
@@ -50,23 +51,17 @@
       gap: 6px;
       transition: color 0.3s;
     }
-    .queue-header-bar .back-link:hover { color: white; }
+    .queue-header-bar .back-link:hover { color: #0891b2; }
     .queue-main {
-      padding-top: 80px;
       min-height: 100vh;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 2rem;
-      padding: 2rem;
-    }
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      padding: 2rem;
+      padding: 100px 2rem 2rem;
     }
     .now-serving-panel {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: white;
+      border: 1px solid rgba(8,145,178,0.1);
       border-radius: 28px;
       padding: 3rem 2rem;
       text-align: center;
@@ -74,20 +69,21 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      box-shadow: 0 8px 32px rgba(8,145,178,0.08);
     }
     .serving-label {
       text-transform: uppercase;
       letter-spacing: 4px;
       font-size: 0.9rem;
       font-weight: 700;
-      color: rgba(255,255,255,0.4);
+      color: #64748b;
       margin-bottom: 1rem;
     }
     .serving-token {
       font-size: 8rem;
       font-weight: 900;
       line-height: 1;
-      background: linear-gradient(135deg, #22d3ee, #34d399);
+      background: linear-gradient(135deg, #0891b2, #059669);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -97,12 +93,12 @@
     .serving-name {
       font-size: 1.5rem;
       font-weight: 600;
-      color: rgba(255,255,255,0.9);
+      color: #0f172a;
       margin-bottom: 0.5rem;
     }
     .serving-dept {
       font-size: 1rem;
-      color: rgba(255,255,255,0.4);
+      color: #64748b;
       margin-bottom: 2rem;
     }
     .serving-doctor {
@@ -110,16 +106,17 @@
       align-items: center;
       gap: 8px;
       padding: 0.6rem 1.25rem;
-      background: rgba(8,145,178,0.15);
+      background: rgba(8,145,178,0.08);
       border-radius: 12px;
-      color: var(--primary-light);
+      color: #0891b2;
       font-weight: 600;
       font-size: 0.95rem;
       margin-bottom: 2rem;
+      border: 1px solid rgba(8,145,178,0.15);
     }
     .next-box {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(8,145,178,0.06);
+      border: 1px solid rgba(8,145,178,0.12);
       border-radius: 16px;
       padding: 1.5rem 2rem;
       width: 100%;
@@ -130,17 +127,17 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 3px;
-      color: rgba(255,255,255,0.4);
+      color: #64748b;
       font-weight: 700;
       margin-bottom: 0.5rem;
     }
     .next-token {
       font-size: 3rem;
       font-weight: 800;
-      color: var(--warning);
+      color: #d97706;
     }
     .next-name {
-      color: rgba(255,255,255,0.6);
+      color: #475569;
       font-size: 0.9rem;
     }
     .queue-right-panel {
@@ -154,12 +151,13 @@
       gap: 1rem;
     }
     .queue-stat-box {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: white;
+      border: 1px solid rgba(8,145,178,0.1);
       border-radius: 16px;
       padding: 1.25rem;
       text-align: center;
-      color: white;
+      color: #0f172a;
+      box-shadow: 0 4px 16px rgba(8,145,178,0.06);
     }
     .queue-stat-value {
       font-size: 2rem;
@@ -168,30 +166,31 @@
     }
     .queue-stat-label {
       font-size: 0.75rem;
-      color: rgba(255,255,255,0.4);
+      color: #64748b;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
     .waiting-list-panel {
       flex: 1;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: white;
+      border: 1px solid rgba(8,145,178,0.1);
       border-radius: 20px;
       padding: 1.5rem;
       overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(8,145,178,0.06);
     }
     .waiting-list-header {
       font-size: 1rem;
       font-weight: 700;
-      color: rgba(255,255,255,0.7);
+      color: #0f172a;
       margin-bottom: 1rem;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .waiting-list-header i {
-      color: var(--primary-light);
+      color: #0891b2;
     }
     @media (max-width: 768px) {
       .queue-main { grid-template-columns: 1fr; }
@@ -205,18 +204,18 @@
   <div class="queue-header-bar">
     <div class="logo"><i class="fas fa-hospital"></i> <span>MediQueue AI</span></div>
     <div style="display:flex;align-items:center;gap:0.75rem;">
-      <select id="deptFilter" onchange="applyDeptFilter()" style="background:#1e293b;border:1px solid rgba(255,255,255,0.2);color:white;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.82rem;cursor:pointer;outline:none;">
-        <option value="" style="background:#1e293b;color:white;">All Departments</option>
-        <option style="background:#1e293b;color:white;">General Medicine</option>
-        <option style="background:#1e293b;color:white;">Cardiology</option>
-        <option style="background:#1e293b;color:white;">Orthopedics</option>
-        <option style="background:#1e293b;color:white;">Neurology</option>
-        <option style="background:#1e293b;color:white;">Pediatrics</option>
-        <option style="background:#1e293b;color:white;">Dermatology</option>
-        <option style="background:#1e293b;color:white;">ENT</option>
-        <option style="background:#1e293b;color:white;">Ophthalmology</option>
-        <option style="background:#1e293b;color:white;">Gastroenterology</option>
-        <option style="background:#1e293b;color:white;">Psychiatry</option>
+      <select id="deptFilter" onchange="applyDeptFilter()" style="background:white;border:1px solid #e2e8f0;color:#1e293b;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.82rem;cursor:pointer;outline:none;">
+        <option value="" style="background:white;color:#1e293b;">All Departments</option>
+        <option style="background:white;color:#1e293b;">General Medicine</option>
+        <option style="background:white;color:#1e293b;">Cardiology</option>
+        <option style="background:white;color:#1e293b;">Orthopedics</option>
+        <option style="background:white;color:#1e293b;">Neurology</option>
+        <option style="background:white;color:#1e293b;">Pediatrics</option>
+        <option style="background:white;color:#1e293b;">Dermatology</option>
+        <option style="background:white;color:#1e293b;">ENT</option>
+        <option style="background:white;color:#1e293b;">Ophthalmology</option>
+        <option style="background:white;color:#1e293b;">Gastroenterology</option>
+        <option style="background:white;color:#1e293b;">Psychiatry</option>
       </select>
       <div class="datetime" id="currentDateTime">--</div>
     </div>
@@ -227,7 +226,7 @@
   <div id="myAppointmentCard" style="display:none;padding:80px 2rem 0;"></div>
 
   <!-- Queue Display -->
-  <div class="queue-main" style="padding-top:0;">
+  <div class="queue-main" style="padding-top:80px;">
     <!-- Left: Now Serving -->
     <div class="now-serving-panel">
       <div class="serving-label"><i class="fas fa-broadcast-tower" style="animation:pulse 1.5s infinite;"></i> Now Serving</div>
@@ -247,15 +246,15 @@
     <div class="queue-right-panel">
       <div class="queue-stats-row">
         <div class="queue-stat-box">
-          <div class="queue-stat-value" id="qStatWaiting" style="color:var(--warning);">0</div>
+          <div class="queue-stat-value" id="qStatWaiting" style="color:#d97706;">0</div>
           <div class="queue-stat-label">Waiting</div>
         </div>
         <div class="queue-stat-box">
-          <div class="queue-stat-value" id="qStatCompleted" style="color:var(--success);">0</div>
+          <div class="queue-stat-value" id="qStatCompleted" style="color:#059669;">0</div>
           <div class="queue-stat-label">Completed</div>
         </div>
         <div class="queue-stat-box">
-          <div class="queue-stat-value" id="qStatTotal" style="color:var(--primary-light);">0</div>
+          <div class="queue-stat-value" id="qStatTotal" style="color:#0891b2;">0</div>
           <div class="queue-stat-label">Total Today</div>
         </div>
       </div>
@@ -263,7 +262,7 @@
       <div class="waiting-list-panel">
         <div class="waiting-list-header"><i class="fas fa-list-ol"></i> Waiting Queue</div>
         <div id="waitingList">
-          <p style="text-align:center; color:rgba(255,255,255,0.3); padding:2rem;">Loading queue data...</p>
+          <p style="text-align:center; color:#64748b; padding:2rem;">Loading queue data...</p>
         </div>
       </div>
     </div>

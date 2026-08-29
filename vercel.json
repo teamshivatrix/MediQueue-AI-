@@ -55,10 +55,6 @@
       "src": "/$",
       "headers": { "Location": "/patient/index.html" },
       "status": 302
-    },
-    {
-      "src": "/(.*\\.html)$",
-      "dest": "/api/index.js"
     }
   ]
 }

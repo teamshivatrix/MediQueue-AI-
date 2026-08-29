@@ -1,4 +1,8 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Force Google DNS to fix querySrv ECONNREFUSED issues
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
 const connectDB = async () => {
   try {
@@ -10,7 +14,10 @@ const connectDB = async () => {
       return false;
     }
 
-    await mongoose.connect(uri);
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+    });
     console.log('✅ Connected to MongoDB Atlas');
     return true;
   } catch (err) {
