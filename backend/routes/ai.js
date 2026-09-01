@@ -167,7 +167,7 @@ router.post('/analyze-symptoms', async (req, res) => {
     if (provider === 'groq') {
       try {
         const completion = await client.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [
             { role: 'system', content: `You are a medical triage assistant. Analyze symptoms and respond ONLY with valid JSON (no markdown, no backticks).
 Available departments: General Medicine, Cardiology, Orthopedics, Neurology, Pediatrics, Dermatology, ENT, Ophthalmology, Gastroenterology, Psychiatry, Gynecology, Dental, Pulmonology, Urology, Endocrinology
@@ -286,7 +286,7 @@ Emergency: 108`;
         messages.push({ role: 'user', content: message });
 
         const completion = await client.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages,
           temperature: 0.7,
           max_tokens: 300
@@ -406,7 +406,7 @@ Emergency examples: chest pain+sweating, difficulty breathing, unconscious, stro
     if (provider === 'groq') {
       try {
         const completion = await client.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2, max_tokens: 200
         });
@@ -460,7 +460,7 @@ Respond ONLY with valid JSON (no markdown):
     if (provider === 'groq') {
       try {
         const completion = await client.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.3, max_tokens: 250
         });
@@ -504,7 +504,7 @@ Respond ONLY with valid JSON (no markdown):
     if (provider === 'groq') {
       try {
         const completion = await client.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2, max_tokens: 500
         });
