@@ -7,6 +7,29 @@ let unreadAppointments = 0;
 let refreshCountdown = 30;
 let countdownTimer = null;
 
+// ---- Audio Context unlock (required by browsers — must be triggered by user gesture) ----
+let _audioCtx = null;
+function getAudioContext() {
+  if (!_audioCtx) {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume().catch(() => {});
+  }
+  return _audioCtx;
+}
+
+// Unlock audio on first user interaction
+function unlockAudio() {
+  getAudioContext();
+  document.removeEventListener('click', unlockAudio);
+  document.removeEventListener('keydown', unlockAudio);
+  document.removeEventListener('touchstart', unlockAudio);
+}
+document.addEventListener('click', unlockAudio);
+document.addEventListener('keydown', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
   pollEmergencyAlerts();
@@ -67,7 +90,9 @@ function startAmbulancePolling() {
   if (_ambPollingStarted) return;
   _ambPollingStarted = true;
   pollAmbulanceRequests();
-  setInterval(pollAmbulanceRequests, 6000);
+  // 2 sec on Vercel/serverless for faster ambulance alerts, 4 sec otherwise
+  const isServerless = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('netlify');
+  setInterval(pollAmbulanceRequests, isServerless ? 2000 : 4000);
 }
 
 async function pollAmbulanceRequests() {
@@ -168,7 +193,7 @@ function showAmbulanceAlert(req) {
 
   // Siren sound for 3 seconds
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getAudioContext();
     const endTime = ctx.currentTime + 3;
     for (let t = ctx.currentTime; t < endTime; t += 0.5) {
       const osc = ctx.createOscillator();
@@ -226,7 +251,7 @@ function startPollingFallback() {
   if (_pollingStarted) return;
   _pollingStarted = true;
   pollAppointmentChanges();
-  setInterval(pollAppointmentChanges, 5000);
+  setInterval(pollAppointmentChanges, 3000); // 3 sec on Vercel for faster notifications
 }
 
 async function pollAppointmentChanges() {
@@ -286,7 +311,7 @@ function showCancellationAlert(apt) {
 
   // Play soft alert sound
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getAudioContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
@@ -395,7 +420,7 @@ function showNewAppointmentAlert(apt) {
 
   // Play a soft notification sound
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getAudioContext();
     [0, 0.15, 0.3].forEach((t, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
