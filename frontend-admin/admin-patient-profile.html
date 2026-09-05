@@ -89,7 +89,7 @@
   </style>
   <script>
     (function() {
-      const base = window.location.port === '3000' ? '' : 'http://localhost:3000';
+      const base = (function(){ var h=window.location.hostname,p=window.location.port,isLocal=h==='localhost'||h==='127.0.0.1'; return (isLocal&&p!=='3000')?'http://localhost:3000':''; })();
       const token = sessionStorage.getItem('adminToken');
       if (!token) { window.location.href = 'admin-login.html'; return; }
       fetch(base + '/api/admin/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) })
@@ -418,6 +418,7 @@
   </script>
 </body>
 </html>
+
 
 
 

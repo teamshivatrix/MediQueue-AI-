@@ -16,29 +16,33 @@ function resolveApiBase() {
     return queryBase;
   }
 
-  const storedBase = sanitizeApiBase(localStorage.getItem('mq_api_base'));
-  if (storedBase) {
-    // If we're already on localhost:3000, ignore any stored base to avoid stale config
-    const currentIsLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '3000';
-    if (!currentIsLocal) return storedBase;
-  }
-
   const host = window.location.hostname;
   const port = window.location.port;
   const protocol = window.location.protocol;
   const isLocalHost = host === 'localhost' || host === '127.0.0.1';
   const isPrivateIpv4 = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host);
-  const isLikelyHosted = host.endsWith('.vercel.app') || host.endsWith('.netlify.app');
+  const isLikelyHosted = host.endsWith('.vercel.app') || host.endsWith('.netlify.app') || (!isLocalHost && !isPrivateIpv4);
+
+  // On production/Vercel — always same-origin, ignore any stored localhost base
+  if (isLikelyHosted) {
+    localStorage.removeItem('mq_api_base'); // clear any stale localhost url
+    return '';
+  }
+
+  const storedBase = sanitizeApiBase(localStorage.getItem('mq_api_base'));
+  if (storedBase) {
+    const currentIsLocal = isLocalHost && port === '3000';
+    if (!currentIsLocal) return storedBase;
+  }
 
   if (protocol === 'file:') return 'http://localhost:3000';
 
   if (isLocalHost && port === '3000') return '';
   if (isLocalHost) return 'http://localhost:3000';
 
-  // If opened from local LAN or custom local dev server, route API to local backend.
-  if (!isLikelyHosted && (isPrivateIpv4 || port)) return 'http://localhost:3000';
+  // Local LAN
+  if (isPrivateIpv4 || port) return 'http://localhost:3000';
 
-  // Netlify/production default expects same-origin reverse proxy if configured.
   return '';
 }
 
