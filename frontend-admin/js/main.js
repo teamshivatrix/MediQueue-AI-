@@ -323,11 +323,11 @@ window.addEventListener('scroll', () => {
 
 // ---- API Helper ----
 async function apiCall(endpoint, options = {}) {
-  const bases = Array.from(new Set([
-    sanitizeBase(API_BASE),
-    '',
-    'http://localhost:3000'
-  ]));
+  const host = window.location.hostname;
+  const isProduction = !( host === 'localhost' || host === '127.0.0.1' || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host) );
+
+  const allBases = [sanitizeBase(API_BASE), '', 'http://localhost:3000'];
+  const bases = Array.from(new Set(isProduction ? [sanitizeBase(API_BASE), ''] : allBases));
 
   let lastError = null;
 
