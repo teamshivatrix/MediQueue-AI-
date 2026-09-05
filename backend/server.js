@@ -61,36 +61,68 @@ app.use('/api/bed-management', bedManagementRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/export', exportRoutes);
 
-// Admin authentication
+// Admin authentication — MongoDB-backed sessions (works on Vercel serverless)
 const crypto = require('crypto');
-const adminSessions = new Set();
+const adminSessions = new Set(); // local fallback for in-memory mode
 
-app.post('/api/admin/login', (req, res) => {
+// Helper: get admin_sessions collection from MongoDB
+function getAdminSessionsCol() {
+  try {
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
+    if (!db) return null;
+    return db.collection('admin_sessions');
+  } catch (_) { return null; }
+}
+
+app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body;
   const adminUser = process.env.ADMIN_USERNAME || 'admin';
   const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
 
   if (username === adminUser && password === adminPass) {
     const token = crypto.randomBytes(32).toString('hex');
-    adminSessions.add(token);
-    // Auto-expire after 8 hours
-    setTimeout(() => adminSessions.delete(token), 8 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
+
+    const col = getAdminSessionsCol();
+    if (col) {
+      // Store in MongoDB — survives serverless cold starts
+      await col.replaceOne({ token }, { token, expiresAt }, { upsert: true });
+      // Ensure TTL index exists
+      col.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {});
+    } else {
+      // In-memory fallback
+      adminSessions.add(token);
+      setTimeout(() => adminSessions.delete(token), 8 * 60 * 60 * 1000);
+    }
     return res.json({ success: true, token, message: 'Login successful' });
   }
   res.status(401).json({ success: false, message: 'Invalid username or password' });
 });
 
-app.post('/api/admin/verify', (req, res) => {
+app.post('/api/admin/verify', async (req, res) => {
   const { token } = req.body;
-  if (token && adminSessions.has(token)) {
-    return res.json({ valid: true });
+  if (!token) return res.status(401).json({ valid: false });
+
+  const col = getAdminSessionsCol();
+  if (col) {
+    const session = await col.findOne({ token, expiresAt: { $gt: new Date() } }).catch(() => null);
+    if (session) return res.json({ valid: true });
+    return res.status(401).json({ valid: false });
   }
+
+  // In-memory fallback
+  if (adminSessions.has(token)) return res.json({ valid: true });
   res.status(401).json({ valid: false });
 });
 
-app.post('/api/admin/logout', (req, res) => {
+app.post('/api/admin/logout', async (req, res) => {
   const { token } = req.body;
-  if (token) adminSessions.delete(token);
+  if (token) {
+    const col = getAdminSessionsCol();
+    if (col) await col.deleteOne({ token }).catch(() => {});
+    adminSessions.delete(token);
+  }
   res.json({ success: true });
 });
 
