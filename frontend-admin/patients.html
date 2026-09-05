@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script>
     (function() {
-      const adminApiBase = (function(){ var h=window.location.hostname,p=window.location.port,isLocal=h==='localhost'||h==='127.0.0.1'; return (isLocal&&p!=='3000')?'http://localhost:3000':''; })();
+      const adminApiBase = '';
       const token = sessionStorage.getItem('adminToken');
       if (!token) { window.location.href = 'admin-login.html?redirect=patients.html'; return; }
       fetch(adminApiBase + '/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
